@@ -13,6 +13,7 @@
         Task<bool> DeleteAsync(int id, CancellationToken cancellationToken = default);
 
         Task<bool> ExistsAsync(int id, CancellationToken cancellationToken = default);
+        Task<int> CountAsync(CancellationToken cancellationToken = default);
 
         Task<IReadOnlyList<TEntity>> GetByConditionAsync(
             string whereClause,

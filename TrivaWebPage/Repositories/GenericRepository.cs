@@ -152,6 +152,16 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
             cancellationToken: cancellationToken));
     }
 
+    public async Task<int> CountAsync(CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        var sql = $"SELECT COUNT(1) FROM [{_tableName}];";
+
+        return await connection.ExecuteScalarAsync<int>(new CommandDefinition(
+            sql,
+            cancellationToken: cancellationToken));
+    }
+
     public async Task<IReadOnlyList<TEntity>> GetByConditionAsync(
         string whereClause,
         object? parameters = null,

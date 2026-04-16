@@ -1,7 +1,15 @@
+using Microsoft.EntityFrameworkCore;
+using TrivaWebPage.Data.Connection;
+using TrivaWebPage.DependencyInjection;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
+
+// EF Core DbContext
+builder.Services.AddDbContext<AppDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Data access / repositories
 builder.Services.AddDataAccess(builder.Configuration);

@@ -1,6 +1,8 @@
-﻿namespace TrivaWebPage.Abstractions.ContentAbstractions
+﻿using TrivaWebPage.Models.Contents;
+
+namespace TrivaWebPage.Abstractions.ContentAbstractions
 {
-    public interface IImageComponent
+    public interface IImageComponent : IGenericRepository<ImageComponent>
     {
     }
 }
