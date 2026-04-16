@@ -1,0 +1,273 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>@ViewData["Title"] - Triva</title>
+
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;600;700;800&family=Inter:wght@400;500;600&family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+
+    <script>
+        tailwind.config = {
+        darkMode: "class",
+        theme: {
+        extend: {
+        colors: {
+        brand: {
+        darkBg: "#000f08",
+        darkAccent: "#fb3640",
+        lightAccent: "#00a19b",
+        lightBg: "#e4ddd3",
+
+        darkSidebar: "#061710",
+        darkSidebarHover: "#0b2419",
+        darkNavbar: "#08150f",
+        darkPanel: "#0d1c15",
+        darkFooter: "#08150f",
+        darkBorder: "rgba(251, 54, 64, 0.18)",
+        darkText: "#f4efe9",
+        darkMuted: "rgba(244, 239, 233, 0.65)",
+
+        lightSidebar: "#d8d0c4",
+        lightSidebarHover: "#cdc4b7",
+        lightNavbar: "#f3ece3",
+        lightPanel: "#ede5db",
+        lightFooter: "#d9d1c6",
+        lightBorder: "rgba(0, 161, 155, 0.18)",
+        lightText: "#12211f",
+        lightMuted: "rgba(18, 33, 31, 0.65)"
+        }
+        },
+        boxShadow: {
+        soft: "0 10px 30px rgba(0,0,0,0.10)"
+        },
+        fontFamily: {
+        headline: ["Manrope", "sans-serif"],
+        body: ["Inter", "sans-serif"]
+        }
+        }
+        }
+        };
+    </script>
+
+    <style>
+        body {
+        font-family: "Inter", sans-serif;
+        }
+
+        h1, h2, h3, .font-headline {
+        font-family: "Manrope", sans-serif;
+        }
+
+        /* Adjust individual logo sizes so they look visually equal */
+        #logoDark {
+        height: 2.5rem; /* base dark logo size */
+        width: auto;
+        }
+
+        #logoLight {
+        height: 3.25rem; /* larger to visually match dark logo */
+        width: auto;
+        }
+
+        .material-symbols-outlined {
+        font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        display: inline-block;
+        vertical-align: middle;
+        }
+
+        .theme-transition,
+        .theme-transition * {
+        transition:
+        background-color 220ms ease,
+        color 220ms ease,
+        border-color 220ms ease,
+        box-shadow 220ms ease,
+        opacity 220ms ease;
+        }
+    </style>
+
+    <script>
+        (function () {
+        const savedTheme = localStorage.getItem("theme");
+        const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
+        const theme = savedTheme || (prefersDark ? "dark" : "light");
+
+        if (theme === "dark") {
+        document.documentElement.classList.add("dark");
+        } else {
+        document.documentElement.classList.remove("dark");
+        }
+        })();
+    </script>
+</head>
+<body class="theme-transition bg-brand-lightBg text-brand-lightText dark:bg-brand-darkBg dark:text-brand-darkText min-h-screen">
+    <!-- Top Navbar -->
+    <header class="fixed top-0 left-0 right-0 z-50 h-16 px-6 md:px-8 flex items-center justify-between
+        bg-brand-lightNavbar dark:bg-brand-darkNavbar
+        border-b border-brand-lightBorder dark:border-brand-darkBorder shadow-soft">
+        <div class="flex items-center">
+            <!-- Light Logo -->
+            <img id="logoLight"
+                 src="~/pictures/TrivaMavi.png"
+                 alt="Triva Light Logo"
+                 class="h-10 w-auto block dark:hidden" />
+
+            <!-- Dark Logo -->
+            <img id="logoDark"
+                 src="~/pictures/TrivaLogo.png"
+                 alt="Triva Dark Logo"
+                 class="h-10 w-auto hidden dark:block" />
+        </div>
+
+        <div class="flex items-center gap-3">
+            <button id="themeToggle"
+                    type="button"
+                    class="flex items-center gap-2 rounded-full px-2 py-2
+                bg-brand-lightPanel dark:bg-brand-darkPanel
+                border border-brand-lightBorder dark:border-brand-darkBorder hover:scale-[1.02] active:scale-[0.98]"
+                    aria-label="Toggle theme">
+                <span id="sunIconWrap"
+                      class="flex h-8 w-8 items-center justify-center rounded-full text-brand-lightAccent dark:text-brand-darkMuted">
+                    <span class="material-symbols-outlined text-[20px]">light_mode</span>
+                </span>
+
+                <span id="moonIconWrap"
+                      class="flex h-8 w-8 items-center justify-center rounded-full text-brand-lightMuted dark:text-brand-darkAccent">
+                    <span class="material-symbols-outlined text-[20px]">dark_mode</span>
+                </span>
+            </button>
+
+            <button class="p-2 rounded-lg text-brand-lightMuted dark:text-brand-darkMuted hover:bg-black/5 dark:hover:bg-white/5">
+                <span class="material-symbols-outlined">notifications</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex pt-16 min-h-screen">
+        <!-- Sidebar -->
+        <aside class="hidden md:flex fixed left-0 top-16 bottom-0 w-64 flex-col px-4 py-6
+            bg-brand-lightSidebar dark:bg-brand-darkSidebar
+            border-r border-brand-lightBorder dark:border-brand-darkBorder">
+            <nav class="space-y-2">
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    bg-brand-lightAccent text-white dark:bg-brand-darkAccent dark:text-white shadow-soft font-semibold">
+                    <span class="material-symbols-outlined">dashboard</span>
+                    <span>Dashboard</span>
+                </a>
+
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">insights</span>
+                    <span>Analytics</span>
+                </a>
+
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">inventory_2</span>
+                    <span>Inventory</span>
+                </a>
+
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">description</span>
+                    <span>Reports</span>
+                </a>
+
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">settings</span>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <div class="mt-auto pt-6 border-t border-brand-lightBorder dark:border-brand-darkBorder space-y-2">
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">help</span>
+                    <span>Support</span>
+                </a>
+
+                <a href="#"
+                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                    text-brand-lightText dark:text-brand-darkText
+                    hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
+                    <span class="material-symbols-outlined">logout</span>
+                    <span>Logout</span>
+                </a>
+            </div>
+        </aside>
+
+        <!-- Page Content -->
+        <div class="flex flex-col flex-1 md:ml-64 min-h-[calc(100vh-4rem)]">
+            <main class="flex-1 p-6 md:p-8 bg-brand-lightBg dark:bg-brand-darkBg">
+                @RenderBody()
+            </main>
+
+            <footer class="px-6 md:px-8 h-16 flex items-center justify-between
+                bg-brand-lightFooter dark:bg-brand-darkFooter
+                border-t border-brand-lightBorder dark:border-brand-darkBorder">
+                <span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">
+                    © @DateTime.Now.Year Triva
+                </span>
+
+                <span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">
+                    Admin Panel
+                </span>
+            </footer>
+        </div>
+    </div>
+
+    <script>
+        const root = document.documentElement;
+        const themeToggle = document.getElementById("themeToggle");
+        const sunIconWrap = document.getElementById("sunIconWrap");
+        const moonIconWrap = document.getElementById("moonIconWrap");
+
+        function applyThemeState() {
+        const isDark = root.classList.contains("dark");
+
+        sunIconWrap.classList.remove("bg-brand-lightAccent", "text-white");
+        moonIconWrap.classList.remove("bg-brand-darkAccent", "text-white");
+
+        if (isDark) {
+        moonIconWrap.classList.add("bg-brand-darkAccent", "text-white");
+        } else {
+        sunIconWrap.classList.add("bg-brand-lightAccent", "text-white");
+        }
+        }
+
+        function setTheme(theme) {
+        if (theme === "dark") {
+        root.classList.add("dark");
+        } else {
+        root.classList.remove("dark");
+        }
+
+        localStorage.setItem("theme", theme);
+        applyThemeState();
+        }
+
+        themeToggle.addEventListener("click", function () {
+        const nextTheme = root.classList.contains("dark") ? "light" : "dark";
+        setTheme(nextTheme);
+        });
+
+        applyThemeState();
+    </script>
+
+    @await RenderSectionAsync("Scripts", required: false)
+</body>
+</html>
