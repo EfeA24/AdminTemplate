@@ -1,0 +1,46 @@
+@model IEnumerable<object>
+@{
+    var title = (ViewBag.DisplayName as string) ?? "Items";
+    ViewData["Title"] = $"{title} - List";
+    var items = Model?.ToList() ?? new List<object>();
+}
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">@title</h1>
+        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Create</a>
+    </div>
+
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-brand-lightPanel dark:bg-brand-darkPanel">
+                <tr>
+                    <th class="px-4 py-2 text-left">Item</th>
+                    <th class="px-4 py-2 text-left">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var item in items)
+            {
+                var idProp = item.GetType().GetProperty("Id");
+                var id = idProp?.GetValue(item)?.ToString();
+                <tr class="border-t border-brand-lightBorder dark:border-brand-darkBorder">
+                    <td class="px-4 py-3">
+                        <div class="font-medium">@item.GetType().Name #@id</div>
+                        <div class="text-xs opacity-70">@item</div>
+                    </td>
+                    <td class="px-4 py-3 space-x-3">
+                        <a asp-action="Details" asp-route-id="@id">Details</a>
+                        <a asp-action="Edit" asp-route-id="@id">Edit</a>
+                        <a asp-action="Delete" asp-route-id="@id">Delete</a>
+                    </td>
+                </tr>
+            }
+            @if (!items.Any())
+            {
+                <tr><td colspan="2" class="px-4 py-3">No records found.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

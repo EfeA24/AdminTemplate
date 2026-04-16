@@ -1,0 +1,30 @@
+@model TrivaWebPage.Models.WebsiteSettings
+@{
+    ViewData["Title"] = "Website Settings";
+}
+
+<div class="space-y-4 max-w-2xl">
+    <h1 class="text-2xl font-semibold">Website Settings</h1>
+    <form asp-action="Edit" method="post" class="space-y-3 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+        @Html.AntiForgeryToken()
+        <div>
+            <label asp-for="SiteTitle" class="block text-sm font-medium"></label>
+            <input asp-for="SiteTitle" class="w-full rounded border px-3 py-2 text-black" />
+        </div>
+        <div>
+            <label asp-for="PrimaryColor" class="block text-sm font-medium"></label>
+            <input asp-for="PrimaryColor" type="color" class="h-10 w-20 rounded border" />
+        </div>
+        <div>
+            <label asp-for="ContactEmail" class="block text-sm font-medium"></label>
+            <input asp-for="ContactEmail" class="w-full rounded border px-3 py-2 text-black" />
+        </div>
+        <div>
+            <label class="inline-flex items-center gap-2">
+                <input asp-for="MaintenanceMode" />
+                <span>Maintenance mode</span>
+            </label>
+        </div>
+        <button type="submit" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Save</button>
+    </form>
+</div>

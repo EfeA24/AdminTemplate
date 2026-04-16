@@ -1,0 +1,16 @@
+@model object
+@{
+    var title = (ViewBag.DisplayName as string) ?? "Details";
+    ViewData["Title"] = title;
+}
+
+<div class="space-y-4">
+    <h1 class="text-2xl font-semibold">@title Details</h1>
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+        <pre class="text-sm whitespace-pre-wrap">@System.Text.Json.JsonSerializer.Serialize(Model, new System.Text.Json.JsonSerializerOptions { WriteIndented = true })</pre>
+    </div>
+    <div class="flex gap-3">
+        <a asp-action="Edit" asp-route-id="@Model?.GetType().GetProperty("Id")?.GetValue(Model)">Edit</a>
+        <a asp-action="Index">Back to List</a>
+    </div>
+</div>

@@ -1,0 +1,44 @@
+@using Microsoft.AspNetCore.Mvc.Rendering
+@model dynamic
+@{
+    var title = (ViewBag.DisplayName as string) ?? "Record";
+    var formAction = (ViewBag.FormAction as string) ?? "Create";
+    ViewData["Title"] = $"{title} {formAction}";
+    var properties = ((object)Model).GetType().GetProperties()
+        .Where(p => p.CanRead && p.CanWrite && (p.PropertyType.IsPrimitive || p.PropertyType == typeof(string) || p.PropertyType == typeof(int?) || p.PropertyType == typeof(bool?) || p.PropertyType == typeof(DateTime?) || p.PropertyType == typeof(DateTime) || p.PropertyType == typeof(long) || p.PropertyType == typeof(long?) || p.PropertyType == typeof(decimal) || p.PropertyType == typeof(decimal?)));
+}
+
+<div class="space-y-4">
+    <h1 class="text-2xl font-semibold">@title @formAction</h1>
+    <form asp-action="@formAction" method="post" class="space-y-3 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+        @Html.AntiForgeryToken()
+        <div asp-validation-summary="All" class="text-red-600 text-sm"></div>
+        @foreach (var prop in properties)
+        {
+            var value = prop.GetValue(Model);
+            var type = Nullable.GetUnderlyingType(prop.PropertyType) ?? prop.PropertyType;
+            var selectList = ViewData[prop.Name] as SelectList;
+            <div class="space-y-1">
+                <label class="block text-sm font-medium">@prop.Name</label>
+                @if (selectList is not null)
+                {
+                    <select class="w-full rounded border px-3 py-2 text-black" name="@prop.Name" asp-items="selectList"></select>
+                }
+                else if (type == typeof(bool))
+                {
+                    <input type="checkbox" name="@prop.Name" value="true" @(value is true ? "checked" : "") />
+                    <input type="hidden" name="@prop.Name" value="false" />
+                }
+                else
+                {
+                    var inputType = type == typeof(int) || type == typeof(long) || type == typeof(decimal) ? "number" : (prop.Name.Contains("Color", StringComparison.OrdinalIgnoreCase) ? "color" : "text");
+                    <input class="w-full rounded border px-3 py-2 text-black" type="@inputType" name="@prop.Name" value="@value" />
+                }
+            </div>
+        }
+        <div class="flex gap-3">
+            <button type="submit" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Save</button>
+            <a asp-action="Index">Cancel</a>
+        </div>
+    </form>
+</div>
