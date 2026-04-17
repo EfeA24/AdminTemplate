@@ -126,7 +126,12 @@
                 <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto overflow-hidden"
                      style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
                      id="pageCanvas">
-                    <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0"></iframe>
+                    <div class="absolute left-2 top-2 z-20 flex items-center gap-1 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white/95 px-2 py-1 text-xs shadow-sm">
+                        <button type="button" id="zoomOutBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">-</button>
+                        <button type="button" id="zoomResetBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">100%</button>
+                        <button type="button" id="zoomInBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">+</button>
+                    </div>
+                    <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="yes"></iframe>
                 </div>
             </section>
         </div>
@@ -147,6 +152,9 @@
             const saveForm = document.getElementById("saveTextsForm");
             const addBtn = document.getElementById("addTextBoxBtn");
             const removeBtn = document.getElementById("removeTextBoxBtn");
+            const zoomInBtn = document.getElementById("zoomInBtn");
+            const zoomOutBtn = document.getElementById("zoomOutBtn");
+            const zoomResetBtn = document.getElementById("zoomResetBtn");
             const fontFamily = document.getElementById("fontFamily");
             const fontSize = document.getElementById("fontSize");
             const textColor = document.getElementById("textColor");
@@ -154,6 +162,7 @@
             const styleButtons = Array.from(document.querySelectorAll(".style-btn"));
 
             if (!canvas || !templateFrame || !payloadInput || !saveBtn || !saveForm) return;
+            let templateZoom = 1;
 
             const state = {
                 items: initialItems.map((item) => ({
@@ -271,7 +280,10 @@
 
                 const root = doc.documentElement;
                 root.style.setProperty("transform", "none");
-                root.style.setProperty("zoom", "1");
+                root.style.setProperty("overflow", "auto");
+                if (doc.body) {
+                    doc.body.style.overflow = "auto";
+                }
 
                 if (palette) {
                     root.style.setProperty("--color-primary", palette.PrimaryHex || "#111111");
@@ -297,6 +309,17 @@
                     target.setAttribute("contenteditable", "true");
                     target.focus();
                 }, true);
+
+                applyTemplateZoom();
+            }
+
+            function applyTemplateZoom() {
+                const doc = templateFrame.contentDocument;
+                if (!doc?.documentElement) return;
+                doc.documentElement.style.zoom = String(templateZoom);
+                if (zoomResetBtn) {
+                    zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
+                }
             }
 
             function clamp(value, min, max) {
@@ -465,6 +488,19 @@
 
                 payloadInput.value = JSON.stringify(payload);
                 saveForm.submit();
+            });
+
+            zoomInBtn?.addEventListener("click", () => {
+                templateZoom = Math.min(2, Number((templateZoom + 0.1).toFixed(2)));
+                applyTemplateZoom();
+            });
+            zoomOutBtn?.addEventListener("click", () => {
+                templateZoom = Math.max(0.5, Number((templateZoom - 0.1).toFixed(2)));
+                applyTemplateZoom();
+            });
+            zoomResetBtn?.addEventListener("click", () => {
+                templateZoom = 1;
+                applyTemplateZoom();
             });
 
             loadTemplateFrame();
