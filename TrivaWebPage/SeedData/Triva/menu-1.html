@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Triva | Menü Sayfası 1</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="bg-amber-50 text-stone-900">
+  <nav class="sticky top-0 z-20 border-b border-amber-200/80 bg-amber-50/95 backdrop-blur">
+    <div class="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-5 py-4">
+      <span class="text-lg font-bold text-amber-900">Menü · 1</span>
+      <div class="flex flex-wrap gap-6 text-sm font-medium text-stone-700">
+        <a href="#" class="rounded-full bg-amber-900 px-4 py-1.5 text-white">Anasayfa</a>
+        <a href="#" class="hover:text-amber-900">Katalog</a>
+        <a href="#" class="hover:text-amber-900">Hakkımızda</a>
+        <a href="#" class="hover:text-amber-900">Sepet</a>
+      </div>
+    </div>
+  </nav>
+  <main class="mx-auto max-w-6xl px-5 py-10">
+    <div class="grid gap-8 lg:grid-cols-3">
+      <aside class="lg:col-span-1">
+        <div class="overflow-hidden rounded-xl border border-amber-200 bg-white shadow-sm">
+          <img data-triva-img="side" class="aspect-square w-full object-cover" src="https://images.unsplash.com/photo-1542744173-8e7e53410bb8?w=600&q=80" alt="Yan menü" />
+          <div class="p-4 text-sm text-stone-600">Yan sütun görseli değiştirilebilir.</div>
+        </div>
+      </aside>
+      <div class="lg:col-span-2 space-y-6">
+        <h1 class="text-3xl font-bold text-amber-950">Menü ağırlıklı düzen</h1>
+        <p class="text-stone-600">Üst şerit menülü, sol görsel + sağ içerik grid yapısı.</p>
+        <div class="grid gap-4 sm:grid-cols-2">
+          <img data-triva-img="tile-1" class="h-40 w-full rounded-lg object-cover" src="https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=600&q=80" alt="" />
+          <img data-triva-img="tile-2" class="h-40 w-full rounded-lg object-cover" src="https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&q=80" alt="" />
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

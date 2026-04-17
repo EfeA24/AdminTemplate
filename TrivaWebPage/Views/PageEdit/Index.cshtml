@@ -59,6 +59,7 @@
             @Html.AntiForgeryToken()
             <input type="hidden" name="PageId" value="@activePage.PageId" />
             <input type="hidden" name="PayloadJson" id="payloadJsonInput" value="@payload" />
+            <input type="hidden" name="RenderedHtmlOverride" id="renderedHtmlOverrideInput" value="" />
         </form>
 
         <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-3 space-y-3">
@@ -68,14 +69,14 @@
                     <p class="text-sm font-medium truncate max-w-[14rem]">@activePage.PageName</p>
                     <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">@activePage.PageWidth × @activePage.PageHeight px</p>
                 </div>
-                <div class="flex flex-wrap gap-2">
-                    <button type="button" id="addTextBoxBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">+ Metin kutusu</button>
+                <div class="flex flex-wrap gap-2 items-center">
+                    <label class="flex items-center gap-2 text-sm cursor-pointer border rounded-lg px-3 py-2 border-brand-lightBorder dark:border-brand-darkBorder">
+                        <input type="checkbox" id="drawTextModeToggle" />
+                        Metin çizimi
+                    </label>
                     <button type="button" id="removeTextBoxBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçiliyi sil</button>
+                    <span class="text-xs text-brand-lightMuted dark:text-brand-darkMuted max-w-[14rem]">Metin kutusu: çizimi açıp şablonda boş alanda sürükleyin.</span>
                 </div>
-                <label class="flex items-center gap-2 text-sm cursor-pointer border rounded-lg px-3 py-2 border-brand-lightBorder dark:border-brand-darkBorder">
-                    <input type="checkbox" id="resizeHandlesToggle" checked />
-                    Köşeden boyutlandır
-                </label>
                 <div class="flex flex-wrap items-center gap-2 border-l border-brand-lightBorder dark:border-brand-darkBorder pl-3">
                     <span class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Zoom</span>
                     <button type="button" id="zoomOutBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">-</button>
@@ -122,16 +123,27 @@
                         <input type="file" name="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="text-xs w-full" required />
                         <button type="submit" class="w-full rounded border border-brand-lightAccent bg-brand-lightAccent px-2 py-1.5 text-xs font-medium text-white dark:bg-brand-darkAccent">Yükle</button>
                     </form>
-                    <div id="pageMediaThumbs" class="grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto"></div>
+                    <div id="pageMediaThumbs" class="grid grid-cols-2 gap-2 max-h-[280px] overflow-y-auto"></div>
+                    <p class="text-xs font-semibold uppercase text-brand-lightMuted dark:text-brand-darkMuted pt-2 border-t border-brand-lightBorder dark:border-brand-darkBorder">Şablondaki görseller</p>
+                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Yalnızca yüklediğiniz sayfa görselleriyle değiştirebilirsiniz.</p>
+                    <div id="templateImgList" class="space-y-2 max-h-[280px] overflow-y-auto text-xs"></div>
                 </aside>
 
-                <div id="templateViewport" class="relative order-1 lg:order-2 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-white p-3 overflow-auto min-h-[480px]">
+                <div id="templateViewport" class="relative order-1 lg:order-2 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-white p-3 overflow-x-hidden overflow-y-auto min-h-[480px]">
                     <p class="text-xs font-semibold text-brand-lightMuted dark:text-brand-darkMuted mb-2">Şablon önizleme · @(
                         string.IsNullOrWhiteSpace(activePage.TemplatePageName) ? "İç sayfa yok" : activePage.TemplatePageName)</p>
-                    <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto"
-                         style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
-                         id="pageCanvas">
-                        <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="yes"></iframe>
+                    <div id="templateFitShell" class="w-full overflow-x-hidden">
+                        <div id="templateScaleHost" class="mx-auto rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm"
+                             style="transform-origin: top center;">
+                            <div class="relative rounded-xl bg-white"
+                                 data-page-width="@activePage.PageWidth"
+                                 data-page-height="@activePage.PageHeight"
+                                 style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
+                                 id="pageCanvas">
+                                <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="yes"></iframe>
+                                <div id="textDrawOverlay" class="absolute inset-0 z-[5] bg-transparent" style="pointer-events: none;" title=""></div>
+                            </div>
+                        </div>
                     </div>
                     <div id="cardPreviewStrip" class="mt-4 space-y-2"></div>
                 </div>
@@ -150,11 +162,15 @@
             const templateHtml = @Html.Raw(JsonSerializer.Serialize(activePage.TemplateHtml ?? ""));
             const canvas = document.getElementById("pageCanvas");
             const viewport = document.getElementById("templateViewport");
+            const templateFitShell = document.getElementById("templateFitShell");
+            const templateScaleHost = document.getElementById("templateScaleHost");
             const templateFrame = document.getElementById("templateFrame");
+            const textDrawOverlay = document.getElementById("textDrawOverlay");
+            const drawModeToggle = document.getElementById("drawTextModeToggle");
             const payloadInput = document.getElementById("payloadJsonInput");
+            const renderedHtmlOverrideInput = document.getElementById("renderedHtmlOverrideInput");
             const saveBtn = document.getElementById("savePageEditBtn");
             const saveForm = document.getElementById("savePageEditForm");
-            const addBtn = document.getElementById("addTextBoxBtn");
             const removeBtn = document.getElementById("removeTextBoxBtn");
             const zoomInBtn = document.getElementById("zoomInBtn");
             const zoomOutBtn = document.getElementById("zoomOutBtn");
@@ -164,14 +180,89 @@
             const textColor = document.getElementById("textColor");
             const alignButtons = Array.from(document.querySelectorAll(".align-btn"));
             const styleButtons = Array.from(document.querySelectorAll(".style-btn"));
-            const resizeToggle = document.getElementById("resizeHandlesToggle");
             const mediaThumbs = document.getElementById("pageMediaThumbs");
+            const templateImgList = document.getElementById("templateImgList");
             const cardStrip = document.getElementById("cardPreviewStrip");
             const pageId = @activePage.PageId;
             const tokenInput = saveForm?.querySelector('input[name="__RequestVerificationToken"]');
 
             if (!canvas || !viewport || !templateFrame || !payloadInput || !saveBtn || !saveForm) return;
+
+            let templateHtmlDirty = false;
+            const rubberEl = document.createElement("div");
+            rubberEl.className = "absolute z-[7] border-2 border-dashed border-teal-600 bg-teal-500/15 pointer-events-none hidden";
+            canvas.appendChild(rubberEl);
+
+            let rbDrawing = false;
+            let rbPointerId = null;
+            let rbStart = { x: 0, y: 0 };
             let templateZoom = 1;
+            let previewFitScale = 1;
+            const basePageW = Number(canvas.dataset.pageWidth) || 1280;
+            const basePageH = Number(canvas.dataset.pageHeight) || 720;
+
+            function applyPreviewFitToWidth() {
+                if (!viewport || !canvas || !templateScaleHost || !templateFitShell) return;
+                const pad = 28;
+                const avail = Math.max(160, viewport.clientWidth - pad);
+                const w = canvas.offsetWidth || basePageW;
+                const h = canvas.offsetHeight || basePageH;
+                const fit = Math.min(1, avail / w);
+                previewFitScale = fit;
+                templateScaleHost.style.width = w + "px";
+                templateScaleHost.style.height = h + "px";
+                templateScaleHost.style.transform = "scale(" + fit + ")";
+                templateFitShell.style.height = Math.ceil(h * fit) + "px";
+            }
+
+            function measureIframeContentExtent(doc) {
+                if (!doc?.body) return { w: basePageW, h: basePageH };
+                const win = doc.defaultView;
+                const scrollH = Math.max(
+                    doc.documentElement.scrollHeight,
+                    doc.body.scrollHeight,
+                    doc.documentElement.offsetHeight,
+                    doc.body.offsetHeight
+                );
+                const scrollW = Math.max(
+                    doc.documentElement.scrollWidth,
+                    doc.body.scrollWidth,
+                    doc.documentElement.offsetWidth,
+                    doc.body.offsetWidth
+                );
+                let bboxBottom = 0;
+                let bboxRight = 0;
+                if (win) {
+                    try {
+                        doc.body.querySelectorAll("*").forEach((el) => {
+                            const rect = el.getBoundingClientRect();
+                            bboxBottom = Math.max(bboxBottom, rect.bottom + win.scrollY);
+                            bboxRight = Math.max(bboxRight, rect.right + win.scrollX);
+                        });
+                    } catch (_) { /* ignore cross-origin or detached */ }
+                }
+                const h = Math.max(scrollH, bboxBottom, basePageH);
+                const w = Math.max(scrollW, bboxRight, basePageW);
+                return { w: Math.ceil(w), h: Math.ceil(h) };
+            }
+
+            function syncCanvasToTemplateContent() {
+                const doc = templateFrame.contentDocument;
+                if (!doc?.body) return;
+                const { w, h } = measureIframeContentExtent(doc);
+                canvas.style.width = w + "px";
+                canvas.style.height = h + "px";
+                applyPreviewFitToWidth();
+            }
+
+            function scheduleSyncCanvasToTemplate() {
+                syncCanvasToTemplateContent();
+                const cw = templateFrame.contentWindow;
+                cw?.addEventListener("load", syncCanvasToTemplateContent, { once: true });
+                requestAnimationFrame(() => requestAnimationFrame(syncCanvasToTemplateContent));
+                setTimeout(syncCanvasToTemplateContent, 120);
+                setTimeout(syncCanvasToTemplateContent, 600);
+            }
 
             document.documentElement.classList.remove("dark");
             localStorage.setItem("theme", "light");
@@ -319,7 +410,7 @@
                 textArea.style.textDecoration = item.isUnderline ? "underline" : "none";
                 textArea.style.textAlign = item.textAlign || "left";
                 textArea.style.pointerEvents = "none";
-                textArea.style.cursor = "move";
+                textArea.style.cursor = "default";
                 textArea.addEventListener("input", () => {
                     state.items[index].content = textArea.value;
                 });
@@ -343,21 +434,7 @@
                     textArea.focus();
                 });
 
-                const handle = document.createElement("div");
-                handle.className = "absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded bg-brand-lightAccent dark:bg-brand-darkAccent resize-handle";
-                handle.title = "Boyutlandır";
-
-                function syncResizeVisibility() {
-                    const on = resizeToggle && resizeToggle.checked;
-                    handle.style.display = on ? "block" : "none";
-                }
-                syncResizeVisibility();
-
-                enablePointerDrag(box, index, textArea);
-                enableResize(handle, box, index);
-
                 box.appendChild(textArea);
-                box.appendChild(handle);
                 return box;
             }
 
@@ -365,10 +442,10 @@
                 state.editingIndex = isEditing ? index : -1;
                 textArea.readOnly = !isEditing;
                 textArea.style.pointerEvents = isEditing ? "auto" : "none";
-                textArea.style.cursor = isEditing ? "text" : "move";
+                textArea.style.cursor = isEditing ? "text" : "default";
                 const box = textArea.parentElement;
                 if (box) {
-                    box.style.cursor = isEditing ? "text" : "move";
+                    box.style.cursor = isEditing ? "text" : "default";
                 }
                 if (!isEditing) {
                     textArea.blur();
@@ -447,7 +524,9 @@
                 }, true);
 
                 if (zoomResetBtn) zoomResetBtn.textContent = "100%";
-                viewport.style.overflow = "auto";
+                scheduleSyncCanvasToTemplate();
+                setTimeout(renderTemplateImageControls, 0);
+                setTimeout(renderTemplateImageControls, 400);
             }
 
             function applyTemplateZoom() {
@@ -457,117 +536,166 @@
                 if (zoomResetBtn) zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
                 doc.documentElement.style.overflow = templateZoom > 1 ? "auto" : "auto";
                 doc.body.style.overflow = "auto";
+                requestAnimationFrame(() => {
+                    syncCanvasToTemplateContent();
+                    setTimeout(syncCanvasToTemplateContent, 50);
+                });
             }
 
             function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
             }
 
-            function enablePointerDrag(node, index, textArea) {
-                let active = false;
-                let originX = 0;
-                let originY = 0;
-                let startX = 0;
-                let startY = 0;
-
-                node.addEventListener("pointerdown", (event) => {
-                    if (textArea.readOnly === false) return;
-                    if (event.target.classList.contains("resize-handle")) return;
-                    active = true;
-                    node.setPointerCapture(event.pointerId);
-                    select(index);
-                    originX = event.clientX;
-                    originY = event.clientY;
-                    startX = state.items[index].x;
-                    startY = state.items[index].y;
-                    event.preventDefault();
-                });
-
-                node.addEventListener("pointermove", (event) => {
-                    if (!active) return;
-                    const item = state.items[index];
-                    const canvasRect = canvas.getBoundingClientRect();
-                    const dx = event.clientX - originX;
-                    const dy = event.clientY - originY;
-                    item.x = clamp(Math.round(startX + dx), 0, canvasRect.width - item.width);
-                    item.y = clamp(Math.round(startY + dy), 0, canvasRect.height - item.height);
-                    node.style.left = item.x + "px";
-                    node.style.top = item.y + "px";
-                });
-
-                node.addEventListener("pointerup", (event) => {
-                    if (!active) return;
-                    active = false;
-                    try { node.releasePointerCapture(event.pointerId); } catch (_) { }
-                });
-                node.addEventListener("pointercancel", (event) => {
-                    active = false;
-                    try { node.releasePointerCapture(event.pointerId); } catch (_) { }
-                });
-            }
-
-            function enableResize(handle, node, index) {
-                let active = false;
-                let originX = 0;
-                let originY = 0;
-                let startW = 0;
-                let startH = 0;
-
-                handle.addEventListener("pointerdown", (event) => {
-                    active = true;
-                    handle.setPointerCapture(event.pointerId);
-                    select(index);
-                    originX = event.clientX;
-                    originY = event.clientY;
-                    startW = state.items[index].width;
-                    startH = state.items[index].height;
-                    event.preventDefault();
-                    event.stopPropagation();
-                });
-
-                handle.addEventListener("pointermove", (event) => {
-                    if (!active) return;
-                    const item = state.items[index];
-                    const canvasRect = canvas.getBoundingClientRect();
-                    const dw = event.clientX - originX;
-                    const dh = event.clientY - originY;
-                    const nextW = clamp(startW + dw, 80, canvasRect.width - item.x);
-                    const nextH = clamp(startH + dh, 40, canvasRect.height - item.y);
-                    item.width = Math.round(nextW);
-                    item.height = Math.round(nextH);
-                    node.style.width = item.width + "px";
-                    node.style.height = item.height + "px";
-                });
-
-                handle.addEventListener("pointerup", (event) => {
-                    active = false;
-                    try { handle.releasePointerCapture(event.pointerId); } catch (_) { }
-                });
-                handle.addEventListener("pointercancel", () => { active = false; });
-            }
-
-            addBtn?.addEventListener("click", () => {
-                const next = {
-                    componentId: 0,
-                    displayOrder: state.items.length + 1,
-                    x: 30 + (state.items.length * 10),
-                    y: 30 + (state.items.length * 10),
-                    width: 260,
-                    height: 120,
-                    isVisible: true,
-                    content: "",
-                    fontFamily: "Inter",
-                    fontSize: 16,
-                    fontWeight: null,
-                    textColor: "#111111",
-                    textAlign: "left",
-                    isBold: false,
-                    isItalic: false,
-                    isUnderline: false
+            function clientToCanvas(clientX, clientY) {
+                const rect = canvas.getBoundingClientRect();
+                const inv = previewFitScale > 0 ? 1 / previewFitScale : 1;
+                return {
+                    x: Math.round((clientX - rect.left) * inv),
+                    y: Math.round((clientY - rect.top) * inv)
                 };
-                state.items.push(next);
-                state.selectedIndex = state.items.length - 1;
-                render();
+            }
+
+            function syncDrawOverlayPointer() {
+                if (!textDrawOverlay) return;
+                textDrawOverlay.style.pointerEvents = drawModeToggle && drawModeToggle.checked ? "auto" : "none";
+            }
+
+            function renderTemplateImageControls() {
+                if (!templateImgList) return;
+                const doc = templateFrame.contentDocument;
+                templateImgList.innerHTML = "";
+                if (!doc?.body) {
+                    templateImgList.innerHTML = '<p class="text-brand-lightMuted">Şablon yükleniyor…</p>';
+                    return;
+                }
+                const imgs = Array.from(doc.querySelectorAll("img"));
+                if (!imgs.length) {
+                    templateImgList.innerHTML = '<p class="text-brand-lightMuted">img bulunamadı.</p>';
+                    return;
+                }
+                imgs.forEach((img, idx) => {
+                    const row = document.createElement("div");
+                    row.className = "rounded border border-brand-lightBorder p-2 space-y-1 bg-white/80";
+                    const label = document.createElement("p");
+                    label.className = "font-medium text-[11px] truncate";
+                    label.textContent = img.getAttribute("data-triva-img") || ("Görsel " + (idx + 1));
+                    const thumb = document.createElement("img");
+                    thumb.src = img.src;
+                    thumb.className = "h-10 w-full object-cover rounded";
+                    thumb.alt = "";
+                    const sel = document.createElement("select");
+                    sel.className = "w-full rounded border px-1 py-1 text-black text-[11px]";
+                    const opt0 = document.createElement("option");
+                    opt0.value = "";
+                    opt0.textContent = "Sayfa medyasından seç…";
+                    sel.appendChild(opt0);
+                    pageMedia.forEach((m) => {
+                        const o = document.createElement("option");
+                        o.value = String(m.mediaFileId);
+                        o.textContent = (m.displayName || m.filePath || "").slice(0, 40);
+                        sel.appendChild(o);
+                    });
+                    sel.addEventListener("change", () => {
+                        const v = sel.value;
+                        sel.selectedIndex = 0;
+                        if (!v) return;
+                        const m = pageMedia.find((x) => String(x.mediaFileId) === v);
+                        if (!m || !m.filePath) return;
+                        img.setAttribute("src", m.filePath);
+                        thumb.src = m.filePath;
+                        templateHtmlDirty = true;
+                    });
+                    row.appendChild(label);
+                    row.appendChild(thumb);
+                    row.appendChild(sel);
+                    templateImgList.appendChild(row);
+                });
+            }
+
+            function finishRubberBand() {
+                if (!rbDrawing) return;
+                rbDrawing = false;
+                rubberEl.classList.add("hidden");
+                try {
+                    if (textDrawOverlay && rbPointerId != null) textDrawOverlay.releasePointerCapture(rbPointerId);
+                } catch (_) { }
+                rbPointerId = null;
+            }
+
+            function wireTextDrawOverlay() {
+                if (!textDrawOverlay) return;
+                textDrawOverlay.addEventListener("pointerdown", (event) => {
+                    if (!drawModeToggle || !drawModeToggle.checked) return;
+                    if (event.target.closest && event.target.closest(".absolute[data-index]")) return;
+                    closeEditingIfAny();
+                    rbDrawing = true;
+                    rbPointerId = event.pointerId;
+                    rbStart = clientToCanvas(event.clientX, event.clientY);
+                    rubberEl.classList.remove("hidden");
+                    rubberEl.style.left = rbStart.x + "px";
+                    rubberEl.style.top = rbStart.y + "px";
+                    rubberEl.style.width = "0px";
+                    rubberEl.style.height = "0px";
+                    try { textDrawOverlay.setPointerCapture(event.pointerId); } catch (_) { }
+                    event.preventDefault();
+                });
+
+                textDrawOverlay.addEventListener("pointermove", (event) => {
+                    if (!rbDrawing) return;
+                    const p = clientToCanvas(event.clientX, event.clientY);
+                    const x1 = Math.min(rbStart.x, p.x);
+                    const y1 = Math.min(rbStart.y, p.y);
+                    const w = Math.abs(p.x - rbStart.x);
+                    const h = Math.abs(p.y - rbStart.y);
+                    rubberEl.style.left = x1 + "px";
+                    rubberEl.style.top = y1 + "px";
+                    rubberEl.style.width = w + "px";
+                    rubberEl.style.height = h + "px";
+                });
+
+                textDrawOverlay.addEventListener("pointerup", (event) => {
+                    if (!rbDrawing) return;
+                    const p = clientToCanvas(event.clientX, event.clientY);
+                    const x1 = Math.min(rbStart.x, p.x);
+                    const y1 = Math.min(rbStart.y, p.y);
+                    let w = Math.abs(p.x - rbStart.x);
+                    let h = Math.abs(p.y - rbStart.y);
+                    finishRubberBand();
+                    const minW = 40;
+                    const minH = 24;
+                    if (w < minW || h < minH) return;
+                    const cw = canvas.offsetWidth;
+                    const ch = canvas.offsetHeight;
+                    w = Math.round(clamp(w, minW, cw - x1));
+                    h = Math.round(clamp(h, minH, ch - y1));
+                    const x = Math.round(clamp(x1, 0, cw - w));
+                    const y = Math.round(clamp(y1, 0, ch - h));
+                    const next = {
+                        componentId: 0,
+                        displayOrder: state.items.length + 1,
+                        x, y, width: w, height: h,
+                        isVisible: true,
+                        content: "",
+                        fontFamily: "Inter",
+                        fontSize: 16,
+                        fontWeight: null,
+                        textColor: "#111111",
+                        textAlign: "left",
+                        isBold: false,
+                        isItalic: false,
+                        isUnderline: false
+                    };
+                    state.items.push(next);
+                    state.selectedIndex = state.items.length - 1;
+                    render();
+                });
+
+                textDrawOverlay.addEventListener("pointercancel", () => finishRubberBand());
+            }
+
+            drawModeToggle?.addEventListener("change", () => {
+                syncDrawOverlayPointer();
+                if (!drawModeToggle.checked) finishRubberBand();
             });
 
             removeBtn?.addEventListener("click", () => {
@@ -640,6 +768,13 @@
                 }));
 
                 payloadInput.value = JSON.stringify(payload);
+                if (renderedHtmlOverrideInput) {
+                    if (templateHtmlDirty && templateFrame.contentDocument && templateFrame.contentDocument.documentElement) {
+                        renderedHtmlOverrideInput.value = templateFrame.contentDocument.documentElement.outerHTML;
+                    } else {
+                        renderedHtmlOverrideInput.value = "";
+                    }
+                }
                 saveForm.submit();
             });
 
@@ -656,12 +791,6 @@
                 applyTemplateZoom();
             });
 
-            resizeToggle?.addEventListener("change", () => {
-                document.querySelectorAll(".resize-handle").forEach((h) => {
-                    h.style.display = resizeToggle.checked ? "block" : "none";
-                });
-            });
-
             document.addEventListener("pointerdown", (event) => {
                 if (!canvas.contains(event.target)) {
                     closeEditingIfAny();
@@ -675,10 +804,19 @@
                 }
             });
 
+            let previewResizeTimer = null;
+            window.addEventListener("resize", () => {
+                clearTimeout(previewResizeTimer);
+                previewResizeTimer = setTimeout(applyPreviewFitToWidth, 120);
+            });
+
+            wireTextDrawOverlay();
+            syncDrawOverlayPointer();
             renderMediaThumbs();
             renderCardStrip();
             loadTemplateFrame();
             render();
+            requestAnimationFrame(() => applyPreviewFitToWidth());
         })();
     </script>
 }

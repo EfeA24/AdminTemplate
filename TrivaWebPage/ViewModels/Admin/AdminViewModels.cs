@@ -349,6 +349,9 @@ public class PageEditSaveInputModel
 
     [Required]
     public string PayloadJson { get; set; } = "[]";
+
+    /// <summary>İsteğe bağlı: şablondaki img değişiklikleri sonrası tam HTML (sanitize edilir).</summary>
+    public string? RenderedHtmlOverride { get; set; }
 }
 
 public record TextBoxSaveItemInputModel

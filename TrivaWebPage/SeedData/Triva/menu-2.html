@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html class="light" lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Triva | Menü Sayfası 2</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+</head>
+<body class="bg-white text-slate-800">
+  <div class="flex min-h-screen flex-col md:flex-row">
+    <aside class="flex w-full flex-col border-b border-slate-200 bg-slate-900 text-white md:w-64 md:border-b-0 md:border-r">
+      <div class="p-6 text-lg font-semibold">Menü · 2</div>
+      <nav class="flex flex-1 flex-col gap-1 px-3 pb-6">
+        <a href="#" class="rounded-lg bg-white/10 px-3 py-2 text-sm">Panel</a>
+        <a href="#" class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5">Raporlar</a>
+        <a href="#" class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5">Ayarlar</a>
+        <a href="#" class="rounded-lg px-3 py-2 text-sm text-slate-300 hover:bg-white/5">Çıkış</a>
+      </nav>
+      <div class="mt-auto hidden p-4 md:block">
+        <img data-triva-img="nav-brand" class="h-24 w-full rounded-lg object-cover opacity-90" src="https://images.unsplash.com/photo-1551434678-e076c223a692?w=400&q=80" alt="Marka" />
+      </div>
+    </aside>
+    <div class="flex-1">
+      <header class="border-b border-slate-200 px-6 py-4">
+        <h1 class="text-xl font-semibold">Dikey menü + içerik</h1>
+      </header>
+      <main class="p-6">
+        <div class="max-w-3xl space-y-4">
+          <p class="text-slate-600">Sol sabit menü çubuğu; içerik sağda. Görselleri sayfa medyasından güncelleyin.</p>
+          <div class="overflow-hidden rounded-xl border border-slate-200">
+            <img data-triva-img="banner" class="h-56 w-full object-cover" src="https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=1200&q=80" alt="Banner" />
+          </div>
+        </div>
+      </main>
+    </div>
+  </div>
+</body>
+</html>

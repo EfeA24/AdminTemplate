@@ -1,6 +1,7 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
+using TrivaWebPage.Helpers;
 using TrivaWebPage.Models.General;
 using TrivaWebPage.ViewModels.Admin;
 
@@ -157,6 +158,22 @@ public class PageEditController : Controller
         }
 
         await _textBuilderRepository.SavePageTextBoxesAsync(model.PageId, items, cancellationToken);
+
+        if (!string.IsNullOrWhiteSpace(model.RenderedHtmlOverride))
+        {
+            var sanitized = AdminHtmlSanitizer.Sanitize(model.RenderedHtmlOverride);
+            if (!string.IsNullOrWhiteSpace(sanitized))
+            {
+                var page = await _pageRepository.GetByIdAsync(model.PageId, cancellationToken);
+                if (page is not null && !page.IsDeleted)
+                {
+                    page.RenderedHtmlOverride = sanitized;
+                    page.UpdatedDate = DateTime.UtcNow;
+                    await _pageRepository.UpdateAsync(page, cancellationToken);
+                }
+            }
+        }
+
         TempData["PageEditMessage"] = "Sayfa düzeni kaydedildi.";
         return RedirectToAction(nameof(Index), new { pageId = model.PageId });
     }

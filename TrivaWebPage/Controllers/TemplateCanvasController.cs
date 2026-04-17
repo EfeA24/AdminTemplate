@@ -1,11 +1,11 @@
-using System.Text.RegularExpressions;
 using Microsoft.AspNetCore.Mvc;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
+using TrivaWebPage.Helpers;
 using TrivaWebPage.ViewModels.Admin;
 
 namespace TrivaWebPage.Controllers;
 
-public partial class TemplateCanvasController : Controller
+public class TemplateCanvasController : Controller
 {
     private readonly IPage _pageRepository;
     private readonly IPageTemplatePage _templatePageRepository;
@@ -101,7 +101,7 @@ public partial class TemplateCanvasController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var sanitized = SanitizeHtml(model.HtmlContent);
+        var sanitized = AdminHtmlSanitizer.Sanitize(model.HtmlContent);
         if (string.IsNullOrWhiteSpace(sanitized))
         {
             TempData["TemplateCanvasError"] = "Kaydedilecek HTML içeriği boş olamaz.";
@@ -132,25 +132,6 @@ public partial class TemplateCanvasController : Controller
         TempData["TemplateCanvasMessage"] = "Sayfa şablonu varsayılan haline döndürüldü.";
         return RedirectToAction(nameof(Index), new { pageId });
     }
-
-    private static string SanitizeHtml(string input)
-    {
-        if (string.IsNullOrWhiteSpace(input))
-        {
-            return string.Empty;
-        }
-
-        var html = input.Trim();
-        html = ScriptTagRegex().Replace(html, string.Empty);
-        html = EventHandlerAttributeRegex().Replace(html, string.Empty);
-        return html;
-    }
-
-    [GeneratedRegex("<script\\b[^<]*(?:(?!<\\/script>)<[^<]*)*<\\/script>", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex ScriptTagRegex();
-
-    [GeneratedRegex("\\son[a-z]+\\s*=\\s*(['\"]).*?\\1", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
-    private static partial Regex EventHandlerAttributeRegex();
 
     private async Task<TemplateCanvasPaletteData?> ResolvePaletteAsync(int? colorPaletteId, CancellationToken cancellationToken)
     {

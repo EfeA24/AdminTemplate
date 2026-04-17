@@ -6,6 +6,8 @@ namespace TrivaWebPage.Services;
 
 public class CuratorTemplateSeedService
 {
+    public const string TemplateCode = "triva";
+
     private readonly AppDbContext _dbContext;
     private readonly IWebHostEnvironment _environment;
 
@@ -17,30 +19,40 @@ public class CuratorTemplateSeedService
 
     public async Task SeedAsync(CancellationToken cancellationToken = default)
     {
-        var template = await _dbContext.PageTemplates.FirstOrDefaultAsync(x => x.Code == "curator", cancellationToken);
+        await RemoveLegacyCuratorTemplateAsync(cancellationToken);
+
+        var template = await _dbContext.PageTemplates.FirstOrDefaultAsync(x => x.Code == TemplateCode, cancellationToken);
         if (template is null)
         {
             template = new PageTemplate
             {
-                Name = "The Curator",
-                Code = "curator",
-                Description = "Creative and dark variants for main and gallery pages.",
+                Name = "Triva",
+                Code = TemplateCode,
+                Description = "İki ana sayfa ve iki menü sayfası şablonları.",
                 IsActive = true,
                 CreatedDate = DateTime.UtcNow
             };
             _dbContext.PageTemplates.Add(template);
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
-
-        var fileMap = new (string Name, int DisplayOrder, string FileName, string PreviewImagePath)[]
+        else
         {
-            ("Creative Main", 0, "creative-main.html", "/pictures/template-previews/creative-main.png"),
-            ("Creative Gallery", 1, "creative-gallery.html", "/pictures/template-previews/creative-gallery.png"),
-            ("Dark Main", 2, "dark-main.html", "/pictures/template-previews/dark-main.png"),
-            ("Dark Gallery", 3, "dark-gallery.html", "/pictures/template-previews/dark-gallery.png")
+            template.Name = "Triva";
+            template.Description = "İki ana sayfa ve iki menü sayfası şablonları.";
+            template.IsActive = true;
+        }
+
+        var fileMap = new (string Name, int DisplayOrder, string FileName, string? PreviewImagePath)[]
+        {
+            ("Ana Sayfa 1", 0, "ana-sayfa-1.html", "/pictures/template-previews/triva-ana-sayfa-1-preview.png"),
+            ("Ana Sayfa 2", 1, "ana-sayfa-2.html", "/pictures/template-previews/triva-ana-sayfa-2-preview.png"),
+            ("Menü Sayfası 1", 2, "menu-1.html", "/pictures/template-previews/triva-menu-1-preview.png"),
+            ("Menü Sayfası 2", 3, "menu-2.html", "/pictures/template-previews/triva-menu-2-preview.png")
         };
 
-        var seedRoot = Path.Combine(_environment.ContentRootPath, "SeedData", "Curator");
+        var seedRoot = Path.Combine(_environment.ContentRootPath, "SeedData", "Triva");
+        var validNames = fileMap.Select(f => f.Name).ToList();
+
         foreach (var (name, displayOrder, fileName, previewImagePath) in fileMap)
         {
             var fullPath = Path.Combine(seedRoot, fileName);
@@ -72,6 +84,30 @@ public class CuratorTemplateSeedService
             }
         }
 
+        var orphans = await _dbContext.PageTemplatePages
+            .Where(x => x.PageTemplateId == template.Id && !validNames.Contains(x.Name))
+            .ToListAsync(cancellationToken);
+        if (orphans.Count > 0)
+        {
+            _dbContext.PageTemplatePages.RemoveRange(orphans);
+        }
+
+        await _dbContext.SaveChangesAsync(cancellationToken);
+    }
+
+    private async Task RemoveLegacyCuratorTemplateAsync(CancellationToken cancellationToken)
+    {
+        var legacy = await _dbContext.PageTemplates.FirstOrDefaultAsync(x => x.Code == "curator", cancellationToken);
+        if (legacy is null)
+        {
+            return;
+        }
+
+        var legacyPages = await _dbContext.PageTemplatePages
+            .Where(x => x.PageTemplateId == legacy.Id)
+            .ToListAsync(cancellationToken);
+        _dbContext.PageTemplatePages.RemoveRange(legacyPages);
+        _dbContext.PageTemplates.Remove(legacy);
         await _dbContext.SaveChangesAsync(cancellationToken);
     }
 }

@@ -6,6 +6,7 @@ using Microsoft.EntityFrameworkCore;
 using TrivaWebPage.Data.Connection;
 using TrivaWebPage.DependencyInjection;
 using TrivaWebPage.Models;
+using TrivaWebPage.Services;
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -34,6 +35,21 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 // Data access / repositories
 builder.Services.AddDataAccess(builder.Configuration);
 var app = builder.Build();
+
+using (var scope = app.Services.CreateScope())
+{
+    var loggerFactory = scope.ServiceProvider.GetRequiredService<ILoggerFactory>();
+    var log = loggerFactory.CreateLogger("Startup");
+    try
+    {
+        await scope.ServiceProvider.GetRequiredService<CuratorTemplateSeedService>().SeedAsync();
+    }
+    catch (Exception ex)
+    {
+        log.LogError(ex, "Şablon tohumlaması başarısız.");
+        throw;
+    }
+}
 
 // Configure the HTTP request pipeline.
 if (!app.Environment.IsDevelopment())
