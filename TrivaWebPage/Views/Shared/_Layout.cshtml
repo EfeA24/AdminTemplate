@@ -125,23 +125,26 @@
         </div>
 
         <div class="flex-1 min-w-0 flex justify-center px-1 md:px-2">
-            <div id="adminSearchRoot"
-                 class="relative w-full max-w-md"
-                 data-search-url="@Url.Action("Quick", "AdminSearch")">
-                <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-brand-lightMuted dark:text-brand-darkMuted">search</span>
-                <input id="adminSearchInput"
-                       type="search"
-                       autocomplete="off"
-                       placeholder="Sayfa veya işlem ara…"
-                       class="w-full rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
-                           bg-brand-lightPanel dark:bg-brand-darkPanel
-                           text-brand-lightText dark:text-brand-darkText text-sm
-                           py-2.5 pl-10 pr-3 shadow-sm
-                           focus:outline-none focus:ring-2 focus:ring-brand-lightAccent dark:focus:ring-brand-darkAccent" />
-                <div id="adminSearchPanel"
-                     class="hidden absolute left-0 right-0 top-full z-[60] mt-1 max-h-80 overflow-y-auto rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
-                         bg-brand-lightPanel dark:bg-brand-darkPanel shadow-soft"></div>
-            </div>
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div id="adminSearchRoot"
+                     class="relative w-full max-w-md"
+                     data-search-url="@Url.Action("Quick", "AdminSearch")">
+                    <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-brand-lightMuted dark:text-brand-darkMuted">search</span>
+                    <input id="adminSearchInput"
+                           type="search"
+                           autocomplete="off"
+                           placeholder="Sayfa veya işlem ara…"
+                           class="w-full rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
+                               bg-brand-lightPanel dark:bg-brand-darkPanel
+                               text-brand-lightText dark:text-brand-darkText text-sm
+                               py-2.5 pl-10 pr-3 shadow-sm
+                               focus:outline-none focus:ring-2 focus:ring-brand-lightAccent dark:focus:ring-brand-darkAccent" />
+                    <div id="adminSearchPanel"
+                         class="hidden absolute left-0 right-0 top-full z-[60] mt-1 max-h-80 overflow-y-auto rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
+                             bg-brand-lightPanel dark:bg-brand-darkPanel shadow-soft"></div>
+                </div>
+            }
         </div>
 
         <div class="flex items-center gap-2 md:gap-3 shrink-0">
@@ -165,6 +168,14 @@
             <button type="button" class="p-2 rounded-lg text-brand-lightMuted dark:text-brand-darkMuted hover:bg-black/5 dark:hover:bg-white/5">
                 <span class="material-symbols-outlined">notifications</span>
             </button>
+
+            @if (User.Identity?.IsAuthenticated == true)
+            {
+                <div class="hidden sm:flex items-center gap-2 pl-1 border-l border-brand-lightBorder dark:border-brand-darkBorder ml-1">
+                    <span class="material-symbols-outlined text-brand-lightMuted dark:text-brand-darkMuted text-[22px]" aria-hidden="true">person</span>
+                    <span class="text-sm font-medium text-brand-lightText dark:text-brand-darkText max-w-[10rem] truncate" title="@User.Identity!.Name">@User.Identity.Name</span>
+                </div>
+            }
         </div>
     </header>
 
@@ -193,7 +204,7 @@
                     <span>Metinler</span>
                 </a>
 
-                <a asp-controller="MediaFiles" asp-action="Index"
+                <a asp-controller="Images" asp-action="Index"
                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-brand-lightText dark:text-brand-darkText hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
                     <span class="material-symbols-outlined">photo_library</span>
                     <span>Resimler</span>
@@ -219,8 +230,8 @@
                     <span>Yardım</span>
                 </a>
 
-                <a href="#"
-                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                <a asp-controller="Account" asp-action="Logout"
+                   class="flex items-center gap-3 rounded-xl px-4 py-3
                     text-brand-lightText dark:text-brand-darkText
                     hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
                     <span class="material-symbols-outlined">logout</span>

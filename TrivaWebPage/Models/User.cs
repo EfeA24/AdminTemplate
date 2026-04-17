@@ -1,9 +1,8 @@
-﻿namespace TrivaWebPage.Models
+﻿namespace TrivaWebPage.Models;
+
+public class User
 {
-    public class User
-    {
-        public int Id { get; set; }
-        public string UserName { get; set; } = null!;
-        public string Password { get; set; } = null!;
-    }
+    public int Id { get; set; }
+    public string UserName { get; set; } = null!;
+    public string PasswordHash { get; set; } = null!;
 }

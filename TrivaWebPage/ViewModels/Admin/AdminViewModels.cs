@@ -169,3 +169,50 @@ public class MediaFileEditViewModel
     public int? Width { get; set; }
     public int? Height { get; set; }
 }
+
+public class LoginViewModel
+{
+    [Required] public string UserName { get; set; } = "admin";
+    [Required] public string Password { get; set; } = "12345";
+    public bool RememberMe { get; set; }
+}
+
+public class UserEditViewModel
+{
+    public int Id { get; set; }
+    [Required] public string UserName { get; set; } = string.Empty;
+    public string? Password { get; set; }
+}
+
+public class ImagesGalleryViewModel
+{
+    public const string TabAll = "all";
+
+    public string ActiveTab { get; set; } = TabAll;
+    public int? ActivePageId { get; set; }
+    public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
+    public IReadOnlyList<MediaFileCardItem> Items { get; init; } = Array.Empty<MediaFileCardItem>();
+    public IReadOnlyDictionary<int, IReadOnlyList<int>> AssignmentsByMediaFileId { get; init; } =
+        new Dictionary<int, IReadOnlyList<int>>();
+}
+
+public class PageTabItem
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+}
+
+public class MediaFileCardItem
+{
+    public int Id { get; init; }
+    public string DisplayName { get; init; } = string.Empty;
+    public string FilePath { get; init; } = string.Empty;
+}
+
+public class ImageAssignInputModel
+{
+    [Range(1, int.MaxValue)]
+    public int MediaFileId { get; set; }
+
+    public int[]? PageIds { get; set; }
+}

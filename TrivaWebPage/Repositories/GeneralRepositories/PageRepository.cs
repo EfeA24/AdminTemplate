@@ -12,7 +12,7 @@ namespace TrivaWebPage.Repositories.GeneralRepositories
             string keyColumnName = "Id")
             : base(
                   connectionFactory,
-                  tableName,
+                  tableName ?? "Pages",
                   keyColumnName)
         {
         }

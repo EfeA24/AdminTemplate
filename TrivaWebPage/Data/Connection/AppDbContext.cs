@@ -16,6 +16,7 @@ namespace TrivaWebPage.Data.Connection
         public DbSet<PageSection> PageSections => Set<PageSection>();
         public DbSet<PageComponent> PageComponents => Set<PageComponent>();
         public DbSet<MediaFile> MediaFiles => Set<MediaFile>();
+        public DbSet<PageMediaFile> PageMediaFiles => Set<PageMediaFile>();
 
         public DbSet<TextComponent> TextComponents => Set<TextComponent>();
         public DbSet<ImageComponent> ImageComponents => Set<ImageComponent>();
@@ -29,6 +30,7 @@ namespace TrivaWebPage.Data.Connection
         public DbSet<CardButton> CardButtons => Set<CardButton>();
 
         public DbSet<WebsiteSettings> WebsiteSettings => Set<WebsiteSettings>();
+        public DbSet<User> Users => Set<User>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -39,6 +41,22 @@ namespace TrivaWebPage.Data.Connection
                 entity.HasMany(p => p.Sections)
                     .WithOne(s => s.Page)
                     .HasForeignKey(s => s.PageId)
+                    .OnDelete(DeleteBehavior.Cascade);
+
+                entity.HasMany(p => p.PageMediaFiles)
+                    .WithOne(l => l.Page)
+                    .HasForeignKey(l => l.PageId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<PageMediaFile>(entity =>
+            {
+                entity.ToTable("PageMediaFiles");
+                entity.HasIndex(e => new { e.PageId, e.MediaFileId }).IsUnique();
+
+                entity.HasOne(e => e.MediaFile)
+                    .WithMany(m => m.PageMediaFiles)
+                    .HasForeignKey(e => e.MediaFileId)
                     .OnDelete(DeleteBehavior.Cascade);
             });
 
@@ -140,6 +158,13 @@ namespace TrivaWebPage.Data.Connection
                     .HasForeignKey(b => b.ActionDefinitionId)
                     .OnDelete(DeleteBehavior.SetNull);
             });
+
+            modelBuilder.Entity<User>(entity =>
+            {
+                entity.ToTable("Users");
+                entity.HasIndex(e => e.UserName).IsUnique();
+            });
         }
     }
 }
+

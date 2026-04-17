@@ -1,0 +1,16 @@
+@model TrivaWebPage.Models.User
+@{
+    ViewData["Title"] = "Kullanıcı detayı";
+}
+
+<div class="space-y-4">
+    <h1 class="text-2xl font-semibold">Kullanıcı detayı</h1>
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 max-w-lg space-y-2">
+        <div><span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">Id</span><div class="font-medium">@Model.Id</div></div>
+        <div><span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">Kullanıcı adı</span><div class="font-medium">@Model.UserName</div></div>
+    </div>
+    <div class="flex gap-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Düzenle</a>
+        <a asp-action="Index">Listeye dön</a>
+    </div>
+</div>

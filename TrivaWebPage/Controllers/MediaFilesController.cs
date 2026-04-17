@@ -14,10 +14,9 @@ public class MediaFilesController : Controller
         _repository = repository;
     }
 
-    public async Task<IActionResult> Index(CancellationToken cancellationToken)
+    public IActionResult Index()
     {
-        ViewBag.DisplayName = "Media Files";
-        return View("~/Views/Shared/AdminCrud/Index.cshtml", await _repository.GetAllAsync(cancellationToken));
+        return RedirectToAction(nameof(ImagesController.Index), "Images");
     }
 
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)

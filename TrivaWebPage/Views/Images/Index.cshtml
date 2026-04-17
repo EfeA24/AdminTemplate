@@ -1,0 +1,186 @@
+@using TrivaWebPage.ViewModels.Admin
+@model ImagesGalleryViewModel
+@{
+    ViewData["Title"] = "Resimler";
+    var isAllTab = Model.ActiveTab == ImagesGalleryViewModel.TabAll;
+}
+
+<div class="max-w-7xl mx-auto space-y-6">
+    <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Resimler</h1>
+        <form asp-action="Upload" asp-controller="Images" method="post" enctype="multipart/form-data" class="flex flex-wrap items-center gap-2">
+            @Html.AntiForgeryToken()
+            <input type="file" name="file" accept="image/jpeg,image/png,image/gif,image/webp,.jpg,.jpeg,.png,.gif,.webp"
+                   class="hidden" id="imageUploadInput" required />
+            <button type="button" onclick="document.getElementById('imageUploadInput').click()"
+                    class="inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-sm font-medium
+                    bg-brand-lightAccent dark:bg-brand-darkAccent text-white shadow-sm hover:opacity-90 active:scale-[0.98]">
+                <span class="material-symbols-outlined text-[20px]">upload</span>
+                Resim yükle
+            </button>
+        </form>
+    </div>
+
+    @if (TempData["ImagesError"] is string err)
+    {
+        <div class="rounded-xl border border-red-300/80 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100">
+            @err
+        </div>
+    }
+    @if (TempData["ImagesMessage"] is string msg)
+    {
+        <div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100">
+            @msg
+        </div>
+    }
+
+    <div class="flex flex-wrap gap-2 border-b border-brand-lightBorder dark:border-brand-darkBorder pb-2">
+        <a asp-action="Index" asp-controller="Images"
+           class="rounded-t-lg px-4 py-2 text-sm font-medium transition @(isAllTab
+               ? "bg-brand-lightPanel dark:bg-brand-darkPanel text-brand-lightText dark:text-brand-darkText border border-b-0 border-brand-lightBorder dark:border-brand-darkBorder -mb-px"
+               : "text-brand-lightMuted dark:text-brand-darkMuted hover:text-brand-lightText dark:hover:text-brand-darkText")">
+            Tüm resimler
+        </a>
+        @foreach (var p in Model.Pages)
+        {
+            var active = Model.ActivePageId == p.Id;
+            <a asp-action="Index" asp-controller="Images" asp-route-pageId="@p.Id"
+               class="rounded-t-lg px-4 py-2 text-sm font-medium transition max-w-[10rem] truncate @(active
+                   ? "bg-brand-lightPanel dark:bg-brand-darkPanel text-brand-lightText dark:text-brand-darkText border border-b-0 border-brand-lightBorder dark:border-brand-darkBorder -mb-px"
+                   : "text-brand-lightMuted dark:text-brand-darkMuted hover:text-brand-lightText dark:hover:text-brand-darkText")"
+               title="@p.Name">@p.Name</a>
+        }
+    </div>
+
+    @if (Model.Items.Count == 0)
+    {
+        <p class="text-sm text-brand-lightMuted dark:text-brand-darkMuted py-8 text-center">
+            @(isAllTab ? "Henüz resim yok. Yukarıdan yükleyin." : "Bu sayfada atanmış resim yok. “Tüm resimler” sekmesinden çift tıklayarak atayın.")
+        </p>
+    }
+    else
+    {
+        <div class="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+            @foreach (var item in Model.Items)
+            {
+                var pageIds = Model.AssignmentsByMediaFileId.TryGetValue(item.Id, out var list)
+                    ? string.Join(",", list)
+                    : "";
+                <div class="group relative overflow-hidden rounded-2xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel shadow-sm @(isAllTab ? "cursor-pointer image-card-assign" : "")"
+                     data-media-id="@item.Id"
+                     data-page-ids="@pageIds">
+                    <div class="relative aspect-[4/3] w-full overflow-hidden bg-black/5 dark:bg-white/5">
+                        <img src="@item.FilePath" alt="" class="h-full w-full object-cover" loading="lazy" />
+                        <div class="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/75 via-black/25 to-transparent dark:from-black/85 dark:via-black/35"></div>
+                    </div>
+                    <div class="absolute bottom-0 left-0 right-0 flex items-end justify-between gap-2 p-3 pt-8">
+                        <span class="min-w-0 flex-1 truncate text-xs font-medium text-white drop-shadow-md" title="@item.DisplayName">@item.DisplayName</span>
+                        @if (isAllTab)
+                        {
+                            <form asp-action="Delete" asp-controller="Images" method="post" class="shrink-0" onclick="event.stopPropagation();">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="id" value="@item.Id" />
+                                <button type="submit" class="rounded-lg bg-white/15 p-1.5 text-white backdrop-blur hover:bg-red-600/90"
+                                        title="Sil" onclick="return confirm('Bu resmi kütüphaneden silmek istediğinize emin misiniz?');">
+                                    <span class="material-symbols-outlined text-[18px]">delete</span>
+                                </button>
+                            </form>
+                        }
+                        else if (Model.ActivePageId is int pid)
+                        {
+                            <form asp-action="Unassign" asp-controller="Images" method="post" class="shrink-0" onclick="event.stopPropagation();">
+                                @Html.AntiForgeryToken()
+                                <input type="hidden" name="pageId" value="@pid" />
+                                <input type="hidden" name="mediaFileId" value="@item.Id" />
+                                <button type="submit" class="rounded-lg bg-white/15 p-1.5 text-white backdrop-blur hover:bg-amber-600/90"
+                                        title="Sayfadan kaldır">
+                                    <span class="material-symbols-outlined text-[18px]">link_off</span>
+                                </button>
+                            </form>
+                        }
+                    </div>
+                </div>
+            }
+        </div>
+    }
+</div>
+
+@if (isAllTab && Model.Pages.Count > 0)
+{
+    <div id="assignModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
+        <div class="max-h-[90vh] w-full max-w-md overflow-hidden rounded-2xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightBg dark:bg-brand-darkBg shadow-xl">
+            <div class="border-b border-brand-lightBorder dark:border-brand-darkBorder px-4 py-3">
+                <h2 class="text-lg font-semibold text-brand-lightText dark:text-brand-darkText">Sayfalara ata</h2>
+                <p class="mt-1 text-xs text-brand-lightMuted dark:text-brand-darkMuted">Seçili resim hangi sayfalarda görünsün?</p>
+            </div>
+            <form id="assignForm" asp-action="Assign" asp-controller="Images" method="post" class="flex max-h-[60vh] flex-col">
+                @Html.AntiForgeryToken()
+                <input type="hidden" name="MediaFileId" id="assignMediaId" value="0" />
+                <div class="flex-1 space-y-2 overflow-y-auto px-4 py-3">
+                    @foreach (var p in Model.Pages)
+                    {
+                        <label class="flex cursor-pointer items-center gap-3 rounded-lg px-2 py-2 hover:bg-black/5 dark:hover:bg-white/5">
+                            <input type="checkbox" name="PageIds" value="@p.Id" class="assign-page-cb h-4 w-4 rounded border-brand-lightBorder dark:border-brand-darkBorder" data-page-id="@p.Id" />
+                            <span class="text-sm text-brand-lightText dark:text-brand-darkText truncate">@p.Name</span>
+                        </label>
+                    }
+                </div>
+                <div class="flex justify-end gap-2 border-t border-brand-lightBorder dark:border-brand-darkBorder px-4 py-3">
+                    <button type="button" id="assignModalCancel" class="rounded-lg px-4 py-2 text-sm text-brand-lightMuted dark:text-brand-darkMuted hover:bg-black/5 dark:hover:bg-white/5">İptal</button>
+                    <button type="submit" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">Kaydet</button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<script>
+    (function () {
+        const uploadInput = document.getElementById('imageUploadInput');
+        if (uploadInput) {
+            uploadInput.addEventListener('change', function () {
+                if (this.files && this.files.length) {
+                    this.form.submit();
+                }
+            });
+        }
+
+        const isAllTab = @isAllTab.ToString().ToLowerInvariant();
+        if (!isAllTab) {
+            return;
+        }
+
+        const modal = document.getElementById('assignModal');
+        const assignMediaId = document.getElementById('assignMediaId');
+        const cancelBtn = document.getElementById('assignModalCancel');
+        if (!modal || !assignMediaId) return;
+
+        function openModal(mediaId, pageIdsCsv) {
+            assignMediaId.value = mediaId;
+            const selected = new Set((pageIdsCsv || '').split(',').map(s => s.trim()).filter(Boolean).map(Number));
+            modal.querySelectorAll('.assign-page-cb').forEach(cb => {
+                const id = parseInt(cb.dataset.pageId, 10);
+                cb.checked = selected.has(id);
+            });
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        cancelBtn?.addEventListener('click', closeModal);
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        document.querySelectorAll('.image-card-assign').forEach(card => {
+            card.addEventListener('dblclick', function (e) {
+                if (e.target.closest('form')) return;
+                const id = this.dataset.mediaId;
+                const ids = this.dataset.pageIds || '';
+                openModal(id, ids);
+            });
+        });
+    })();
+</script>

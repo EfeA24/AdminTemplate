@@ -22,5 +22,6 @@
         public DateTime? UpdatedDate { get; set; }
 
         public ICollection<PageSection> Sections { get; set; } = new List<PageSection>();
+        public ICollection<PageMediaFile> PageMediaFiles { get; set; } = new List<PageMediaFile>();
     }
 }

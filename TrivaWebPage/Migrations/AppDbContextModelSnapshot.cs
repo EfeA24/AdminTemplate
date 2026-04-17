@@ -477,6 +477,30 @@ namespace TrivaWebPage.Migrations
                     b.ToTable("Pages");
                 });
 
+            modelBuilder.Entity("TrivaWebPage.Models.General.PageMediaFile", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("MediaFileId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("PageId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("MediaFileId");
+
+                    b.HasIndex("PageId", "MediaFileId")
+                        .IsUnique();
+
+                    b.ToTable("PageMediaFiles");
+                });
+
             modelBuilder.Entity("TrivaWebPage.Models.General.PageComponent", b =>
                 {
                     b.Property<int>("Id")
@@ -569,6 +593,30 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("PageId");
 
                     b.ToTable("PageSections");
+                });
+
+            modelBuilder.Entity("TrivaWebPage.Models.User", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("PasswordHash")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UserName")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserName")
+                        .IsUnique();
+
+                    b.ToTable("Users", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.WebsiteSettings", b =>
@@ -753,6 +801,25 @@ namespace TrivaWebPage.Migrations
                     b.Navigation("Page");
                 });
 
+            modelBuilder.Entity("TrivaWebPage.Models.General.PageMediaFile", b =>
+                {
+                    b.HasOne("TrivaWebPage.Models.General.MediaFile", "MediaFile")
+                        .WithMany("PageMediaFiles")
+                        .HasForeignKey("MediaFileId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TrivaWebPage.Models.General.Page", "Page")
+                        .WithMany("PageMediaFiles")
+                        .HasForeignKey("PageId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("MediaFile");
+
+                    b.Navigation("Page");
+                });
+
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.ActionDefinition", b =>
                 {
                     b.Navigation("ButtonComponents");
@@ -781,10 +848,14 @@ namespace TrivaWebPage.Migrations
                     b.Navigation("CardDefinitions");
 
                     b.Navigation("ImageComponents");
+
+                    b.Navigation("PageMediaFiles");
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.Page", b =>
                 {
+                    b.Navigation("PageMediaFiles");
+
                     b.Navigation("Sections");
                 });
 

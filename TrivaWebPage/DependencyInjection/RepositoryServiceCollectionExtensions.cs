@@ -20,6 +20,7 @@ public static class RepositoryServiceCollectionExtensions
         // Connection factory
         services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
         services.AddScoped<IAdminSearchService, AdminSearchService>();
+        services.AddScoped<IUser, UserRepository>();
 
         // Generic repositories
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
@@ -39,6 +40,7 @@ public static class RepositoryServiceCollectionExtensions
 
         // General repositories
         services.AddScoped<IMediaFile, MediaFileRepository>();
+        services.AddScoped<IPageMediaFile, PageMediaFileRepository>();
         services.AddScoped<IPage, PageRepository>();
         services.AddScoped<IPageComponent, PageComponentRepository>();
         services.AddScoped<IPageSection, PageSectionRepository>();

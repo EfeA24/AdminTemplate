@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using System.Collections;
+using System.Reflection;
 using System.Text;
 using Dapper;
 using TrivaWebPage.Abstractions;
@@ -16,6 +17,39 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
     private readonly string _tableName;
     private readonly string _keyColumnName;
 
+    /// <summary>
+    /// EF entities often carry navigation properties; Dapper INSERT/UPDATE must only use scalar columns.
+    /// </summary>
+    private static bool MapsToSqlColumn(PropertyInfo p)
+    {
+        var t = Nullable.GetUnderlyingType(p.PropertyType) ?? p.PropertyType;
+
+        if (t.IsEnum)
+        {
+            return true;
+        }
+
+        if (t == typeof(string) || t == typeof(byte[]) || t == typeof(Guid) ||
+            t == typeof(DateTime) || t == typeof(DateTimeOffset) || t == typeof(TimeSpan) ||
+            t == typeof(decimal))
+        {
+            return true;
+        }
+
+        if (t.IsPrimitive)
+        {
+            return true;
+        }
+
+        // Skip navigations and collections (e.g. ICollection&lt;T&gt; on MediaFile, Page, …)
+        if (typeof(IEnumerable).IsAssignableFrom(t) && t != typeof(string))
+        {
+            return false;
+        }
+
+        return false;
+    }
+
     static GenericRepository()
     {
         AllProperties = typeof(TEntity)
@@ -31,7 +65,9 @@ public class GenericRepository<TEntity> : IGenericRepository<TEntity> where TEnt
             throw new InvalidOperationException($"Entity '{typeof(TEntity).Name}' Id property must be int.");
         }
 
-        NonKeyProperties = AllProperties.Where(p => p != KeyProperty).ToArray();
+        NonKeyProperties = AllProperties
+            .Where(p => p != KeyProperty && MapsToSqlColumn(p))
+            .ToArray();
     }
 
     public GenericRepository(IDbConnectionFactory connectionFactory, string? tableName = null, string keyColumnName = "Id")

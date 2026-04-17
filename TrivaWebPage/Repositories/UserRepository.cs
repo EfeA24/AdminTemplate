@@ -1,12 +1,25 @@
-﻿using TrivaWebPage.Data.Connection;
+﻿using Dapper;
+using TrivaWebPage.Abstractions;
+using TrivaWebPage.Data.Connection;
 using TrivaWebPage.Models;
 
-namespace TrivaWebPage.Repositories
+namespace TrivaWebPage.Repositories;
+
+public class UserRepository : GenericRepository<User>, IUser
 {
-    public class UserRepository : GenericRepository<User>, Abstractions.IUser
+    private readonly IDbConnectionFactory _dbFactory;
+
+    public UserRepository(IDbConnectionFactory connectionFactory)
+        : base(connectionFactory, "Users", "Id")
     {
-        public UserRepository(IDbConnectionFactory connectionFactory, string? tableName = null, string keyColumnName = "Id") : base(connectionFactory, tableName, keyColumnName)
-        {
-        }
+        _dbFactory = connectionFactory;
+    }
+
+    public async Task<User?> GetByUserNameAsync(string userName, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _dbFactory.CreateOpenConnectionAsync(cancellationToken);
+        const string sql = "SELECT * FROM [Users] WHERE [UserName] = @UserName;";
+        return await connection.QuerySingleOrDefaultAsync<User>(
+            new CommandDefinition(sql, new { UserName = userName }, cancellationToken: cancellationToken));
     }
 }

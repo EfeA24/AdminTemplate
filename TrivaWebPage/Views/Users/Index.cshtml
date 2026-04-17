@@ -1,0 +1,42 @@
+@model IReadOnlyList<TrivaWebPage.Models.User>
+@{
+    ViewData["Title"] = "Kullanıcılar";
+    var items = Model ?? Array.Empty<TrivaWebPage.Models.User>();
+}
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Kullanıcılar</h1>
+        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Yeni kullanıcı</a>
+    </div>
+
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-brand-lightPanel dark:bg-brand-darkPanel">
+                <tr>
+                    <th class="px-4 py-2 text-left">Kullanıcı adı</th>
+                    <th class="px-4 py-2 text-left">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var u in items)
+            {
+                <tr class="border-t border-brand-lightBorder dark:border-brand-darkBorder">
+                    <td class="px-4 py-3 font-medium">@u.UserName</td>
+                    <td class="px-4 py-3 space-x-3">
+                        <a asp-action="Details" asp-route-id="@u.Id">Detay</a>
+                        <a asp-action="Edit" asp-route-id="@u.Id">Düzenle</a>
+                        <a asp-action="Delete" asp-route-id="@u.Id">Sil</a>
+                    </td>
+                </tr>
+            }
+            @if (!items.Any())
+            {
+                <tr>
+                    <td class="px-4 py-6 text-center text-brand-lightMuted dark:text-brand-darkMuted" colspan="2">Kayıt yok.</td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>
