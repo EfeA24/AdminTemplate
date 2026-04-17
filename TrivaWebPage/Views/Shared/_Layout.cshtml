@@ -85,6 +85,10 @@
         box-shadow 220ms ease,
         opacity 220ms ease;
         }
+
+        .theme-toggle-thumb-active .material-symbols-outlined {
+        color: #ffffff !important;
+        }
     </style>
 
     <script>
@@ -103,10 +107,10 @@
 </head>
 <body class="theme-transition bg-brand-lightBg text-brand-lightText dark:bg-brand-darkBg dark:text-brand-darkText min-h-screen">
     <!-- Top Navbar -->
-    <header class="fixed top-0 left-0 right-0 z-50 h-16 px-6 md:px-8 flex items-center justify-between
+    <header class="fixed top-0 left-0 right-0 z-50 h-16 px-4 md:px-8 flex items-center gap-3 md:gap-4
         bg-brand-lightNavbar dark:bg-brand-darkNavbar
         border-b border-brand-lightBorder dark:border-brand-darkBorder shadow-soft">
-        <div class="flex items-center">
+        <div class="flex items-center shrink-0">
             <!-- Light Logo -->
             <img id="logoLight"
                  src="~/pictures/TrivaMavi.png"
@@ -120,7 +124,27 @@
                  class="h-10 w-auto hidden dark:block" />
         </div>
 
-        <div class="flex items-center gap-3">
+        <div class="flex-1 min-w-0 flex justify-center px-1 md:px-2">
+            <div id="adminSearchRoot"
+                 class="relative w-full max-w-md"
+                 data-search-url="@Url.Action("Quick", "AdminSearch")">
+                <span class="material-symbols-outlined pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-[20px] text-brand-lightMuted dark:text-brand-darkMuted">search</span>
+                <input id="adminSearchInput"
+                       type="search"
+                       autocomplete="off"
+                       placeholder="Sayfa veya işlem ara…"
+                       class="w-full rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
+                           bg-brand-lightPanel dark:bg-brand-darkPanel
+                           text-brand-lightText dark:text-brand-darkText text-sm
+                           py-2.5 pl-10 pr-3 shadow-sm
+                           focus:outline-none focus:ring-2 focus:ring-brand-lightAccent dark:focus:ring-brand-darkAccent" />
+                <div id="adminSearchPanel"
+                     class="hidden absolute left-0 right-0 top-full z-[60] mt-1 max-h-80 overflow-y-auto rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder
+                         bg-brand-lightPanel dark:bg-brand-darkPanel shadow-soft"></div>
+            </div>
+        </div>
+
+        <div class="flex items-center gap-2 md:gap-3 shrink-0">
             <button id="themeToggle"
                     type="button"
                     class="flex items-center gap-2 rounded-full px-2 py-2
@@ -133,12 +157,12 @@
                 </span>
 
                 <span id="moonIconWrap"
-                      class="flex h-8 w-8 items-center justify-center rounded-full text-brand-lightMuted dark:text-brand-darkAccent">
+                      class="flex h-8 w-8 items-center justify-center rounded-full text-brand-lightMuted dark:text-brand-darkMuted">
                     <span class="material-symbols-outlined text-[20px]">dark_mode</span>
                 </span>
             </button>
 
-            <button class="p-2 rounded-lg text-brand-lightMuted dark:text-brand-darkMuted hover:bg-black/5 dark:hover:bg-white/5">
+            <button type="button" class="p-2 rounded-lg text-brand-lightMuted dark:text-brand-darkMuted hover:bg-black/5 dark:hover:bg-white/5">
                 <span class="material-symbols-outlined">notifications</span>
             </button>
         </div>
@@ -234,13 +258,13 @@
         function applyThemeState() {
         const isDark = root.classList.contains("dark");
 
-        sunIconWrap.classList.remove("bg-brand-lightAccent", "text-white");
-        moonIconWrap.classList.remove("bg-brand-darkAccent", "text-white");
+        sunIconWrap.classList.remove("bg-brand-lightAccent", "theme-toggle-thumb-active");
+        moonIconWrap.classList.remove("bg-brand-darkAccent", "theme-toggle-thumb-active");
 
         if (isDark) {
-        moonIconWrap.classList.add("bg-brand-darkAccent", "text-white");
+        moonIconWrap.classList.add("bg-brand-darkAccent", "theme-toggle-thumb-active");
         } else {
-        sunIconWrap.classList.add("bg-brand-lightAccent", "text-white");
+        sunIconWrap.classList.add("bg-brand-lightAccent", "theme-toggle-thumb-active");
         }
         }
 
@@ -262,6 +286,8 @@
 
         applyThemeState();
     </script>
+
+    <script src="~/js/admin-search.js" asp-append-version="true"></script>
 
     @await RenderSectionAsync("Scripts", required: false)
 </body>

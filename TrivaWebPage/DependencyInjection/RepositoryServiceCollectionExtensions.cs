@@ -9,6 +9,7 @@ using TrivaWebPage.Repositories;
 using TrivaWebPage.Repositories.CardOptionRepositories;
 using TrivaWebPage.Repositories.ContentRepositories;
 using TrivaWebPage.Repositories.GeneralRepositories;
+using TrivaWebPage.Services;
 
 namespace TrivaWebPage.DependencyInjection;
 
@@ -18,6 +19,7 @@ public static class RepositoryServiceCollectionExtensions
     {
         // Connection factory
         services.AddScoped<IDbConnectionFactory, SqlConnectionFactory>();
+        services.AddScoped<IAdminSearchService, AdminSearchService>();
 
         // Generic repositories
         services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
