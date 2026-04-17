@@ -2,17 +2,18 @@
 @using System.Text.Json
 @model TrivaWebPage.ViewModels.Admin.CardsBuilderViewModel
 @{
-    ViewData["Title"] = "Kartlar Builder";
+    ViewData["Title"] = "Kartlar";
     var activePage = Model.ActivePage;
-    var cardsPayload = JsonSerializer.Serialize(activePage?.Items ?? []);
-    var presetsPayload = JsonSerializer.Serialize(Model.ButtonPresets ?? []);
+    var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var cardsPayload = JsonSerializer.Serialize(activePage?.Items ?? [], jsonOpts);
+    var mediaPayload = JsonSerializer.Serialize(Model.PageMedia ?? [], jsonOpts);
     var safeCardsPayload = JavaScriptEncoder.Default.Encode(cardsPayload);
-    var safePresetsPayload = JavaScriptEncoder.Default.Encode(presetsPayload);
+    var safeMediaPayload = JavaScriptEncoder.Default.Encode(mediaPayload);
 }
 
-<div class="max-w-7xl mx-auto space-y-5">
+<div class="max-w-[1600px] mx-auto space-y-4">
     <div class="flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Kartlar Builder</h1>
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Kartlar</h1>
         @if (activePage is not null)
         {
             <button type="button" id="saveCardsBtn" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">
@@ -56,54 +57,30 @@
             <input type="hidden" name="PayloadJson" id="cardsPayloadInput" value="@cardsPayload" />
         </form>
 
-        <div class="grid gap-4 lg:grid-cols-[340px_1fr]">
-            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-3">
-                <div>
-                    <p class="text-xs uppercase tracking-wide text-brand-lightMuted dark:text-brand-darkMuted">Sayfa</p>
-                    <p class="font-medium">@activePage.PageName</p>
-                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">@activePage.PageWidth x @activePage.PageHeight px</p>
-                </div>
+        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-4">
+            <div class="space-y-2">
+                <label class="text-sm font-semibold">HTML ile kart ekle</label>
+                <textarea id="htmlCardInput" class="w-full min-h-[100px] rounded border px-3 py-2 text-black text-sm font-mono" placeholder="<div>...</div>"></textarea>
+                <button type="button" id="addHtmlCardBtn" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white">Kartı ekle</button>
+            </div>
 
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <button type="button" id="addImageCardBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">+ Resimli kart ekle</button>
-                    <button type="button" id="addTextCardBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">+ Yazı kartı ekle</button>
-                    <button type="button" id="removeCardBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçili kartı sil</button>
-                </div>
+            <div class="flex flex-wrap gap-3 items-center border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                <button type="button" id="removeCardBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm">Seçili kartı sil</button>
+                <span class="text-xs text-brand-lightMuted">Kart üzerine tıklayarak seçin. Varsayılan kartlarda görsele çift tıklayınca sayfa görsellerinden seçebilirsiniz.</span>
+            </div>
 
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Başlık</label>
-                    <input id="cardTitleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Alt başlık</label>
-                    <input id="cardSubtitleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Açıklama</label>
-                    <textarea id="cardDescriptionInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="3"></textarea>
-                    <div class="grid grid-cols-2 gap-2">
-                        <label class="flex items-center gap-2 text-xs"><input type="checkbox" id="cardShowImageInput" /> Resim</label>
-                        <label class="flex items-center gap-2 text-xs"><input type="checkbox" id="cardShowButtonInput" checked /> Buton</label>
-                    </div>
-                </div>
+            <div id="cardsRow" class="flex flex-wrap gap-3"></div>
+        </div>
 
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <p class="text-sm font-semibold">Butonlar (max 10)</p>
-                    <select id="presetSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm">
-                        <option value="">Hazır buton seç</option>
-                    </select>
-                    <button type="button" id="applyPresetBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçili karta uygula</button>
-                    <button type="button" id="addEmptyButtonBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Boş buton ekle</button>
-                    <div id="buttonList" class="space-y-2"></div>
+        <div id="imagePickerModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4">
+            <div class="max-w-lg w-full rounded-xl bg-white p-4 shadow-lg space-y-3">
+                <div class="flex justify-between items-center">
+                    <h2 class="font-semibold text-lg">Görsel seç</h2>
+                    <button type="button" id="closeImageModal" class="text-2xl leading-none">&times;</button>
                 </div>
-            </section>
-
-            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-auto">
-                <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto"
-                     style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
-                     id="cardsCanvas">
-                    @if (!string.IsNullOrWhiteSpace(activePage.TemplateHtml))
-                    {
-                        <div class="absolute inset-0 pointer-events-none opacity-40 overflow-hidden prose max-w-none">@Html.Raw(activePage.TemplateHtml)</div>
-                    }
-                </div>
-            </section>
+                <div id="imagePickerGrid" class="grid grid-cols-3 gap-2 max-h-80 overflow-y-auto"></div>
+                <p class="text-xs text-gray-500">Görselleri sayfa düzenle ekranından yükleyin.</p>
+            </div>
         </div>
     }
 </div>
@@ -113,182 +90,246 @@
     <script>
         (function () {
             const initialCards = JSON.parse("@Html.Raw(safeCardsPayload)");
-            const presets = JSON.parse("@Html.Raw(safePresetsPayload)");
-            const canvas = document.getElementById("cardsCanvas");
+            const pageMedia = JSON.parse("@Html.Raw(safeMediaPayload)");
+            const pageId = @activePage.PageId;
+            const canvas = document.getElementById("cardsRow");
             const saveBtn = document.getElementById("saveCardsBtn");
             const payloadInput = document.getElementById("cardsPayloadInput");
             const saveForm = document.getElementById("saveCardsForm");
-            const titleInput = document.getElementById("cardTitleInput");
-            const subtitleInput = document.getElementById("cardSubtitleInput");
-            const descriptionInput = document.getElementById("cardDescriptionInput");
-            const showImageInput = document.getElementById("cardShowImageInput");
-            const showButtonInput = document.getElementById("cardShowButtonInput");
-            const buttonList = document.getElementById("buttonList");
-            const presetSelect = document.getElementById("presetSelect");
+            const addHtmlBtn = document.getElementById("addHtmlCardBtn");
+            const htmlInput = document.getElementById("htmlCardInput");
+            const removeBtn = document.getElementById("removeCardBtn");
+            const modal = document.getElementById("imagePickerModal");
+            const modalGrid = document.getElementById("imagePickerGrid");
+            const closeModal = document.getElementById("closeImageModal");
+            const token = document.querySelector('#saveCardsForm input[name="__RequestVerificationToken"]')?.value || "";
 
             if (!canvas || !saveBtn || !payloadInput || !saveForm) return;
 
-            const state = { cards: initialCards, selected: -1 };
-            presets.forEach((p) => {
-                const opt = document.createElement("option");
-                opt.value = p.presetId;
-                opt.textContent = p.name + " - " + p.text;
-                presetSelect?.appendChild(opt);
-            });
+            let selectedIndex = -1;
+            let pickerTargetIndex = -1;
 
-            function cardTemplate(withImage) {
+            const state = {
+                cards: initialCards.map(normalizeCard)
+            };
+
+            function normalizeCard(c) {
                 return {
-                    componentId: 0, cardComponentId: 0, displayOrder: state.cards.length + 1,
-                    x: 24 + ((state.cards.length % 3) * 320), y: 24 + (Math.floor(state.cards.length / 3) * 260),
-                    width: 300, height: 220, isVisible: true, cardDefinitionId: 1,
-                    title: withImage ? "Resimli Kart" : "Yazı Kartı", subtitle: "", description: "", mediaFileId: null,
-                    showImage: withImage, showButton: true, backgroundColor: "#ffffff", textColor: "#111827", borderColor: "#d1d5db",
-                    buttons: []
+                    componentId: c.componentId || 0,
+                    cardComponentId: c.cardComponentId || 0,
+                    displayOrder: c.displayOrder || 0,
+                    x: c.x || 0,
+                    y: c.y || 0,
+                    width: c.width || 280,
+                    height: c.height || 200,
+                    isVisible: c.isVisible !== false,
+                    cardDefinitionId: c.cardDefinitionId || 1,
+                    title: c.title || "",
+                    subtitle: c.subtitle || "",
+                    description: c.description || "",
+                    htmlFragment: c.htmlFragment || "",
+                    mediaFileId: c.mediaFileId || null,
+                    mediaFilePath: c.mediaFilePath || "",
+                    showImage: !!c.showImage,
+                    showButton: c.showButton !== false,
+                    backgroundColor: c.backgroundColor || "#ffffff",
+                    textColor: c.textColor || "#111827",
+                    borderColor: c.borderColor || "#d1d5db",
+                    buttons: Array.isArray(c.buttons) ? c.buttons.map(b => ({
+                        id: b.id || 0,
+                        displayOrder: b.displayOrder || 1,
+                        text: b.text || "",
+                        icon: b.icon || "",
+                        backgroundColor: b.backgroundColor || "#00a19b",
+                        textColor: b.textColor || "#ffffff",
+                        borderColor: b.borderColor || "#008f8a",
+                        actionDefinitionId: b.actionDefinitionId || null,
+                        actionUrl: b.actionUrl || "",
+                        actionTarget: b.actionTarget || "_self"
+                    })) : []
                 };
             }
 
-            function selectCard(index) {
-                state.selected = index;
-                const card = state.cards[index];
-                if (!card) return;
-                titleInput.value = card.title || "";
-                subtitleInput.value = card.subtitle || "";
-                descriptionInput.value = card.description || "";
-                showImageInput.checked = !!card.showImage;
-                showButtonInput.checked = !!card.showButton;
-                renderButtons();
-                renderCanvas();
+            function openPicker(idx) {
+                pickerTargetIndex = idx;
+                if (!modal || !modalGrid) return;
+                modalGrid.innerHTML = "";
+                if (!pageMedia.length) {
+                    modalGrid.innerHTML = '<p class="text-sm col-span-3">Bu sayfaya bağlı görsel yok.</p>';
+                } else {
+                    pageMedia.forEach((m) => {
+                        const b = document.createElement("button");
+                        b.type = "button";
+                        b.className = "rounded border overflow-hidden hover:ring-2 ring-brand-lightAccent";
+                        const img = document.createElement("img");
+                        img.src = m.filePath;
+                        img.alt = m.displayName || "";
+                        img.className = "h-24 w-full object-cover";
+                        b.appendChild(img);
+                        b.addEventListener("click", () => submitPick(m.mediaFileId));
+                        modalGrid.appendChild(b);
+                    });
+                }
+                modal.classList.remove("hidden");
+                modal.classList.add("flex");
             }
 
-            function renderButtons() {
-                buttonList.innerHTML = "";
-                const card = state.cards[state.selected];
+            function submitPick(mediaFileId) {
+                const card = state.cards[pickerTargetIndex];
                 if (!card) return;
-                (card.buttons || []).forEach((btn, idx) => {
-                    const row = document.createElement("div");
-                    row.className = "rounded border p-2 space-y-1";
-                    row.innerHTML =
-                        '<input class="w-full rounded border px-2 py-1 text-black text-xs" placeholder="Buton metni" data-k="text" value="' + (btn.text || "") + '">' +
-                        '<input class="w-full rounded border px-2 py-1 text-black text-xs" placeholder="Link (https://...)" data-k="actionUrl" value="' + (btn.actionUrl || "") + '">' +
-                        '<select class="w-full rounded border px-2 py-1 text-black text-xs" data-k="actionTarget">' +
-                        '<option value="_self">Aynı sekme</option><option value="_blank">Yeni sekme</option></select>' +
-                        '<button type="button" class="rounded border px-2 py-1 text-xs" data-remove="' + idx + '">Sil</button>';
-                    const targetSelect = row.querySelector('select[data-k="actionTarget"]');
-                    if (targetSelect) targetSelect.value = btn.actionTarget || "_self";
-                    row.querySelectorAll("input,select").forEach((el) => {
-                        el.addEventListener("change", () => {
-                            const key = el.getAttribute("data-k");
-                            if (!key) return;
-                            card.buttons[idx][key] = el.value;
-                        });
-                    });
-                    row.querySelector("button")?.addEventListener("click", () => {
-                        card.buttons.splice(idx, 1);
-                        renderButtons();
-                    });
-                    buttonList.appendChild(row);
+                const form = document.createElement("form");
+                form.method = "post";
+                form.action = "@Url.Action("SetCardMedia", "Cards")";
+                const t = document.createElement("input");
+                t.type = "hidden"; t.name = "__RequestVerificationToken"; t.value = token;
+                form.appendChild(t);
+                [["pageId", String(pageId)], ["cardComponentId", String(card.cardComponentId)], ["mediaFileId", String(mediaFileId)]].forEach(([n, v]) => {
+                    const i = document.createElement("input");
+                    i.type = "hidden"; i.name = n; i.value = v;
+                    form.appendChild(i);
                 });
+                document.body.appendChild(form);
+                form.submit();
             }
 
-            function renderCanvas() {
-                canvas.querySelectorAll(".builder-card").forEach((n) => n.remove());
+            function closePicker() {
+                if (!modal) return;
+                modal.classList.add("hidden");
+                modal.classList.remove("flex");
+            }
+
+            closeModal?.addEventListener("click", closePicker);
+            modal?.addEventListener("click", (e) => { if (e.target === modal) closePicker(); });
+
+            function render() {
+                canvas.innerHTML = "";
                 state.cards.forEach((card, idx) => {
-                    const node = document.createElement("div");
-                    node.className = "builder-card absolute rounded-xl border shadow-sm p-3 cursor-move";
-                    node.style.left = card.x + "px";
-                    node.style.top = card.y + "px";
-                    node.style.width = card.width + "px";
-                    node.style.height = card.height + "px";
-                    node.style.background = card.backgroundColor || "#fff";
-                    node.style.color = card.textColor || "#111827";
-                    node.style.borderColor = card.borderColor || "#d1d5db";
-                    if (idx === state.selected) node.classList.add("ring-2", "ring-brand-lightAccent");
-                    node.innerHTML =
-                        '<div class="text-sm font-semibold truncate">' + (card.title || "Kart") + '</div>' +
-                        '<div class="text-xs opacity-75 truncate">' + (card.subtitle || "") + '</div>' +
-                        '<div class="text-xs mt-1 line-clamp-3">' + (card.description || "") + '</div>' +
-                        (card.showImage ? '<div class="mt-2 h-12 rounded border border-dashed text-[10px] flex items-center justify-center">Resim Alanı</div>' : '');
-                    node.addEventListener("mousedown", (e) => startDrag(e, idx, node));
-                    node.addEventListener("click", () => selectCard(idx));
-                    canvas.appendChild(node);
+                    const el = document.createElement("div");
+                    el.dataset.index = String(idx);
+                    el.className = "relative w-[280px] min-h-[180px] rounded-xl border-2 bg-white p-2 shadow-sm cursor-pointer " +
+                        (idx === selectedIndex ? "border-brand-lightAccent ring-2 ring-brand-lightAccent" : "border-brand-lightBorder");
+                    el.style.backgroundColor = card.backgroundColor || "#fff";
+
+                    if (card.htmlFragment) {
+                        const wrap = document.createElement("div");
+                        wrap.className = "prose prose-sm max-w-none text-xs overflow-auto max-h-48";
+                        wrap.innerHTML = card.htmlFragment;
+                        el.appendChild(wrap);
+                    } else {
+                        const title = document.createElement("div");
+                        title.className = "font-semibold text-sm truncate";
+                        title.textContent = card.title || "Kart";
+                        el.appendChild(title);
+                        if (card.showImage) {
+                            const imgWrap = document.createElement("div");
+                            imgWrap.className = "mt-2 rounded overflow-hidden bg-gray-100 min-h-[80px]";
+                            if (card.mediaFilePath) {
+                                const img = document.createElement("img");
+                                img.src = card.mediaFilePath;
+                                img.className = "h-28 w-full object-cover";
+                                imgWrap.appendChild(img);
+                            } else {
+                                imgWrap.textContent = "Görsel yok";
+                                imgWrap.classList.add("flex", "items-center", "justify-center", "text-xs", "text-gray-400");
+                            }
+                            imgWrap.addEventListener("dblclick", (e) => {
+                                e.stopPropagation();
+                                if (!card.htmlFragment && card.cardComponentId > 0) openPicker(idx);
+                            });
+                            el.appendChild(imgWrap);
+                        }
+                        const sub = document.createElement("div");
+                        sub.className = "text-xs text-gray-600 mt-1 line-clamp-2";
+                        sub.textContent = card.subtitle || card.description || "";
+                        el.appendChild(sub);
+                    }
+
+                    el.addEventListener("click", () => {
+                        selectedIndex = idx;
+                        render();
+                    });
+
+                    canvas.appendChild(el);
                 });
             }
 
-            function startDrag(event, idx, node) {
-                selectCard(idx);
-                const card = state.cards[idx];
-                const rect = canvas.getBoundingClientRect();
-                const ox = event.clientX - card.x;
-                const oy = event.clientY - card.y;
-                function onMove(ev) {
-                    card.x = Math.max(0, Math.min(rect.width - card.width, ev.clientX - ox));
-                    card.y = Math.max(0, Math.min(rect.height - card.height, ev.clientY - oy));
-                    node.style.left = card.x + "px";
-                    node.style.top = card.y + "px";
-                }
-                function onUp() {
-                    window.removeEventListener("mousemove", onMove);
-                    window.removeEventListener("mouseup", onUp);
-                }
-                window.addEventListener("mousemove", onMove);
-                window.addEventListener("mouseup", onUp);
-            }
+            addHtmlBtn?.addEventListener("click", () => {
+                const html = (htmlInput?.value || "").trim();
+                if (!html) return;
+                state.cards.push({
+                    componentId: 0,
+                    cardComponentId: 0,
+                    displayOrder: state.cards.length + 1,
+                    x: 0,
+                    y: 0,
+                    width: 280,
+                    height: 200,
+                    isVisible: true,
+                    cardDefinitionId: 0,
+                    title: "",
+                    subtitle: "",
+                    description: "",
+                    htmlFragment: html,
+                    mediaFileId: null,
+                    mediaFilePath: "",
+                    showImage: false,
+                    showButton: false,
+                    backgroundColor: "#ffffff",
+                    textColor: "#111827",
+                    borderColor: "#d1d5db",
+                    buttons: []
+                });
+                htmlInput.value = "";
+                selectedIndex = state.cards.length - 1;
+                render();
+            });
 
-            document.getElementById("addImageCardBtn")?.addEventListener("click", () => {
-                state.cards.push(cardTemplate(true));
-                selectCard(state.cards.length - 1);
-            });
-            document.getElementById("addTextCardBtn")?.addEventListener("click", () => {
-                state.cards.push(cardTemplate(false));
-                selectCard(state.cards.length - 1);
-            });
-            document.getElementById("removeCardBtn")?.addEventListener("click", () => {
-                if (state.selected < 0) return;
-                state.cards.splice(state.selected, 1);
-                state.selected = Math.min(state.selected, state.cards.length - 1);
-                renderCanvas();
-                renderButtons();
-            });
-            titleInput?.addEventListener("input", () => { if (state.cards[state.selected]) { state.cards[state.selected].title = titleInput.value; renderCanvas(); } });
-            subtitleInput?.addEventListener("input", () => { if (state.cards[state.selected]) { state.cards[state.selected].subtitle = subtitleInput.value; renderCanvas(); } });
-            descriptionInput?.addEventListener("input", () => { if (state.cards[state.selected]) { state.cards[state.selected].description = descriptionInput.value; renderCanvas(); } });
-            showImageInput?.addEventListener("change", () => { if (state.cards[state.selected]) { state.cards[state.selected].showImage = showImageInput.checked; renderCanvas(); } });
-            showButtonInput?.addEventListener("change", () => { if (state.cards[state.selected]) { state.cards[state.selected].showButton = showButtonInput.checked; } });
-
-            document.getElementById("applyPresetBtn")?.addEventListener("click", () => {
-                const card = state.cards[state.selected];
-                if (!card || !presetSelect?.value || (card.buttons || []).length >= 10) return;
-                const preset = presets.find((x) => String(x.presetId) === String(presetSelect.value));
-                if (!preset) return;
-                card.buttons.push({ id: 0, displayOrder: card.buttons.length + 1, text: preset.text, icon: null, backgroundColor: preset.backgroundColor, textColor: preset.textColor, borderColor: preset.borderColor, actionDefinitionId: null, actionUrl: preset.urlPlaceholder, actionTarget: preset.target || "_self" });
-                renderButtons();
-            });
-            document.getElementById("addEmptyButtonBtn")?.addEventListener("click", () => {
-                const card = state.cards[state.selected];
-                if (!card || (card.buttons || []).length >= 10) return;
-                card.buttons.push({ id: 0, displayOrder: card.buttons.length + 1, text: "Buton", icon: null, backgroundColor: "#00a19b", textColor: "#ffffff", borderColor: "#008f8a", actionDefinitionId: null, actionUrl: "", actionTarget: "_self" });
-                renderButtons();
+            removeBtn?.addEventListener("click", () => {
+                if (selectedIndex < 0) return;
+                state.cards.splice(selectedIndex, 1);
+                selectedIndex = Math.min(selectedIndex, state.cards.length - 1);
+                render();
             });
 
             saveBtn.addEventListener("click", () => {
-                const payload = state.cards.map((c, idx) => ({
+                const payload = state.cards.map((c, index) => ({
                     componentId: c.componentId || 0,
                     cardComponentId: c.cardComponentId || 0,
-                    displayOrder: idx + 1,
-                    x: Math.round(c.x || 0), y: Math.round(c.y || 0),
-                    width: Math.round(c.width || 300), height: Math.round(c.height || 220),
-                    isVisible: c.isVisible !== false, cardDefinitionId: c.cardDefinitionId || 1,
-                    title: c.title || "", subtitle: c.subtitle || "", description: c.description || "",
-                    mediaFileId: c.mediaFileId || null, showImage: !!c.showImage, showButton: !!c.showButton,
-                    backgroundColor: c.backgroundColor || "#ffffff", textColor: c.textColor || "#111827", borderColor: c.borderColor || "#d1d5db",
-                    buttons: (c.buttons || []).slice(0, 10).map((b, i) => ({ id: b.id || 0, displayOrder: i + 1, text: b.text || "", icon: b.icon || null, backgroundColor: b.backgroundColor || null, textColor: b.textColor || null, borderColor: b.borderColor || null, actionDefinitionId: b.actionDefinitionId || null, actionUrl: b.actionUrl || null, actionTarget: b.actionTarget || "_self" }))
+                    displayOrder: index + 1,
+                    x: c.x || 0,
+                    y: c.y || 0,
+                    width: c.width || 280,
+                    height: c.height || 200,
+                    isVisible: c.isVisible !== false,
+                    cardDefinitionId: c.cardDefinitionId || 0,
+                    title: c.title || "",
+                    subtitle: c.subtitle || "",
+                    description: c.description || "",
+                    htmlFragment: c.htmlFragment || "",
+                    mediaFileId: c.mediaFileId,
+                    showImage: !!c.showImage,
+                    showButton: c.htmlFragment ? false : !!c.showButton,
+                    backgroundColor: c.backgroundColor,
+                    textColor: c.textColor,
+                    borderColor: c.borderColor,
+                    buttons: (c.buttons || []).map((b, bi) => ({
+                        id: b.id || 0,
+                        displayOrder: bi + 1,
+                        text: b.text || "",
+                        icon: b.icon || "",
+                        backgroundColor: b.backgroundColor,
+                        textColor: b.textColor,
+                        borderColor: b.borderColor,
+                        actionDefinitionId: b.actionDefinitionId,
+                        actionUrl: b.actionUrl || "",
+                        actionTarget: b.actionTarget || "_self"
+                    }))
                 }));
                 payloadInput.value = JSON.stringify(payload);
                 saveForm.submit();
             });
 
-            renderCanvas();
-            if (state.cards.length > 0) selectCard(0);
+            render();
         })();
     </script>
 }

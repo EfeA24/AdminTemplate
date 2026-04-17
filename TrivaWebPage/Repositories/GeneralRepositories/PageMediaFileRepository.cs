@@ -21,6 +21,17 @@ public class PageMediaFileRepository : IPageMediaFile
         return rows.AsList();
     }
 
+    public async Task EnsureLinkedAsync(int pageId, int mediaFileId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        const string sql = """
+                           IF NOT EXISTS (SELECT 1 FROM [PageMediaFiles] WHERE [PageId] = @PageId AND [MediaFileId] = @MediaFileId)
+                               INSERT INTO [PageMediaFiles] ([PageId], [MediaFileId]) VALUES (@PageId, @MediaFileId);
+                           """;
+        await connection.ExecuteAsync(
+            new CommandDefinition(sql, new { PageId = pageId, MediaFileId = mediaFileId }, cancellationToken: cancellationToken));
+    }
+
     public async Task<IReadOnlyList<int>> GetPageIdsForMediaFileAsync(int mediaFileId, CancellationToken cancellationToken = default)
     {
         using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);

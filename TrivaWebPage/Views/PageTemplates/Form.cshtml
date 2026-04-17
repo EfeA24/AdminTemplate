@@ -2,10 +2,18 @@
 @{
     ViewData["Title"] = Model.Id == 0 ? "Şablon oluştur" : "Şablon düzenle";
     var isEdit = Model.Id > 0;
+    var pageCount = Model.Pages?.Count ?? 0;
 }
 
 <div class="space-y-4 max-w-5xl">
     <h1 class="text-2xl font-semibold">@ViewData["Title"]</h1>
+
+    @if (isEdit && pageCount > 1)
+    {
+        <div class="rounded-lg border border-amber-300/80 bg-amber-50 px-4 py-2 text-sm text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+            Bu şablonda <strong>@pageCount</strong> iç sayfa var. ZIP yükleyerek veya aşağıdaki HTML alanına yazarak tümünü değiştirebilirsiniz; HTML alanını boş bırakırsanız mevcut sayfalar korunur.
+        </div>
+    }
 
     <form asp-action="@(isEdit ? "Edit" : "Create")" asp-route-id="@(isEdit ? Model.Id : null)"
           method="post" enctype="multipart/form-data" class="space-y-6 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
@@ -16,67 +24,28 @@
         }
         <div asp-validation-summary="All" class="text-red-600 text-sm"></div>
 
-        <div class="grid gap-4 md:grid-cols-2">
-            <div class="space-y-1 md:col-span-2">
-                <label class="block text-sm font-medium" asp-for="Name">Şablon adı</label>
-                <input class="w-full rounded border px-3 py-2 text-black" asp-for="Name" />
-                <span asp-validation-for="Name" class="text-red-600 text-xs"></span>
-            </div>
-            <div class="space-y-1">
-                <label class="block text-sm font-medium" asp-for="Code">Kod (benzersiz)</label>
-                <input class="w-full rounded border px-3 py-2 text-black" asp-for="Code" placeholder="ornek-sablon" />
-                <span asp-validation-for="Code" class="text-red-600 text-xs"></span>
-            </div>
-            <div class="space-y-1 flex items-end">
-                <label class="flex items-center gap-2 text-sm">
-                    <input type="checkbox" asp-for="IsActive" />
-                    Aktif
-                </label>
-            </div>
-            <div class="space-y-1 md:col-span-2">
-                <label class="block text-sm font-medium" asp-for="Description">Açıklama</label>
-                <textarea class="w-full rounded border px-3 py-2 text-black" asp-for="Description" rows="2"></textarea>
-            </div>
+        <div class="space-y-1">
+            <label class="block text-sm font-medium" asp-for="Name">Şablon adı</label>
+            <input class="w-full rounded border px-3 py-2 text-black" asp-for="Name" />
+            <span asp-validation-for="Name" class="text-red-600 text-xs"></span>
+        </div>
+
+        <div class="space-y-1">
+            <label class="block text-sm font-medium" asp-for="MasterHtml">HTML kod</label>
+            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">ZIP kullanmıyorsanız tek sayfa olarak kaydedilir. ZIP kullanıyorsanız bu alanı boş bırakabilirsiniz.</p>
+            <textarea class="w-full rounded border px-3 py-2 text-black font-mono min-h-[200px]" asp-for="MasterHtml"></textarea>
         </div>
 
         <div class="rounded-lg border border-dashed border-brand-lightBorder dark:border-brand-darkBorder p-4 space-y-2">
-            <h2 class="font-semibold text-sm">ZIP ile toplu HTML</h2>
-            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">ZIP içindeki tüm .html dosyaları sırayla şablon sayfası olarak eklenir (mevcut satırların yerine geçer).</p>
+            <h2 class="font-semibold text-sm">ZIP (HTML + CSS + JS)</h2>
+            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">ZIP içindeki tüm dosyalar sunucuya çıkarılır; her .html dosyası ayrı şablon içi sayfa olur. Göreli yollar için otomatik <code>&lt;base href&gt;</code> eklenir.</p>
             <input type="file" name="zipArchive" accept=".zip" class="text-sm" />
         </div>
 
-        <div class="space-y-3">
-            <div class="flex items-center justify-between">
-                <h2 class="font-semibold">Şablon içi sayfalar</h2>
-                <button type="button" id="addRow" class="text-sm rounded border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-1 hover:bg-black/5 dark:hover:bg-white/5">Satır ekle</button>
-            </div>
-
-            <div id="rows" class="space-y-4">
-                @for (var i = 0; i < Model.Pages.Count; i++)
-                {
-                    <div class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-3 space-y-2 template-row" data-index="@i">
-                        <input type="hidden" asp-for="Pages[i].Id" />
-                        <div class="grid gap-2 md:grid-cols-2">
-                            <div class="space-y-1">
-                                <label class="text-xs font-medium">Sayfa adı</label>
-                                <input class="w-full rounded border px-2 py-1 text-sm text-black" asp-for="Pages[i].Name" />
-                            </div>
-                            <div class="space-y-1">
-                                <label class="text-xs font-medium">Sıra</label>
-                                <input type="number" class="w-full rounded border px-2 py-1 text-sm text-black" asp-for="Pages[i].DisplayOrder" />
-                            </div>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-medium">HTML</label>
-                            <textarea class="w-full rounded border px-2 py-1 text-sm text-black font-mono min-h-[120px]" asp-for="Pages[i].HtmlContent"></textarea>
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs font-medium">HTML dosyası (.html / .htm)</label>
-                            <input type="file" name="HtmlFile_@i" accept=".html,.htm" class="text-xs" />
-                        </div>
-                    </div>
-                }
-            </div>
+        <div class="rounded-lg border border-dashed border-brand-lightBorder dark:border-brand-darkBorder p-4 space-y-2">
+            <h2 class="font-semibold text-sm">Önizleme resmi</h2>
+            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">İlk şablon içi sayfanın önizlemesinde kullanılır (JPG, PNG, GIF, WEBP).</p>
+            <input type="file" name="previewImage" accept=".jpg,.jpeg,.png,.gif,.webp" class="text-sm" />
         </div>
 
         <div class="flex gap-3">
@@ -85,29 +54,3 @@
         </div>
     </form>
 </div>
-
-<script>
-    (function () {
-        const rows = document.getElementById('rows');
-        const addBtn = document.getElementById('addRow');
-        if (!rows || !addBtn) return;
-
-        addBtn.addEventListener('click', function () {
-            const i = rows.querySelectorAll('.template-row').length;
-            const wrap = document.createElement('div');
-            wrap.className = 'rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-3 space-y-2 template-row';
-            wrap.innerHTML =
-                '<input type="hidden" name="Pages[' + i + '].Id" value="0" />' +
-                '<div class="grid gap-2 md:grid-cols-2">' +
-                '<div class="space-y-1"><label class="text-xs font-medium">Sayfa adı</label>' +
-                '<input class="w-full rounded border px-2 py-1 text-sm text-black" name="Pages[' + i + '].Name" /></div>' +
-                '<div class="space-y-1"><label class="text-xs font-medium">Sıra</label>' +
-                '<input type="number" class="w-full rounded border px-2 py-1 text-sm text-black" name="Pages[' + i + '].DisplayOrder" value="' + i + '" /></div></div>' +
-                '<div class="space-y-1"><label class="text-xs font-medium">HTML</label>' +
-                '<textarea class="w-full rounded border px-2 py-1 text-sm text-black font-mono min-h-[120px]" name="Pages[' + i + '].HtmlContent"></textarea></div>' +
-                '<div class="space-y-1"><label class="text-xs font-medium">HTML dosyası</label>' +
-                '<input type="file" name="HtmlFile_' + i + '" accept=".html,.htm" class="text-xs" /></div>';
-            rows.appendChild(wrap);
-        });
-    })();
-</script>

@@ -9,4 +9,6 @@ public interface IPageCardBuilderRepository
     Task<IReadOnlyList<CardButtonPresetViewModel>> GetButtonPresetsAsync(CancellationToken cancellationToken = default);
 
     Task SavePageCardsAsync(int pageId, IReadOnlyList<CardBuilderSaveItemInputModel> items, CancellationToken cancellationToken = default);
+
+    Task UpdateCardComponentMediaAsync(int cardComponentId, int? mediaFileId, CancellationToken cancellationToken = default);
 }

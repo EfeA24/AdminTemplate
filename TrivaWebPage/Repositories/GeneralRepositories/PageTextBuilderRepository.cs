@@ -14,7 +14,7 @@ public class PageTextBuilderRepository : IPageTextBuilderRepository
         _connectionFactory = connectionFactory;
     }
 
-    public async Task<TextsEditorPageData?> GetPageEditorDataAsync(int pageId, CancellationToken cancellationToken = default)
+    public async Task<PageEditCanvasPageData?> GetPageEditorDataAsync(int pageId, CancellationToken cancellationToken = default)
     {
         using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
 
@@ -58,7 +58,7 @@ public class PageTextBuilderRepository : IPageTextBuilderRepository
         using var multi = await connection.QueryMultipleAsync(
             new CommandDefinition(sql, new { PageId = pageId }, cancellationToken: cancellationToken));
 
-        var page = await multi.ReadSingleOrDefaultAsync<TextsEditorPageData>();
+        var page = await multi.ReadSingleOrDefaultAsync<PageEditCanvasPageData>();
         if (page is null)
         {
             return null;

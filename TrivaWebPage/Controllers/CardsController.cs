@@ -9,11 +9,19 @@ public class CardsController : Controller
 {
     private readonly IPage _pageRepository;
     private readonly IPageCardBuilderRepository _cardBuilderRepository;
+    private readonly IPageMediaFile _pageMediaFile;
+    private readonly IMediaFile _mediaFile;
 
-    public CardsController(IPage pageRepository, IPageCardBuilderRepository cardBuilderRepository)
+    public CardsController(
+        IPage pageRepository,
+        IPageCardBuilderRepository cardBuilderRepository,
+        IPageMediaFile pageMediaFile,
+        IMediaFile mediaFile)
     {
         _pageRepository = pageRepository;
         _cardBuilderRepository = cardBuilderRepository;
+        _pageMediaFile = pageMediaFile;
+        _mediaFile = mediaFile;
     }
 
     [HttpGet]
@@ -41,23 +49,36 @@ public class CardsController : Controller
         }
 
         CardsEditorPageData? activePage = null;
+        IReadOnlyList<PageEditMediaItemViewModel> pageMedia = Array.Empty<PageEditMediaItemViewModel>();
+
         if (activePageId is int validPageId)
         {
             activePage = await _cardBuilderRepository.GetPageEditorDataAsync(validPageId, cancellationToken);
-            if (activePage is not null && activePage.Items.Count == 0)
-            {
-                activePage.Items = BuildDefaultCards();
-            }
-        }
 
-        var presets = await _cardBuilderRepository.GetButtonPresetsAsync(cancellationToken);
+            var mediaIds = await _pageMediaFile.GetMediaFileIdsByPageAsync(validPageId, cancellationToken);
+            var mediaList = new List<PageEditMediaItemViewModel>();
+            foreach (var mid in mediaIds)
+            {
+                var m = await _mediaFile.GetByIdAsync(mid, cancellationToken);
+                if (m is null) continue;
+                mediaList.Add(new PageEditMediaItemViewModel
+                {
+                    MediaFileId = m.Id,
+                    FilePath = m.FilePath,
+                    DisplayName = m.OriginalFileName
+                });
+            }
+
+            pageMedia = mediaList;
+        }
 
         return View(new CardsBuilderViewModel
         {
             ActivePageId = activePageId,
             Pages = pages,
             ActivePage = activePage,
-            ButtonPresets = presets
+            ButtonPresets = Array.Empty<CardButtonPresetViewModel>(),
+            PageMedia = pageMedia
         });
     }
 
@@ -101,47 +122,28 @@ public class CardsController : Controller
         return RedirectToAction(nameof(Index), new { pageId = model.PageId });
     }
 
-    private static List<CardEditorItemViewModel> BuildDefaultCards()
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> SetCardMedia(int pageId, int cardComponentId, int? mediaFileId, CancellationToken cancellationToken)
     {
-        var cards = new List<CardEditorItemViewModel>();
-        for (var i = 0; i < 6; i++)
+        var page = await _pageRepository.GetByIdAsync(pageId, cancellationToken);
+        if (page is null || page.IsDeleted)
         {
-            var hasImage = i < 4;
-            cards.Add(new CardEditorItemViewModel
-            {
-                DisplayOrder = i + 1,
-                X = 32 + ((i % 3) * 340),
-                Y = 32 + ((i / 3) * 280),
-                Width = 300,
-                Height = 230,
-                IsVisible = true,
-                CardDefinitionId = 1,
-                Title = $"Kart {i + 1}",
-                Subtitle = hasImage ? "Resimli kart" : "Yazı kartı",
-                Description = hasImage
-                    ? "Bu kartta görsel ve metin birlikte gösterilir."
-                    : "Bu kart yalnızca metin içeriğiyle başlar.",
-                ShowImage = hasImage,
-                ShowButton = true,
-                BackgroundColor = "#ffffff",
-                TextColor = "#111827",
-                BorderColor = "#d1d5db",
-                Buttons =
-                [
-                    new CardEditorButtonViewModel
-                    {
-                        DisplayOrder = 1,
-                        Text = "Detaya Git",
-                        BackgroundColor = "#00a19b",
-                        TextColor = "#ffffff",
-                        BorderColor = "#008f8a",
-                        ActionUrl = "https://example.com",
-                        ActionTarget = "_self"
-                    }
-                ]
-            });
+            return NotFound();
         }
 
-        return cards;
+        if (mediaFileId is int mid)
+        {
+            var onPage = await _pageMediaFile.GetMediaFileIdsByPageAsync(pageId, cancellationToken);
+            if (!onPage.Contains(mid))
+            {
+                TempData["CardsError"] = "Bu görsel bu sayfaya yüklenmemiş.";
+                return RedirectToAction(nameof(Index), new { pageId });
+            }
+        }
+
+        await _cardBuilderRepository.UpdateCardComponentMediaAsync(cardComponentId, mediaFileId, cancellationToken);
+        TempData["CardsMessage"] = "Kart görseli güncellendi.";
+        return RedirectToAction(nameof(Index), new { pageId });
     }
 }

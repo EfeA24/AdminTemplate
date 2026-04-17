@@ -10,18 +10,15 @@ public class PagesController : Controller
     private readonly IPage _pageRepository;
     private readonly IPageTemplate _pageTemplateRepository;
     private readonly IPageTemplatePage _pageTemplatePageRepository;
-    private readonly IColorPalette _colorPaletteRepository;
 
     public PagesController(
         IPage pageRepository,
         IPageTemplate pageTemplateRepository,
-        IPageTemplatePage pageTemplatePageRepository,
-        IColorPalette colorPaletteRepository)
+        IPageTemplatePage pageTemplatePageRepository)
     {
         _pageRepository = pageRepository;
         _pageTemplateRepository = pageTemplateRepository;
         _pageTemplatePageRepository = pageTemplatePageRepository;
-        _colorPaletteRepository = colorPaletteRepository;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -65,7 +62,7 @@ public class PagesController : Controller
     public async Task<IActionResult> Create(PageEditViewModel model, CancellationToken cancellationToken)
     {
         ViewBag.FormAction = "Create";
-        await PopulatePageFormLookupsAsync(cancellationToken);
+        await PopulatePageFormLookupsAsync(cancellationToken, model.PageTemplateId);
         await ValidatePageDesignAsync(model, cancellationToken);
         if (!ModelState.IsValid) return View("~/Views/Pages/Form.cshtml", model);
 
@@ -152,7 +149,11 @@ public class PagesController : Controller
         entity.IsDeleted = model.IsDeleted;
         entity.DisplayOrder = model.DisplayOrder;
         entity.PageTemplatePageId = model.PageTemplatePageId;
-        entity.ColorPaletteId = model.ColorPaletteId;
+        if (model.ColorPaletteId.HasValue && model.ColorPaletteId > 0)
+        {
+            entity.ColorPaletteId = model.ColorPaletteId;
+        }
+
         entity.UpdatedDate = DateTime.UtcNow;
 
         await _pageRepository.UpdateAsync(entity, cancellationToken);
@@ -182,11 +183,6 @@ public class PagesController : Controller
             .ToList();
         ViewBag.PageTemplates = templates;
 
-        var palettes = (await _colorPaletteRepository.GetAllAsync(cancellationToken))
-            .OrderBy(p => p.Id)
-            .ToList();
-        ViewBag.ColorPalettes = palettes;
-
         if (selectedTemplateId is > 0)
         {
             ViewBag.TemplateInnerPages = await _pageTemplatePageRepository.GetByConditionAsync(
@@ -202,11 +198,6 @@ public class PagesController : Controller
 
     private async Task ValidatePageDesignAsync(PageEditViewModel model, CancellationToken cancellationToken)
     {
-        if (!model.ColorPaletteId.HasValue || model.ColorPaletteId <= 0)
-        {
-            ModelState.AddModelError(nameof(model.ColorPaletteId), "Renk paleti seçin.");
-        }
-
         var templatePageCount = (await _pageTemplatePageRepository.GetAllAsync(cancellationToken)).Count;
         if (templatePageCount > 0)
         {

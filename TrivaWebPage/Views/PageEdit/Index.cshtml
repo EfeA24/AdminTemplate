@@ -1,33 +1,38 @@
 @using System.Text.Encodings.Web
 @using System.Text.Json
-@model TrivaWebPage.ViewModels.Admin.TextsBuilderViewModel
+@model TrivaWebPage.ViewModels.Admin.PageEditIndexViewModel
 @{
-    ViewData["Title"] = "Metinler";
+    ViewData["Title"] = "Sayfa düzenle";
     var activePage = Model.ActivePage;
-    var payload = JsonSerializer.Serialize(activePage?.Items ?? []);
+    var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+    var payload = JsonSerializer.Serialize(activePage?.Items ?? [], jsonOpts);
     var safePayload = JavaScriptEncoder.Default.Encode(payload);
+    var cardsJson = JsonSerializer.Serialize(Model.Cards, jsonOpts);
+    var safeCards = JavaScriptEncoder.Default.Encode(cardsJson);
+    var mediaJson = JsonSerializer.Serialize(Model.PageMedia, jsonOpts);
+    var safeMedia = JavaScriptEncoder.Default.Encode(mediaJson);
 }
 
-<div class="max-w-7xl mx-auto space-y-5">
+<div class="max-w-[1600px] mx-auto space-y-4">
     <div class="flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Metinler</h1>
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Sayfa düzenle</h1>
         @if (activePage is not null)
         {
             <button type="button"
-                    id="saveTextsBtn"
+                    id="savePageEditBtn"
                     class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">
                 Kaydet
             </button>
         }
     </div>
 
-    @if (TempData["TextsError"] is string error)
+    @if (TempData["PageEditError"] is string err)
     {
-        <div class="rounded-xl border border-red-300/80 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100">@error</div>
+        <div class="rounded-xl border border-red-300/80 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100">@err</div>
     }
-    @if (TempData["TextsMessage"] is string ok)
+    @if (TempData["PageEditMessage"] is string okMsg)
     {
-        <div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100">@ok</div>
+        <div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100">@okMsg</div>
     }
 
     <div class="flex flex-wrap gap-2 border-b border-brand-lightBorder dark:border-brand-darkBorder pb-2">
@@ -50,47 +55,35 @@
     }
     else
     {
-        <form id="saveTextsForm" asp-action="Save" method="post">
+        <form id="savePageEditForm" asp-action="Save" method="post" class="hidden">
             @Html.AntiForgeryToken()
             <input type="hidden" name="PageId" value="@activePage.PageId" />
             <input type="hidden" name="PayloadJson" id="payloadJsonInput" value="@payload" />
         </form>
 
-        <div class="grid gap-4 lg:grid-cols-[320px_1fr]">
-            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-3">
-                <div>
-                    <p class="text-xs uppercase tracking-wide text-brand-lightMuted dark:text-brand-darkMuted">Sayfa</p>
-                    <p class="font-medium">@activePage.PageName</p>
-                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">@activePage.PageWidth x @activePage.PageHeight px</p>
-                    <p class="mt-1 text-xs text-brand-lightMuted dark:text-brand-darkMuted">
-                        Şablon içi sayfa: @(string.IsNullOrWhiteSpace(activePage.TemplatePageName) ? "Seçili değil" : activePage.TemplatePageName)
-                    </p>
-                    @if (activePage.Palette is not null)
-                    {
-                        <div class="mt-2">
-                            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Palet: @activePage.Palette.Name</p>
-                            <div class="mt-1 flex gap-1">
-                                <span class="h-4 w-6 rounded border border-black/10" style="background:@activePage.Palette.PrimaryHex" title="Primary"></span>
-                                <span class="h-4 w-6 rounded border border-black/10" style="background:@activePage.Palette.SecondaryHex" title="Secondary"></span>
-                                <span class="h-4 w-6 rounded border border-black/10" style="background:@activePage.Palette.MutedHex" title="Muted"></span>
-                                <span class="h-4 w-6 rounded border border-black/10" style="background:@activePage.Palette.AccentHex" title="Accent"></span>
-                            </div>
-                        </div>
-                    }
+        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-3 space-y-3">
+            <div class="flex flex-wrap items-end gap-3 border-b border-brand-lightBorder dark:border-brand-darkBorder pb-3">
+                <div class="min-w-[8rem]">
+                    <p class="text-xs uppercase text-brand-lightMuted dark:text-brand-darkMuted">Sayfa</p>
+                    <p class="text-sm font-medium truncate max-w-[14rem]">@activePage.PageName</p>
+                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">@activePage.PageWidth × @activePage.PageHeight px</p>
                 </div>
-
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <button type="button" id="addTextBoxBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
-                        + Metin kutusu ekle
-                    </button>
-                    <button type="button" id="removeTextBoxBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">
-                        Seçiliyi sil
-                    </button>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" id="addTextBoxBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">+ Metin kutusu</button>
+                    <button type="button" id="removeTextBoxBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçiliyi sil</button>
                 </div>
-
-                <div class="space-y-3 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <h3 class="text-sm font-semibold">Biçim</h3>
-                    <div class="space-y-1">
+                <label class="flex items-center gap-2 text-sm cursor-pointer border rounded-lg px-3 py-2 border-brand-lightBorder dark:border-brand-darkBorder">
+                    <input type="checkbox" id="resizeHandlesToggle" checked />
+                    Köşeden boyutlandır
+                </label>
+                <div class="flex flex-wrap items-center gap-2 border-l border-brand-lightBorder dark:border-brand-darkBorder pl-3">
+                    <span class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Zoom</span>
+                    <button type="button" id="zoomOutBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">-</button>
+                    <button type="button" id="zoomResetBtn" class="h-8 min-w-[64px] rounded-md border border-brand-lightBorder bg-white px-2 text-sm font-semibold text-black hover:bg-black/5">100%</button>
+                    <button type="button" id="zoomInBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">+</button>
+                </div>
+                <div class="flex flex-wrap gap-2 items-end flex-1 min-w-[240px]">
+                    <div class="space-y-1 flex-1 min-w-[120px]">
                         <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Yazı tipi</label>
                         <select id="fontFamily" class="w-full rounded border px-2 py-1.5 text-black text-sm">
                             @foreach (var font in Model.FontOptions)
@@ -99,42 +92,50 @@
                             }
                         </select>
                     </div>
-                    <div class="grid grid-cols-2 gap-2">
-                        <div class="space-y-1">
-                            <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Boyut</label>
-                            <input id="fontSize" type="number" min="8" max="144" class="w-full rounded border px-2 py-1.5 text-black text-sm" value="16" />
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Renk</label>
-                            <input id="textColor" type="color" class="h-9 w-full rounded border bg-white p-1" value="#111111" />
-                        </div>
+                    <div class="space-y-1 w-20">
+                        <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Boyut</label>
+                        <input id="fontSize" type="number" min="8" max="144" class="w-full rounded border px-2 py-1.5 text-black text-sm" value="16" />
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="space-y-1 w-24">
+                        <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Renk</label>
+                        <input id="textColor" type="color" class="h-9 w-full rounded border bg-white p-1" value="#111111" />
+                    </div>
+                    <div class="flex gap-1">
                         <button type="button" data-toggle-style="bold" class="style-btn rounded border px-2 py-1 text-sm font-semibold">B</button>
                         <button type="button" data-toggle-style="italic" class="style-btn rounded border px-2 py-1 text-sm italic">I</button>
                         <button type="button" data-toggle-style="underline" class="style-btn rounded border px-2 py-1 text-sm underline">U</button>
                     </div>
-                    <div class="grid grid-cols-3 gap-2">
+                    <div class="flex gap-1">
                         <button type="button" data-align="left" class="align-btn rounded border px-2 py-1 text-xs">Sola</button>
                         <button type="button" data-align="center" class="align-btn rounded border px-2 py-1 text-xs">Ortala</button>
                         <button type="button" data-align="right" class="align-btn rounded border px-2 py-1 text-xs">Sağa</button>
                     </div>
                 </div>
-            </section>
+            </div>
 
-            <section id="templateViewport" class="relative rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-hidden">
-                <div class="pointer-events-auto absolute right-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-brand-lightBorder bg-white px-3 py-2 shadow-md">
-                    <span class="text-xs font-semibold text-black/70">Zoom</span>
-                    <button type="button" id="zoomOutBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">-</button>
-                    <button type="button" id="zoomResetBtn" class="h-8 min-w-[64px] rounded-md border border-brand-lightBorder bg-white px-2 text-sm font-semibold text-black hover:bg-black/5">100%</button>
-                    <button type="button" id="zoomInBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">+</button>
+            <div class="grid gap-3 lg:grid-cols-[minmax(0,200px)_1fr]">
+                <aside class="space-y-3 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-3 bg-white/50 dark:bg-black/10 order-2 lg:order-1">
+                    <p class="text-xs font-semibold uppercase text-brand-lightMuted dark:text-brand-darkMuted">Sayfa görselleri</p>
+                    <form asp-action="UploadMedia" method="post" enctype="multipart/form-data" class="space-y-2">
+                        @Html.AntiForgeryToken()
+                        <input type="hidden" name="pageId" value="@activePage.PageId" />
+                        <input type="file" name="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="text-xs w-full" required />
+                        <button type="submit" class="w-full rounded border border-brand-lightAccent bg-brand-lightAccent px-2 py-1.5 text-xs font-medium text-white dark:bg-brand-darkAccent">Yükle</button>
+                    </form>
+                    <div id="pageMediaThumbs" class="grid grid-cols-2 gap-2 max-h-[420px] overflow-y-auto"></div>
+                </aside>
+
+                <div id="templateViewport" class="relative order-1 lg:order-2 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-white p-3 overflow-auto min-h-[480px]">
+                    <p class="text-xs font-semibold text-brand-lightMuted dark:text-brand-darkMuted mb-2">Şablon önizleme · @(
+                        string.IsNullOrWhiteSpace(activePage.TemplatePageName) ? "İç sayfa yok" : activePage.TemplatePageName)</p>
+                    <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto"
+                         style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
+                         id="pageCanvas">
+                        <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="yes"></iframe>
+                    </div>
+                    <div id="cardPreviewStrip" class="mt-4 space-y-2"></div>
                 </div>
-                <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto overflow-hidden"
-                     style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
-                     id="pageCanvas">
-                    <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="auto"></iframe>
-                </div>
-            </section>
+            </div>
         </div>
     }
 </div>
@@ -144,14 +145,15 @@
     <script>
         (function () {
             const initialItems = JSON.parse("@Html.Raw(safePayload)");
+            const pageMedia = JSON.parse("@Html.Raw(safeMedia)");
+            const cardPreviews = JSON.parse("@Html.Raw(safeCards)");
             const templateHtml = @Html.Raw(JsonSerializer.Serialize(activePage.TemplateHtml ?? ""));
-            const palette = @Html.Raw(JsonSerializer.Serialize(activePage.Palette));
             const canvas = document.getElementById("pageCanvas");
             const viewport = document.getElementById("templateViewport");
             const templateFrame = document.getElementById("templateFrame");
             const payloadInput = document.getElementById("payloadJsonInput");
-            const saveBtn = document.getElementById("saveTextsBtn");
-            const saveForm = document.getElementById("saveTextsForm");
+            const saveBtn = document.getElementById("savePageEditBtn");
+            const saveForm = document.getElementById("savePageEditForm");
             const addBtn = document.getElementById("addTextBoxBtn");
             const removeBtn = document.getElementById("removeTextBoxBtn");
             const zoomInBtn = document.getElementById("zoomInBtn");
@@ -162,6 +164,11 @@
             const textColor = document.getElementById("textColor");
             const alignButtons = Array.from(document.querySelectorAll(".align-btn"));
             const styleButtons = Array.from(document.querySelectorAll(".style-btn"));
+            const resizeToggle = document.getElementById("resizeHandlesToggle");
+            const mediaThumbs = document.getElementById("pageMediaThumbs");
+            const cardStrip = document.getElementById("cardPreviewStrip");
+            const pageId = @activePage.PageId;
+            const tokenInput = saveForm?.querySelector('input[name="__RequestVerificationToken"]');
 
             if (!canvas || !viewport || !templateFrame || !payloadInput || !saveBtn || !saveForm) return;
             let templateZoom = 1;
@@ -182,14 +189,89 @@
                     fontFamily: item.fontFamily || "Inter",
                     fontSize: item.fontSize || 16,
                     fontWeight: item.fontWeight || null,
-                    textColor: item.textColor || palette?.PrimaryHex || "#111111",
+                    textColor: item.textColor || "#111111",
                     textAlign: item.textAlign || "left",
                     isBold: !!item.isBold,
                     isItalic: !!item.isItalic,
                     isUnderline: !!item.isUnderline
                 })),
-                selectedIndex: -1
+                selectedIndex: -1,
+                editingIndex: -1
             };
+
+            function renderMediaThumbs() {
+                if (!mediaThumbs) return;
+                mediaThumbs.innerHTML = "";
+                pageMedia.forEach((m) => {
+                    const wrap = document.createElement("div");
+                    wrap.className = "relative group rounded border border-brand-lightBorder overflow-hidden";
+                    const img = document.createElement("img");
+                    img.src = m.filePath;
+                    img.alt = m.displayName || "";
+                    img.className = "h-20 w-full object-cover";
+                    wrap.appendChild(img);
+                    const rm = document.createElement("form");
+                    rm.method = "post";
+                    rm.action = "@Url.Action("RemovePageMedia")";
+                    rm.className = "absolute top-1 right-1 opacity-0 group-hover:opacity-100 transition";
+                    const t = document.createElement("input");
+                    t.type = "hidden";
+                    t.name = "__RequestVerificationToken";
+                    t.value = tokenInput ? tokenInput.value : "";
+                    rm.appendChild(t);
+                    const p = document.createElement("input");
+                    p.type = "hidden"; p.name = "pageId"; p.value = String(pageId);
+                    rm.appendChild(p);
+                    const mid = document.createElement("input");
+                    mid.type = "hidden"; mid.name = "mediaFileId"; mid.value = String(m.mediaFileId);
+                    rm.appendChild(mid);
+                    const btn = document.createElement("button");
+                    btn.type = "submit";
+                    btn.className = "rounded bg-red-600 text-white text-[10px] px-1 py-0.5";
+                    btn.textContent = "×";
+                    rm.appendChild(btn);
+                    wrap.appendChild(rm);
+                    mediaThumbs.appendChild(wrap);
+                });
+            }
+
+            function renderCardStrip() {
+                if (!cardStrip) return;
+                cardStrip.innerHTML = "";
+                if (!cardPreviews.length) {
+                    cardStrip.innerHTML = '<p class="text-xs text-brand-lightMuted">Bu sayfada kart yok. Kartlar sayfasından HTML ile ekleyebilirsiniz.</p>';
+                    return;
+                }
+                const title = document.createElement("p");
+                title.className = "text-xs font-semibold text-brand-lightMuted";
+                title.textContent = "Kartlar (önizleme)";
+                cardStrip.appendChild(title);
+                const row = document.createElement("div");
+                row.className = "flex flex-wrap gap-2";
+                cardPreviews.forEach((c) => {
+                    const box = document.createElement("div");
+                    box.className = "rounded border border-brand-lightBorder bg-white/90 p-2 text-xs max-w-[200px] shadow-sm";
+                    if (c.htmlFragment) {
+                        const ph = document.createElement("div");
+                        ph.className = "text-[11px] max-h-24 overflow-hidden prose prose-sm";
+                        ph.innerHTML = c.htmlFragment;
+                        box.appendChild(ph);
+                    } else {
+                        const t = document.createElement("div");
+                        t.className = "font-medium truncate";
+                        t.textContent = c.title || "Kart";
+                        box.appendChild(t);
+                        if (c.showImage && c.mediaFilePath) {
+                            const im = document.createElement("img");
+                            im.src = c.mediaFilePath;
+                            im.className = "mt-1 h-16 w-full object-cover rounded";
+                            box.appendChild(im);
+                        }
+                    }
+                    row.appendChild(box);
+                });
+                cardStrip.appendChild(row);
+            }
 
             function updateToolbar() {
                 const item = state.items[state.selectedIndex];
@@ -216,7 +298,7 @@
 
             function createBoxElement(item, index) {
                 const box = document.createElement("div");
-                box.className = "absolute rounded border border-brand-lightAccent/60 dark:border-brand-darkAccent/60 bg-white/85 shadow-sm z-10";
+                box.className = "absolute rounded border border-brand-lightAccent/60 dark:border-brand-darkAccent/60 bg-white/90 shadow-sm z-10 select-none";
                 box.dataset.index = index;
                 box.style.left = item.x + "px";
                 box.style.top = item.y + "px";
@@ -226,6 +308,8 @@
 
                 const textArea = document.createElement("textarea");
                 textArea.className = "w-full h-full resize-none border-0 bg-transparent p-2 text-sm focus:outline-none";
+                textArea.readOnly = true;
+                textArea.tabIndex = 0;
                 textArea.value = item.content || "";
                 textArea.style.fontFamily = item.fontFamily || "Inter";
                 textArea.style.fontSize = (item.fontSize || 16) + "px";
@@ -237,13 +321,37 @@
                 textArea.addEventListener("input", () => {
                     state.items[index].content = textArea.value;
                 });
-                textArea.addEventListener("focus", () => select(index));
+                textArea.addEventListener("blur", () => {
+                    state.editingIndex = -1;
+                    textArea.readOnly = true;
+                });
+                textArea.addEventListener("mousedown", (e) => {
+                    if (!textArea.readOnly) e.stopPropagation();
+                });
+
+                box.addEventListener("click", (e) => {
+                    if (e.target === textArea && !textArea.readOnly) return;
+                    select(index);
+                });
+                box.addEventListener("dblclick", (e) => {
+                    e.preventDefault();
+                    select(index);
+                    state.editingIndex = index;
+                    textArea.readOnly = false;
+                    textArea.focus();
+                });
 
                 const handle = document.createElement("div");
-                handle.className = "absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded bg-brand-lightAccent dark:bg-brand-darkAccent";
+                handle.className = "absolute -bottom-1 -right-1 h-3 w-3 cursor-se-resize rounded bg-brand-lightAccent dark:bg-brand-darkAccent resize-handle";
                 handle.title = "Boyutlandır";
 
-                enableDrag(box, index);
+                function syncResizeVisibility() {
+                    const on = resizeToggle && resizeToggle.checked;
+                    handle.style.display = on ? "block" : "none";
+                }
+                syncResizeVisibility();
+
+                enablePointerDrag(box, index, textArea);
                 enableResize(handle, box, index);
 
                 box.appendChild(textArea);
@@ -280,7 +388,7 @@
                 doc.close();
 
                 const style = doc.createElement("style");
-                style.textContent = ".__texts-template-selected{outline:2px solid var(--color-accent, #00a19b)!important;outline-offset:2px!important;}";
+                style.textContent = ".__texts-template-selected{outline:2px solid #00a19b!important;outline-offset:2px!important;}";
                 doc.head.appendChild(style);
 
                 const root = doc.documentElement;
@@ -291,14 +399,7 @@
                     doc.body.style.overflow = "auto";
                     doc.body.style.zoom = "normal";
                     doc.body.style.margin = "0";
-                    doc.body.style.padding = "0";
-                }
-
-                if (palette) {
-                    root.style.setProperty("--color-primary", palette.PrimaryHex || "#111111");
-                    root.style.setProperty("--color-secondary", palette.SecondaryHex || "#333333");
-                    root.style.setProperty("--color-muted", palette.MutedHex || "#777777");
-                    root.style.setProperty("--color-accent", palette.AccentHex || "#00a19b");
+                    doc.body.style.minHeight = "100%";
                 }
 
                 let selectedNode = null;
@@ -319,54 +420,35 @@
                     target.focus();
                 }, true);
 
-                if (zoomResetBtn) {
-                    zoomResetBtn.textContent = "100%";
-                }
-                updateViewportOverflow();
+                if (zoomResetBtn) zoomResetBtn.textContent = "100%";
+                viewport.style.overflow = "auto";
             }
 
             function applyTemplateZoom() {
                 const doc = templateFrame.contentDocument;
                 if (!doc?.body || !doc.documentElement) return;
                 doc.body.style.zoom = String(templateZoom);
-                if (zoomResetBtn) {
-                    zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
-                }
-
-                if (templateZoom > 1) {
-                    doc.documentElement.style.overflow = "auto";
-                    doc.body.style.overflow = "auto";
-                } else {
-                    doc.documentElement.style.overflow = "hidden";
-                    doc.body.style.overflow = "hidden";
-                }
-                updateViewportOverflow();
-            }
-
-            function updateViewportOverflow() {
-                if (templateZoom > 1) {
-                    viewport.style.overflow = "auto";
-                    return;
-                }
-
-                viewport.style.overflow = "hidden";
+                if (zoomResetBtn) zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
+                doc.documentElement.style.overflow = templateZoom > 1 ? "auto" : "auto";
+                doc.body.style.overflow = "auto";
             }
 
             function clamp(value, min, max) {
                 return Math.min(Math.max(value, min), max);
             }
 
-            function enableDrag(node, index) {
+            function enablePointerDrag(node, index, textArea) {
                 let active = false;
                 let originX = 0;
                 let originY = 0;
                 let startX = 0;
                 let startY = 0;
 
-                node.addEventListener("mousedown", (event) => {
-                    if (event.target.dataset.align || event.target.dataset.toggleStyle) return;
-                    if (event.target.classList.contains("cursor-se-resize")) return;
+                node.addEventListener("pointerdown", (event) => {
+                    if (textArea.readOnly === false) return;
+                    if (event.target.classList.contains("resize-handle")) return;
                     active = true;
+                    node.setPointerCapture(event.pointerId);
                     select(index);
                     originX = event.clientX;
                     originY = event.clientY;
@@ -375,18 +457,26 @@
                     event.preventDefault();
                 });
 
-                window.addEventListener("mousemove", (event) => {
+                node.addEventListener("pointermove", (event) => {
                     if (!active) return;
                     const item = state.items[index];
                     const canvasRect = canvas.getBoundingClientRect();
-                    item.x = clamp(startX + (event.clientX - originX), 0, canvasRect.width - item.width);
-                    item.y = clamp(startY + (event.clientY - originY), 0, canvasRect.height - item.height);
+                    const dx = event.clientX - originX;
+                    const dy = event.clientY - originY;
+                    item.x = clamp(Math.round(startX + dx), 0, canvasRect.width - item.width);
+                    item.y = clamp(Math.round(startY + dy), 0, canvasRect.height - item.height);
                     node.style.left = item.x + "px";
                     node.style.top = item.y + "px";
                 });
 
-                window.addEventListener("mouseup", () => {
+                node.addEventListener("pointerup", (event) => {
+                    if (!active) return;
                     active = false;
+                    try { node.releasePointerCapture(event.pointerId); } catch (_) { }
+                });
+                node.addEventListener("pointercancel", (event) => {
+                    active = false;
+                    try { node.releasePointerCapture(event.pointerId); } catch (_) { }
                 });
             }
 
@@ -397,8 +487,9 @@
                 let startW = 0;
                 let startH = 0;
 
-                handle.addEventListener("mousedown", (event) => {
+                handle.addEventListener("pointerdown", (event) => {
                     active = true;
+                    handle.setPointerCapture(event.pointerId);
                     select(index);
                     originX = event.clientX;
                     originY = event.clientY;
@@ -408,21 +499,25 @@
                     event.stopPropagation();
                 });
 
-                window.addEventListener("mousemove", (event) => {
+                handle.addEventListener("pointermove", (event) => {
                     if (!active) return;
                     const item = state.items[index];
                     const canvasRect = canvas.getBoundingClientRect();
-                    const nextW = clamp(startW + (event.clientX - originX), 80, canvasRect.width - item.x);
-                    const nextH = clamp(startH + (event.clientY - originY), 40, canvasRect.height - item.y);
+                    const dw = event.clientX - originX;
+                    const dh = event.clientY - originY;
+                    const nextW = clamp(startW + dw, 80, canvasRect.width - item.x);
+                    const nextH = clamp(startH + dh, 40, canvasRect.height - item.y);
                     item.width = Math.round(nextW);
                     item.height = Math.round(nextH);
                     node.style.width = item.width + "px";
                     node.style.height = item.height + "px";
                 });
 
-                window.addEventListener("mouseup", () => {
+                handle.addEventListener("pointerup", (event) => {
                     active = false;
+                    try { handle.releasePointerCapture(event.pointerId); } catch (_) { }
                 });
+                handle.addEventListener("pointercancel", () => { active = false; });
             }
 
             addBtn?.addEventListener("click", () => {
@@ -438,7 +533,7 @@
                     fontFamily: "Inter",
                     fontSize: 16,
                     fontWeight: null,
-                    textColor: palette?.PrimaryHex || "#111111",
+                    textColor: "#111111",
                     textAlign: "left",
                     isBold: false,
                     isItalic: false,
@@ -533,6 +628,14 @@
                 applyTemplateZoom();
             });
 
+            resizeToggle?.addEventListener("change", () => {
+                document.querySelectorAll(".resize-handle").forEach((h) => {
+                    h.style.display = resizeToggle.checked ? "block" : "none";
+                });
+            });
+
+            renderMediaThumbs();
+            renderCardStrip();
             loadTemplateFrame();
             render();
         })();

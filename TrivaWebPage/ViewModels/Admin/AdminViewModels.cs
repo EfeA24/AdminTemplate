@@ -62,6 +62,8 @@ public class PageTemplatePageLineViewModel
     public int DisplayOrder { get; set; }
 
     public string? HtmlContent { get; set; }
+
+    public string? PreviewImagePath { get; set; }
 }
 
 public class PageTemplateEditViewModel
@@ -71,12 +73,10 @@ public class PageTemplateEditViewModel
     [Required]
     public string Name { get; set; } = string.Empty;
 
-    [Required]
-    public string Code { get; set; } = string.Empty;
+    /// <summary>Tek sayfa veya ZIP sonrası düzenleme için ana HTML (ZIP yoksa zorunlu).</summary>
+    public string? MasterHtml { get; set; }
 
-    public string? Description { get; set; }
-    public bool IsActive { get; set; } = true;
-
+    /// <summary>Sunucu tarafında ZIP veya MasterHtml ile doldurulur.</summary>
     public List<PageTemplatePageLineViewModel> Pages { get; set; } = new();
 }
 
@@ -280,15 +280,37 @@ public class ImageAssignInputModel
     public int[]? PageIds { get; set; }
 }
 
-public class TextsBuilderViewModel
+public class PageEditIndexViewModel
 {
     public int? ActivePageId { get; set; }
     public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
-    public TextsEditorPageData? ActivePage { get; set; }
+    public PageEditCanvasPageData? ActivePage { get; set; }
     public string[] FontOptions { get; init; } = ["Inter", "Manrope", "Arial", "Verdana", "Tahoma", "Times New Roman", "Georgia"];
+    /// <summary>Page-scoped media for sidebar (active page).</summary>
+    public IReadOnlyList<PageEditMediaItemViewModel> PageMedia { get; init; } = Array.Empty<PageEditMediaItemViewModel>();
+    /// <summary>Card components on the active page (read-only preview in PageEdit).</summary>
+    public IReadOnlyList<PageEditCardPreviewItemViewModel> Cards { get; init; } = Array.Empty<PageEditCardPreviewItemViewModel>();
 }
 
-public class TextsEditorPageData
+public class PageEditMediaItemViewModel
+{
+    public int MediaFileId { get; init; }
+    public string FilePath { get; init; } = string.Empty;
+    public string DisplayName { get; init; } = string.Empty;
+}
+
+public class PageEditCardPreviewItemViewModel
+{
+    public int ComponentId { get; init; }
+    public int CardComponentId { get; init; }
+    public string? Title { get; init; }
+    public int? MediaFileId { get; init; }
+    public string? MediaFilePath { get; init; }
+    public bool ShowImage { get; init; }
+    public string? HtmlFragment { get; init; }
+}
+
+public class PageEditCanvasPageData
 {
     public int PageId { get; set; }
     public string PageName { get; set; } = string.Empty;
@@ -297,7 +319,6 @@ public class TextsEditorPageData
     public int? TemplatePageId { get; set; }
     public string? TemplatePageName { get; set; }
     public string? TemplateHtml { get; set; }
-    public TemplateCanvasPaletteData? Palette { get; set; }
     public List<TextBoxEditorItemViewModel> Items { get; set; } = new();
 }
 
@@ -321,7 +342,7 @@ public class TextBoxEditorItemViewModel
     public bool IsUnderline { get; set; }
 }
 
-public class TextsBuilderSaveInputModel
+public class PageEditSaveInputModel
 {
     [Range(1, int.MaxValue)]
     public int PageId { get; set; }
@@ -356,6 +377,7 @@ public class CardsBuilderViewModel
     public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
     public CardsEditorPageData? ActivePage { get; set; }
     public IReadOnlyList<CardButtonPresetViewModel> ButtonPresets { get; init; } = Array.Empty<CardButtonPresetViewModel>();
+    public IReadOnlyList<PageEditMediaItemViewModel> PageMedia { get; init; } = Array.Empty<PageEditMediaItemViewModel>();
 }
 
 public class CardsEditorPageData
@@ -384,6 +406,7 @@ public class CardEditorItemViewModel
     public string? Title { get; set; }
     public string? Subtitle { get; set; }
     public string? Description { get; set; }
+    public string? HtmlFragment { get; set; }
     public int? MediaFileId { get; set; }
     public string? MediaFilePath { get; set; }
     public bool ShowImage { get; set; }
@@ -443,6 +466,7 @@ public record CardBuilderSaveItemInputModel
     public string? Title { get; init; }
     public string? Subtitle { get; init; }
     public string? Description { get; init; }
+    public string? HtmlFragment { get; init; }
     public int? MediaFileId { get; init; }
     public bool ShowImage { get; init; }
     public bool ShowButton { get; init; } = true;

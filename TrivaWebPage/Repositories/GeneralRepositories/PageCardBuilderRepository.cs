@@ -45,6 +45,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                                cc.[Title],
                                cc.[Subtitle],
                                cc.[Description],
+                               cc.[HtmlFragment],
                                cc.[MediaFileId],
                                mf.[FilePath] AS [MediaFilePath],
                                cc.[ShowImage],
@@ -160,7 +161,20 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
             }
 
             var sectionId = await EnsureSectionAsync(connection, tx, pageId, cancellationToken);
-            var incoming = items.Select((item, idx) => Normalize(item, page.Width, page.Height, idx + 1)).ToList();
+            var htmlEmbedDefinitionId = await connection.QuerySingleOrDefaultAsync<int?>(
+                new CommandDefinition(
+                    "SELECT TOP (1) [Id] FROM [CardDefinitions] WHERE [Code] = @Code;",
+                    new { Code = "html-embed" },
+                    tx,
+                    cancellationToken: cancellationToken));
+            if (!htmlEmbedDefinitionId.HasValue)
+            {
+                throw new InvalidOperationException("CardDefinitions içinde 'html-embed' kodu bulunamadı. Migration uygulandığından emin olun.");
+            }
+
+            var incoming = items
+                .Select((item, idx) => Normalize(item, page.Width, page.Height, idx + 1, htmlEmbedDefinitionId.Value))
+                .ToList();
 
             var existing = (await connection.QueryAsync<ExistingCardRow>(
                 new CommandDefinition(
@@ -224,7 +238,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                     await connection.ExecuteAsync(new CommandDefinition(
                         """
                         UPDATE [CardComponents]
-                        SET [CardDefinitionId] = @CardDefinitionId, [Title] = @Title, [Subtitle] = @Subtitle, [Description] = @Description, [MediaFileId] = @MediaFileId,
+                        SET [CardDefinitionId] = @CardDefinitionId, [Title] = @Title, [Subtitle] = @Subtitle, [Description] = @Description, [HtmlFragment] = @HtmlFragment, [MediaFileId] = @MediaFileId,
                             [BackgroundColor] = @BackgroundColor, [TextColor] = @TextColor, [BorderColor] = @BorderColor, [ShowImage] = @ShowImage, [ShowButton] = @ShowButton
                         WHERE [Id] = @Id;
                         """,
@@ -235,6 +249,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                             item.Title,
                             item.Subtitle,
                             item.Description,
+                            item.HtmlFragment,
                             item.MediaFileId,
                             item.BackgroundColor,
                             item.TextColor,
@@ -277,10 +292,10 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                     cardComponentId = await connection.ExecuteScalarAsync<int>(new CommandDefinition(
                         """
                         INSERT INTO [CardComponents]
-                            ([PageComponentId], [CardDefinitionId], [Title], [Subtitle], [Description], [MediaFileId], [BackgroundColor], [TextColor], [BorderColor], [ShowImage], [ShowButton])
+                            ([PageComponentId], [CardDefinitionId], [Title], [Subtitle], [Description], [HtmlFragment], [MediaFileId], [BackgroundColor], [TextColor], [BorderColor], [ShowImage], [ShowButton])
                         OUTPUT INSERTED.[Id]
                         VALUES
-                            (@PageComponentId, @CardDefinitionId, @Title, @Subtitle, @Description, @MediaFileId, @BackgroundColor, @TextColor, @BorderColor, @ShowImage, @ShowButton);
+                            (@PageComponentId, @CardDefinitionId, @Title, @Subtitle, @Description, @HtmlFragment, @MediaFileId, @BackgroundColor, @TextColor, @BorderColor, @ShowImage, @ShowButton);
                         """,
                         new
                         {
@@ -289,6 +304,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                             item.Title,
                             item.Subtitle,
                             item.Description,
+                            item.HtmlFragment,
                             item.MediaFileId,
                             item.BackgroundColor,
                             item.TextColor,
@@ -378,23 +394,43 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
         }
     }
 
-    private static CardBuilderSaveItemInputModel Normalize(CardBuilderSaveItemInputModel item, int pageWidth, int pageHeight, int displayOrder)
+    public async Task UpdateCardComponentMediaAsync(int cardComponentId, int? mediaFileId, CancellationToken cancellationToken = default)
+    {
+        using var connection = await _connectionFactory.CreateOpenConnectionAsync(cancellationToken);
+        await connection.ExecuteAsync(
+            new CommandDefinition(
+                "UPDATE [CardComponents] SET [MediaFileId] = @MediaFileId WHERE [Id] = @Id;",
+                new { Id = cardComponentId, MediaFileId = mediaFileId },
+                cancellationToken: cancellationToken));
+    }
+
+    private static CardBuilderSaveItemInputModel Normalize(
+        CardBuilderSaveItemInputModel item,
+        int pageWidth,
+        int pageHeight,
+        int displayOrder,
+        int htmlEmbedDefinitionId)
     {
         var width = Math.Clamp(item.Width <= 0 ? 320 : item.Width, 160, pageWidth);
         var height = Math.Clamp(item.Height <= 0 ? 220 : item.Height, 120, pageHeight);
         var xMax = Math.Max(0, pageWidth - width);
         var yMax = Math.Max(0, pageHeight - height);
-        var buttons = (item.Buttons ?? [])
-            .Where(x => !string.IsNullOrWhiteSpace(x.Text))
-            .Take(10)
-            .Select((x, idx) => x with
-            {
-                DisplayOrder = idx + 1,
-                Text = x.Text.Trim(),
-                ActionUrl = NormalizeUrl(x.ActionUrl),
-                ActionTarget = string.IsNullOrWhiteSpace(x.ActionTarget) ? "_self" : x.ActionTarget.Trim()
-            })
-            .ToList();
+        var isHtmlCard = !string.IsNullOrWhiteSpace(item.HtmlFragment);
+        var buttons = isHtmlCard
+            ? new List<CardBuilderSaveButtonInputModel>()
+            : (item.Buttons ?? [])
+                .Where(x => !string.IsNullOrWhiteSpace(x.Text))
+                .Take(10)
+                .Select((x, idx) => x with
+                {
+                    DisplayOrder = idx + 1,
+                    Text = x.Text.Trim(),
+                    ActionUrl = NormalizeUrl(x.ActionUrl),
+                    ActionTarget = string.IsNullOrWhiteSpace(x.ActionTarget) ? "_self" : x.ActionTarget.Trim()
+                })
+                .ToList();
+
+        var htmlFragment = isHtmlCard ? item.HtmlFragment!.Trim() : null;
 
         return item with
         {
@@ -406,10 +442,17 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
             Title = (item.Title ?? string.Empty).Trim(),
             Subtitle = string.IsNullOrWhiteSpace(item.Subtitle) ? null : item.Subtitle.Trim(),
             Description = string.IsNullOrWhiteSpace(item.Description) ? null : item.Description.Trim(),
+            HtmlFragment = htmlFragment,
             BackgroundColor = NormalizeColor(item.BackgroundColor, "#ffffff"),
             TextColor = NormalizeColor(item.TextColor, "#111827"),
             BorderColor = NormalizeColor(item.BorderColor, "#d1d5db"),
-            CardDefinitionId = item.CardDefinitionId is > 0 ? item.CardDefinitionId : 1,
+            CardDefinitionId = isHtmlCard
+                ? htmlEmbedDefinitionId
+                : item.CardDefinitionId is > 0
+                    ? item.CardDefinitionId
+                    : 1,
+            ShowImage = isHtmlCard ? false : item.ShowImage,
+            ShowButton = isHtmlCard ? false : item.ShowButton,
             Buttons = buttons
         };
     }

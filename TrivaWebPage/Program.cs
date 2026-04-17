@@ -6,8 +6,6 @@ using Microsoft.EntityFrameworkCore;
 using TrivaWebPage.Data.Connection;
 using TrivaWebPage.DependencyInjection;
 using TrivaWebPage.Models;
-using TrivaWebPage.Services;
-
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
@@ -35,8 +33,6 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Data access / repositories
 builder.Services.AddDataAccess(builder.Configuration);
-builder.Services.AddScoped<CuratorTemplateSeedService>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -60,12 +56,5 @@ app.MapControllerRoute(
         name: "default",
         pattern: "{controller=Home}/{action=Index}/{id?}")
     .WithStaticAssets();
-
-using (var scope = app.Services.CreateScope())
-{
-    var seeder = scope.ServiceProvider.GetRequiredService<CuratorTemplateSeedService>();
-    await seeder.SeedAsync();
-}
-
 
 app.Run();

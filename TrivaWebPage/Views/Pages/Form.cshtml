@@ -5,7 +5,6 @@
     var formBaslik = formAction == "Edit" ? "Düzenle" : "Oluştur";
     ViewData["Title"] = $"Sayfa {formBaslik}";
     var templates = ViewBag.PageTemplates as IReadOnlyList<PageTemplate> ?? Array.Empty<PageTemplate>();
-    var palettes = ViewBag.ColorPalettes as IReadOnlyList<ColorPalette> ?? Array.Empty<ColorPalette>();
     var innerPages = ViewBag.TemplateInnerPages as IReadOnlyList<PageTemplatePage> ?? Array.Empty<PageTemplatePage>();
     var templateUrl = Url.Action("TemplatePages", "Pages")!;
 }
@@ -16,6 +15,7 @@
     <form asp-action="@formAction" asp-route-id="@(formAction == "Edit" ? Model.Id : null)" method="post" class="space-y-6 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
         @Html.AntiForgeryToken()
         <input type="hidden" asp-for="Id" />
+        <input type="hidden" asp-for="ColorPaletteId" />
         <div asp-validation-summary="All" class="text-red-600 text-sm"></div>
 
         <div class="space-y-2 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-4">
@@ -54,28 +54,6 @@
                 }
             </select>
             <span asp-validation-for="PageTemplatePageId" class="text-red-600 text-xs"></span>
-        </div>
-
-        <div class="space-y-2 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-4">
-            <p class="text-sm font-semibold">3. Renk paleti</p>
-            <div class="grid gap-2 sm:grid-cols-2">
-                @foreach (var pal in palettes)
-                {
-                    <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-2 has-[:checked]:ring-2 has-[:checked]:ring-brand-lightAccent dark:has-[:checked]:ring-brand-darkAccent">
-                        <input type="radio" name="ColorPaletteId" value="@pal.Id" class="shrink-0" @(Model.ColorPaletteId == pal.Id ? "checked" : null) />
-                        <span class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
-                            <span class="font-medium truncate">@pal.Name</span>
-                            <span class="flex gap-1">
-                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.PrimaryHex" title="Ana: @pal.PrimaryHex"></span>
-                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.SecondaryHex" title="İkincil: @pal.SecondaryHex"></span>
-                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.MutedHex" title="Yumuşak ton"></span>
-                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.AccentHex" title="Vurgu"></span>
-                            </span>
-                        </span>
-                    </label>
-                }
-            </div>
-            <span asp-validation-for="ColorPaletteId" class="text-red-600 text-xs"></span>
         </div>
 
         <div class="space-y-3 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-4">
