@@ -1,0 +1,19 @@
+@model TrivaWebPage.Models.General.Page
+@{
+    ViewData["Title"] = "Sayfayı sil";
+}
+
+<div class="space-y-4">
+    <h1 class="text-2xl font-semibold">Sayfayı sil</h1>
+    <p>Bu sayfayı silmek istediğinize emin misiniz?</p>
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 text-sm">
+        <div class="font-medium">@Model.Name</div>
+        <div class="font-mono text-xs opacity-80">@Model.Slug</div>
+    </div>
+    <form asp-action="Delete" method="post" class="flex gap-3">
+        @Html.AntiForgeryToken()
+        <input type="hidden" name="id" value="@Model.Id" />
+        <button class="rounded bg-red-600 text-white px-4 py-2" type="submit">Sil</button>
+        <a asp-action="Index">İptal</a>
+    </form>
+</div>

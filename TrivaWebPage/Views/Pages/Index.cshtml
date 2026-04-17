@@ -1,0 +1,45 @@
+@model IReadOnlyList<TrivaWebPage.Models.General.Page>
+@{
+    ViewData["Title"] = "Sayfalar";
+    var items = Model ?? Array.Empty<TrivaWebPage.Models.General.Page>();
+}
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Sayfalar</h1>
+        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Yeni sayfa</a>
+    </div>
+
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-auto">
+        <table class="min-w-full text-sm">
+            <thead class="bg-brand-lightPanel dark:bg-brand-darkPanel">
+                <tr>
+                    <th class="px-4 py-2 text-left">Sayfa</th>
+                    <th class="px-4 py-2 text-left">Kısa adres</th>
+                    <th class="px-4 py-2 text-left">İşlemler</th>
+                </tr>
+            </thead>
+            <tbody>
+            @foreach (var p in items)
+            {
+                <tr class="border-t border-brand-lightBorder dark:border-brand-darkBorder">
+                    <td class="px-4 py-3">
+                        <div class="font-medium">@p.Name</div>
+                        <div class="text-xs opacity-70">#@p.Id @(p.IsPublished ? "Yayında" : "Taslak")@(p.IsHomePage ? " · Ana sayfa" : "")</div>
+                    </td>
+                    <td class="px-4 py-3 font-mono text-xs">@p.Slug</td>
+                    <td class="px-4 py-3 space-x-3">
+                        <a asp-action="Details" asp-route-id="@p.Id">Detay</a>
+                        <a asp-action="Edit" asp-route-id="@p.Id">Düzenle</a>
+                        <a asp-action="Delete" asp-route-id="@p.Id">Sil</a>
+                    </td>
+                </tr>
+            }
+            @if (!items.Any())
+            {
+                <tr><td colspan="3" class="px-4 py-3">Kayıt bulunamadı.</td></tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

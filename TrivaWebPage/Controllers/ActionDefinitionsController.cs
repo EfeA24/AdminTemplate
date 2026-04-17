@@ -17,6 +17,7 @@ public class ActionDefinitionsController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         ViewBag.DisplayName = "Action Definitions";
+        ViewBag.UnderConstructionMessage = "Bu sayfa yapım aşamasındadır.";
         return View("~/Views/Shared/AdminCrud/Index.cshtml", await _repository.GetAllAsync(cancellationToken));
     }
 

@@ -1,0 +1,27 @@
+@model TrivaWebPage.Models.General.Page
+@{
+    ViewData["Title"] = "Sayfa detayı";
+}
+
+<div class="space-y-4">
+    <h1 class="text-2xl font-semibold">Sayfa detayı</h1>
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 space-y-2 text-sm">
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Ad:</span> @Model.Name</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Kısa adres:</span> <span class="font-mono">@Model.Slug</span></div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Başlık:</span> @(Model.Title ?? "—")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Açıklama:</span> @(Model.Description ?? "—")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Boyut:</span> @Model.Width × @Model.Height</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Görüntüleme sırası:</span> @Model.DisplayOrder</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Ana sayfa:</span> @(Model.IsHomePage ? "Evet" : "Hayır")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Yayında:</span> @(Model.IsPublished ? "Evet" : "Hayır")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Silinmiş:</span> @(Model.IsDeleted ? "Evet" : "Hayır")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Şablon içi sayfa Id:</span> @(Model.PageTemplatePageId?.ToString() ?? "—")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Renk paleti Id:</span> @(Model.ColorPaletteId?.ToString() ?? "—")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Oluşturulma:</span> @Model.CreatedDate.ToString("u")</div>
+        <div><span class="text-brand-lightMuted dark:text-brand-darkMuted">Güncellenme:</span> @(Model.UpdatedDate?.ToString("u") ?? "—")</div>
+    </div>
+    <div class="flex gap-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id">Düzenle</a>
+        <a asp-action="Index">Listeye dön</a>
+    </div>
+</div>

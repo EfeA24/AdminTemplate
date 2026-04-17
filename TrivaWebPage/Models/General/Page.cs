@@ -18,6 +18,12 @@
 
         public int DisplayOrder { get; set; }
 
+        public int? PageTemplatePageId { get; set; }
+        public PageTemplatePage? PageTemplatePage { get; set; }
+
+        public int? ColorPaletteId { get; set; }
+        public ColorPalette? ColorPalette { get; set; }
+
         public DateTime CreatedDate { get; set; }
         public DateTime? UpdatedDate { get; set; }
 

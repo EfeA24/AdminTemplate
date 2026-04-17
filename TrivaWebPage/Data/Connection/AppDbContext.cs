@@ -13,6 +13,9 @@ namespace TrivaWebPage.Data.Connection
         }
 
         public DbSet<Page> Pages => Set<Page>();
+        public DbSet<PageTemplate> PageTemplates => Set<PageTemplate>();
+        public DbSet<PageTemplatePage> PageTemplatePages => Set<PageTemplatePage>();
+        public DbSet<ColorPalette> ColorPalettes => Set<ColorPalette>();
         public DbSet<PageSection> PageSections => Set<PageSection>();
         public DbSet<PageComponent> PageComponents => Set<PageComponent>();
         public DbSet<MediaFile> MediaFiles => Set<MediaFile>();
@@ -36,8 +39,32 @@ namespace TrivaWebPage.Data.Connection
         {
             base.OnModelCreating(modelBuilder);
 
+            modelBuilder.Entity<PageTemplate>(entity =>
+            {
+                entity.HasIndex(e => e.Code).IsUnique();
+                entity.HasMany(t => t.Pages)
+                    .WithOne(p => p.PageTemplate)
+                    .HasForeignKey(p => p.PageTemplateId)
+                    .OnDelete(DeleteBehavior.Cascade);
+            });
+
+            modelBuilder.Entity<ColorPalette>(entity =>
+            {
+                entity.ToTable("ColorPalettes");
+            });
+
             modelBuilder.Entity<Page>(entity =>
             {
+                entity.HasOne(p => p.PageTemplatePage)
+                    .WithMany(t => t.Pages)
+                    .HasForeignKey(p => p.PageTemplatePageId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
+                entity.HasOne(p => p.ColorPalette)
+                    .WithMany(c => c.Pages)
+                    .HasForeignKey(p => p.ColorPaletteId)
+                    .OnDelete(DeleteBehavior.SetNull);
+
                 entity.HasMany(p => p.Sections)
                     .WithOne(s => s.Page)
                     .HasForeignKey(s => s.PageId)

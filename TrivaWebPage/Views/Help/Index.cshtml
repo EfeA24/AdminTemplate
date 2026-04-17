@@ -1,0 +1,38 @@
+@{
+    ViewData["Title"] = "Yardım";
+}
+
+<div class="mx-auto max-w-3xl space-y-8 text-brand-lightText dark:text-brand-darkText">
+    <h1 class="text-2xl font-semibold font-headline">Yardım</h1>
+
+    <section class="space-y-3 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel/40 dark:bg-brand-darkPanel/40 p-5">
+        <h2 class="text-lg font-semibold">Şablonları yükleme</h2>
+        <p class="text-sm leading-relaxed">
+            Sol menüden <strong>Şablonlar</strong> bölümüne gidin. <strong>Yeni şablon</strong> (oluştur) ile bir şablon kaydı açın: şablon adı, benzersiz <strong>kod</strong> ve isteğe bağlı açıklama girin.
+            Her şablonun altında birden fazla <strong>şablon içi sayfa</strong> satırı bulunur; her satırda sayfa adı, sıra numarası ve HTML içeriği vardır.
+        </p>
+        <ul class="list-disc space-y-2 pl-5 text-sm">
+            <li><strong>ZIP ile toplu yükleme:</strong> Formdaki ZIP alanına yalnızca <code>.zip</code> koyun. Arşivin içindeki tüm <code>.html</code> dosyaları alfabetik sırayla okunur; her dosya adı (uzantısız) iç sayfa adı olarak kullanılır ve mevcut satırların yerine geçer.</li>
+            <li><strong>Satır satır:</strong> &quot;Satır ekle&quot; ile yeni iç sayfa ekleyebilir, HTML’i doğrudan metin kutusuna yapıştırabilir veya ilgili satırdaki <strong>.html / .htm</strong> dosyası yükleyerek içeriği dosyadan doldurabilirsiniz.</li>
+        </ul>
+    </section>
+
+    <section class="space-y-3 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel/40 dark:bg-brand-darkPanel/40 p-5">
+        <h2 class="text-lg font-semibold">Manuel HTML şablonu</h2>
+        <p class="text-sm leading-relaxed">
+            Tam bir <code>&lt;html&gt;</code> belgesi veya yalnızca <code>&lt;body&gt;</code> içine girecek parça ve aynı alanda <code>&lt;style&gt;</code> blokları kullanabilirsiniz. Öneri: mümkünse <strong>gövde parçası + stiller</strong> tek metin alanında tutun; böylece ileride önizleme veya yayında üst çerçeveye sarılması kolay olur.
+        </p>
+        <p class="text-sm leading-relaxed">
+            Renklerin şablonda tutarlı uygulanması için CSS değişkenleri kullanabilirsiniz, örneğin <code>var(--color-primary)</code>, <code>var(--color-secondary)</code>, <code>var(--color-muted)</code>, <code>var(--color-accent)</code>.
+            Sayfa kaydında seçtiğiniz <strong>renk paleti</strong> bu değişkenlere bağlanabilir (önizleme veya canlı yayın katmanında).
+        </p>
+    </section>
+
+    <section class="space-y-3 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel/40 dark:bg-brand-darkPanel/40 p-5">
+        <h2 class="text-lg font-semibold">Sayfa oluşturma sırası</h2>
+        <p class="text-sm leading-relaxed">
+            <strong>Sayfalar</strong> menüsünden yeni sayfa oluştururken sıra: önce <strong>şablon</strong>, sonra o şablona ait <strong>iç sayfa</strong>, ardından <strong>renk paleti</strong>, en son ad, slug ve diğer alanlar.
+            Veritabanında henüz hiç şablon içi sayfa yoksa iç sayfa seçimi zorunlu tutulmaz; palet seçimi her zaman beklenir.
+        </p>
+    </section>
+</div>

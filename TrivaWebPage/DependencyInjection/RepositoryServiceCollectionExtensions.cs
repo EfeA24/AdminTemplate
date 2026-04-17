@@ -42,8 +42,12 @@ public static class RepositoryServiceCollectionExtensions
         services.AddScoped<IMediaFile, MediaFileRepository>();
         services.AddScoped<IPageMediaFile, PageMediaFileRepository>();
         services.AddScoped<IPage, PageRepository>();
+        services.AddScoped<IPageTemplate, PageTemplateRepository>();
+        services.AddScoped<IPageTemplatePage, PageTemplatePageRepository>();
+        services.AddScoped<IColorPalette, ColorPaletteRepository>();
         services.AddScoped<IPageComponent, PageComponentRepository>();
         services.AddScoped<IPageSection, PageSectionRepository>();
+        services.AddScoped<IPageTextBuilderRepository, PageTextBuilderRepository>();
 
         return services;
     }

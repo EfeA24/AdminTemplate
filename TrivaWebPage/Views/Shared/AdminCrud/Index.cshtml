@@ -3,6 +3,7 @@
     var title = (ViewBag.DisplayName as string) ?? "Items";
     ViewData["Title"] = $"{title} - List";
     var items = Model?.ToList() ?? new List<object>();
+    var underConstructionMessage = ViewBag.UnderConstructionMessage as string;
 }
 
 <div class="space-y-4">
@@ -10,6 +11,12 @@
         <h1 class="text-2xl font-semibold">@title</h1>
         <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Create</a>
     </div>
+    @if (!string.IsNullOrWhiteSpace(underConstructionMessage))
+    {
+        <div class="rounded-xl border border-amber-300/80 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-700 dark:bg-amber-950/50 dark:text-amber-100">
+            @underConstructionMessage
+        </div>
+    }
 
     <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-auto">
         <table class="min-w-full text-sm">

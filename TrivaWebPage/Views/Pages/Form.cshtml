@@ -1,0 +1,165 @@
+@model TrivaWebPage.ViewModels.Admin.PageEditViewModel
+@using TrivaWebPage.Models.General
+@{
+    var formAction = (ViewBag.FormAction as string) ?? "Create";
+    var formBaslik = formAction == "Edit" ? "Düzenle" : "Oluştur";
+    ViewData["Title"] = $"Sayfa {formBaslik}";
+    var templates = ViewBag.PageTemplates as IReadOnlyList<PageTemplate> ?? Array.Empty<PageTemplate>();
+    var palettes = ViewBag.ColorPalettes as IReadOnlyList<ColorPalette> ?? Array.Empty<ColorPalette>();
+    var innerPages = ViewBag.TemplateInnerPages as IReadOnlyList<PageTemplatePage> ?? Array.Empty<PageTemplatePage>();
+    var templateUrl = Url.Action("TemplatePages", "Pages")!;
+}
+
+<div class="space-y-4 max-w-3xl">
+    <h1 class="text-2xl font-semibold">Sayfa @formBaslik</h1>
+
+    <form asp-action="@formAction" asp-route-id="@(formAction == "Edit" ? Model.Id : null)" method="post" class="space-y-6 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+        @Html.AntiForgeryToken()
+        <input type="hidden" asp-for="Id" />
+        <div asp-validation-summary="All" class="text-red-600 text-sm"></div>
+
+        <div class="space-y-2 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+            <p class="text-sm font-semibold">1. Şablon</p>
+            <select id="pageTemplateSelect" class="w-full rounded border px-3 py-2 text-black">
+                <option value="">— Şablon seçin —</option>
+                @foreach (var t in templates)
+                {
+                    if (Model.PageTemplateId == t.Id)
+                    {
+                        <option value="@t.Id" selected="selected">@t.Name (@t.Code)</option>
+                    }
+                    else
+                    {
+                        <option value="@t.Id">@t.Name (@t.Code)</option>
+                    }
+                }
+            </select>
+            <input type="hidden" asp-for="PageTemplateId" id="pageTemplateIdHidden" />
+        </div>
+
+        <div class="space-y-2 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+            <p class="text-sm font-semibold">2. Şablon içi sayfa</p>
+            <select name="PageTemplatePageId" id="pageTemplatePageSelect" class="w-full rounded border px-3 py-2 text-black">
+                <option value="">— İç sayfa seçin —</option>
+                @foreach (var p in innerPages)
+                {
+                    if (Model.PageTemplatePageId == p.Id)
+                    {
+                        <option value="@p.Id" selected="selected">@p.Name</option>
+                    }
+                    else
+                    {
+                        <option value="@p.Id">@p.Name</option>
+                    }
+                }
+            </select>
+            <span asp-validation-for="PageTemplatePageId" class="text-red-600 text-xs"></span>
+        </div>
+
+        <div class="space-y-2 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-4">
+            <p class="text-sm font-semibold">3. Renk paleti</p>
+            <div class="grid gap-2 sm:grid-cols-2">
+                @foreach (var pal in palettes)
+                {
+                    <label class="flex cursor-pointer items-center gap-3 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-2 has-[:checked]:ring-2 has-[:checked]:ring-brand-lightAccent dark:has-[:checked]:ring-brand-darkAccent">
+                        <input type="radio" name="ColorPaletteId" value="@pal.Id" class="shrink-0" @(Model.ColorPaletteId == pal.Id ? "checked" : null) />
+                        <span class="flex min-w-0 flex-1 flex-col gap-1 text-sm">
+                            <span class="font-medium truncate">@pal.Name</span>
+                            <span class="flex gap-1">
+                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.PrimaryHex" title="Ana: @pal.PrimaryHex"></span>
+                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.SecondaryHex" title="İkincil: @pal.SecondaryHex"></span>
+                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.MutedHex" title="Yumuşak ton"></span>
+                                <span class="h-5 w-8 rounded border border-black/10" style="background:@pal.AccentHex" title="Vurgu"></span>
+                            </span>
+                        </span>
+                    </label>
+                }
+            </div>
+            <span asp-validation-for="ColorPaletteId" class="text-red-600 text-xs"></span>
+        </div>
+
+        <div class="space-y-3 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-4">
+            <p class="text-sm font-semibold">Sayfa bilgileri</p>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium" asp-for="Name"></label>
+                <input class="w-full rounded border px-3 py-2 text-black" asp-for="Name" />
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium" asp-for="Slug"></label>
+                <input class="w-full rounded border px-3 py-2 text-black" asp-for="Slug" />
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium" asp-for="Title"></label>
+                <input class="w-full rounded border px-3 py-2 text-black" asp-for="Title" />
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium" asp-for="Description"></label>
+                <textarea class="w-full rounded border px-3 py-2 text-black" asp-for="Description" rows="2"></textarea>
+            </div>
+            <div class="grid gap-3 sm:grid-cols-2">
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium" asp-for="Width"></label>
+                    <input type="number" class="w-full rounded border px-3 py-2 text-black" asp-for="Width" />
+                </div>
+                <div class="space-y-1">
+                    <label class="block text-sm font-medium" asp-for="Height"></label>
+                    <input type="number" class="w-full rounded border px-3 py-2 text-black" asp-for="Height" />
+                </div>
+            </div>
+            <div class="space-y-1">
+                <label class="block text-sm font-medium" asp-for="DisplayOrder"></label>
+                <input type="number" class="w-full rounded border px-3 py-2 text-black" asp-for="DisplayOrder" />
+            </div>
+            <div class="flex flex-wrap gap-4">
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" asp-for="IsHomePage" /> @Html.DisplayNameFor(m => m.IsHomePage)</label>
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" asp-for="IsPublished" /> @Html.DisplayNameFor(m => m.IsPublished)</label>
+                <label class="flex items-center gap-2 text-sm"><input type="checkbox" asp-for="IsDeleted" /> @Html.DisplayNameFor(m => m.IsDeleted)</label>
+            </div>
+        </div>
+
+        <div class="flex gap-3">
+            <button type="submit" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Kaydet</button>
+            <a asp-action="Index">İptal</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    (function () {
+        const baseUrl = @Json.Serialize(templateUrl);
+        const tplSelect = document.getElementById('pageTemplateSelect');
+        const tplHidden = document.getElementById('pageTemplateIdHidden');
+        const innerSelect = document.getElementById('pageTemplatePageSelect');
+        if (!tplSelect || !innerSelect || !tplHidden) return;
+
+        function syncHidden() {
+            tplHidden.value = tplSelect.value || '';
+        }
+
+        async function loadInnerPages(templateId) {
+            innerSelect.innerHTML = '';
+            const opt0 = document.createElement('option');
+            opt0.value = '';
+            opt0.textContent = '— İç sayfa seçin —';
+            innerSelect.appendChild(opt0);
+            if (!templateId) return;
+
+            const res = await fetch(baseUrl + '?templateId=' + encodeURIComponent(templateId));
+            if (!res.ok) return;
+            const data = await res.json();
+            for (const row of data) {
+                const o = document.createElement('option');
+                o.value = row.id;
+                o.textContent = row.name;
+                innerSelect.appendChild(o);
+            }
+        }
+
+        tplSelect.addEventListener('change', async function () {
+            syncHidden();
+            await loadInnerPages(tplSelect.value);
+        });
+
+        syncHidden();
+    })();
+</script>

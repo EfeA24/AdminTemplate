@@ -191,12 +191,12 @@
                     <span class="material-symbols-outlined">web</span>
                     <span>Sayfalar</span>
                 </a>
-                <a asp-controller="PageComponents" asp-action="Index"
+                <a asp-controller="PageTemplates" asp-action="Index"
                    class="flex items-center gap-3 rounded-xl px-4 py-3 text-brand-lightText dark:text-brand-darkText hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
-                    <span class="material-symbols-outlined">widgets</span>
-                    <span>Sayfa İçeriği</span>
+                    <span class="material-symbols-outlined">dashboard_customize</span>
+                    <span>Şablonlar</span>
                 </a>
-                <a href="#"
+                <a asp-controller="Texts" asp-action="Index"
                        class="flex items-center gap-3 rounded-xl px-4 py-3
                     text-brand-lightText dark:text-brand-darkText
                     hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
@@ -222,8 +222,8 @@
             </nav>
 
             <div class="mt-auto pt-6 border-t border-brand-lightBorder dark:border-brand-darkBorder space-y-2">
-                <a href="#"
-                       class="flex items-center gap-3 rounded-xl px-4 py-3
+                <a asp-controller="Help" asp-action="Index"
+                   class="flex items-center gap-3 rounded-xl px-4 py-3
                     text-brand-lightText dark:text-brand-darkText
                     hover:bg-brand-lightSidebarHover dark:hover:bg-brand-darkSidebarHover">
                     <span class="material-symbols-outlined">help</span>

@@ -1,3 +1,4 @@
+using System.ComponentModel;
 using System.ComponentModel.DataAnnotations;
 
 namespace TrivaWebPage.ViewModels.Admin;
@@ -5,16 +6,78 @@ namespace TrivaWebPage.ViewModels.Admin;
 public class PageEditViewModel
 {
     public int Id { get; set; }
-    [Required] public string Name { get; set; } = string.Empty;
-    [Required] public string Slug { get; set; } = string.Empty;
+
+    [Display(Name = "Ad")]
+    [Required(ErrorMessage = "Ad zorunludur.")]
+    public string Name { get; set; } = string.Empty;
+
+    [Display(Name = "Kısa adres")]
+    [Required(ErrorMessage = "Kısa adres zorunludur.")]
+    public string Slug { get; set; } = string.Empty;
+
+    [Display(Name = "Başlık")]
     public string? Title { get; set; }
+
+    [Display(Name = "Açıklama")]
     public string? Description { get; set; }
-    [Range(1, 5000)] public int Width { get; set; } = 1920;
-    [Range(1, 5000)] public int Height { get; set; } = 1080;
+
+    [Display(Name = "Genişlik")]
+    [Range(1, 5000, ErrorMessage = "Genişlik 1 ile 5000 arasında olmalıdır.")]
+    public int Width { get; set; } = 1920;
+
+    [Display(Name = "Yükseklik")]
+    [Range(1, 5000, ErrorMessage = "Yükseklik 1 ile 5000 arasında olmalıdır.")]
+    public int Height { get; set; } = 1080;
+
+    [Display(Name = "Ana sayfa")]
     public bool IsHomePage { get; set; }
+
+    [Display(Name = "Yayında")]
     public bool IsPublished { get; set; }
+
+    [Display(Name = "Silinmiş")]
     public bool IsDeleted { get; set; }
+
+    [Display(Name = "Görüntüleme sırası")]
     public int DisplayOrder { get; set; }
+
+    /// <summary>UI: şablon seçimi (iç sayfa listesini filtrelemek için).</summary>
+    [Display(Name = "Şablon")]
+    public int? PageTemplateId { get; set; }
+
+    [Display(Name = "Şablon içi sayfa")]
+    public int? PageTemplatePageId { get; set; }
+
+    [Display(Name = "Renk paleti")]
+    public int? ColorPaletteId { get; set; }
+}
+
+public class PageTemplatePageLineViewModel
+{
+    public int Id { get; set; }
+
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    public int DisplayOrder { get; set; }
+
+    public string? HtmlContent { get; set; }
+}
+
+public class PageTemplateEditViewModel
+{
+    public int Id { get; set; }
+
+    [Required]
+    public string Name { get; set; } = string.Empty;
+
+    [Required]
+    public string Code { get; set; } = string.Empty;
+
+    public string? Description { get; set; }
+    public bool IsActive { get; set; } = true;
+
+    public List<PageTemplatePageLineViewModel> Pages { get; set; } = new();
 }
 
 public class PageSectionEditViewModel
@@ -215,4 +278,73 @@ public class ImageAssignInputModel
     public int MediaFileId { get; set; }
 
     public int[]? PageIds { get; set; }
+}
+
+public class TextsBuilderViewModel
+{
+    public int? ActivePageId { get; set; }
+    public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
+    public TextsEditorPageData? ActivePage { get; set; }
+    public string[] FontOptions { get; init; } = ["Inter", "Manrope", "Arial", "Verdana", "Tahoma", "Times New Roman", "Georgia"];
+}
+
+public class TextsEditorPageData
+{
+    public int PageId { get; set; }
+    public string PageName { get; set; } = string.Empty;
+    public int PageWidth { get; set; }
+    public int PageHeight { get; set; }
+    public int? TemplatePageId { get; set; }
+    public string? TemplatePageName { get; set; }
+    public string? TemplateHtml { get; set; }
+    public List<TextBoxEditorItemViewModel> Items { get; set; } = new();
+}
+
+public class TextBoxEditorItemViewModel
+{
+    public int ComponentId { get; set; }
+    public int DisplayOrder { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public bool IsVisible { get; set; }
+    public string Content { get; set; } = string.Empty;
+    public string? FontFamily { get; set; }
+    public int FontSize { get; set; }
+    public string? FontWeight { get; set; }
+    public string? TextColor { get; set; }
+    public string? TextAlign { get; set; }
+    public bool IsBold { get; set; }
+    public bool IsItalic { get; set; }
+    public bool IsUnderline { get; set; }
+}
+
+public class TextsBuilderSaveInputModel
+{
+    [Range(1, int.MaxValue)]
+    public int PageId { get; set; }
+
+    [Required]
+    public string PayloadJson { get; set; } = "[]";
+}
+
+public record TextBoxSaveItemInputModel
+{
+    public int ComponentId { get; init; }
+    public int DisplayOrder { get; init; }
+    public int X { get; init; }
+    public int Y { get; init; }
+    public int Width { get; init; }
+    public int Height { get; init; }
+    public bool IsVisible { get; init; } = true;
+    public string Content { get; init; } = string.Empty;
+    public string? FontFamily { get; init; }
+    public int FontSize { get; init; } = 16;
+    public string? FontWeight { get; init; }
+    public string? TextColor { get; init; }
+    public string? TextAlign { get; init; }
+    public bool IsBold { get; init; }
+    public bool IsItalic { get; init; }
+    public bool IsUnderline { get; init; }
 }
