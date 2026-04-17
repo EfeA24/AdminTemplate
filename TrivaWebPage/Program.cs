@@ -5,7 +5,7 @@ using TrivaWebPage.DependencyInjection;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews().AddRazorRuntimeCompilation();
 
 // EF Core DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
