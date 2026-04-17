@@ -122,16 +122,17 @@
                 </div>
             </section>
 
-            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-auto">
+            <section id="templateViewport" class="relative rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-hidden">
+                <div class="pointer-events-auto absolute right-4 top-4 z-30 flex items-center gap-2 rounded-xl border border-brand-lightBorder bg-white px-3 py-2 shadow-md">
+                    <span class="text-xs font-semibold text-black/70">Zoom</span>
+                    <button type="button" id="zoomOutBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">-</button>
+                    <button type="button" id="zoomResetBtn" class="h-8 min-w-[64px] rounded-md border border-brand-lightBorder bg-white px-2 text-sm font-semibold text-black hover:bg-black/5">100%</button>
+                    <button type="button" id="zoomInBtn" class="h-8 min-w-8 rounded-md border border-brand-lightBorder bg-white px-2 text-base font-bold text-black hover:bg-black/5">+</button>
+                </div>
                 <div class="relative rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm mx-auto overflow-hidden"
                      style="width:@($"{activePage.PageWidth}px"); height:@($"{activePage.PageHeight}px"); max-width:none;"
                      id="pageCanvas">
-                    <div class="absolute left-2 top-2 z-20 flex items-center gap-1 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white/95 px-2 py-1 text-xs shadow-sm">
-                        <button type="button" id="zoomOutBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">-</button>
-                        <button type="button" id="zoomResetBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">100%</button>
-                        <button type="button" id="zoomInBtn" class="rounded border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-0.5 hover:bg-black/5 dark:hover:bg-white/5">+</button>
-                    </div>
-                    <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="yes"></iframe>
+                    <iframe id="templateFrame" class="absolute inset-0 h-full w-full border-0 bg-white z-0" scrolling="auto"></iframe>
                 </div>
             </section>
         </div>
@@ -146,6 +147,7 @@
             const templateHtml = @Html.Raw(JsonSerializer.Serialize(activePage.TemplateHtml ?? ""));
             const palette = @Html.Raw(JsonSerializer.Serialize(activePage.Palette));
             const canvas = document.getElementById("pageCanvas");
+            const viewport = document.getElementById("templateViewport");
             const templateFrame = document.getElementById("templateFrame");
             const payloadInput = document.getElementById("payloadJsonInput");
             const saveBtn = document.getElementById("saveTextsBtn");
@@ -161,8 +163,11 @@
             const alignButtons = Array.from(document.querySelectorAll(".align-btn"));
             const styleButtons = Array.from(document.querySelectorAll(".style-btn"));
 
-            if (!canvas || !templateFrame || !payloadInput || !saveBtn || !saveForm) return;
+            if (!canvas || !viewport || !templateFrame || !payloadInput || !saveBtn || !saveForm) return;
             let templateZoom = 1;
+
+            document.documentElement.classList.remove("dark");
+            localStorage.setItem("theme", "light");
 
             const state = {
                 items: initialItems.map((item) => ({
@@ -285,6 +290,8 @@
                 if (doc.body) {
                     doc.body.style.overflow = "auto";
                     doc.body.style.zoom = "normal";
+                    doc.body.style.margin = "0";
+                    doc.body.style.padding = "0";
                 }
 
                 if (palette) {
@@ -315,15 +322,34 @@
                 if (zoomResetBtn) {
                     zoomResetBtn.textContent = "100%";
                 }
+                updateViewportOverflow();
             }
 
             function applyTemplateZoom() {
                 const doc = templateFrame.contentDocument;
-                if (!doc?.body) return;
+                if (!doc?.body || !doc.documentElement) return;
                 doc.body.style.zoom = String(templateZoom);
                 if (zoomResetBtn) {
                     zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
                 }
+
+                if (templateZoom > 1) {
+                    doc.documentElement.style.overflow = "auto";
+                    doc.body.style.overflow = "auto";
+                } else {
+                    doc.documentElement.style.overflow = "hidden";
+                    doc.body.style.overflow = "hidden";
+                }
+                updateViewportOverflow();
+            }
+
+            function updateViewportOverflow() {
+                if (templateZoom > 1) {
+                    viewport.style.overflow = "auto";
+                    return;
+                }
+
+                viewport.style.overflow = "hidden";
             }
 
             function clamp(value, min, max) {
