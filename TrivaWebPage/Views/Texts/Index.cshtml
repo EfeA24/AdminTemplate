@@ -281,8 +281,10 @@
                 const root = doc.documentElement;
                 root.style.setProperty("transform", "none");
                 root.style.setProperty("overflow", "auto");
+                root.style.setProperty("zoom", "normal");
                 if (doc.body) {
                     doc.body.style.overflow = "auto";
+                    doc.body.style.zoom = "normal";
                 }
 
                 if (palette) {
@@ -310,13 +312,15 @@
                     target.focus();
                 }, true);
 
-                applyTemplateZoom();
+                if (zoomResetBtn) {
+                    zoomResetBtn.textContent = "100%";
+                }
             }
 
             function applyTemplateZoom() {
                 const doc = templateFrame.contentDocument;
-                if (!doc?.documentElement) return;
-                doc.documentElement.style.zoom = String(templateZoom);
+                if (!doc?.body) return;
+                doc.body.style.zoom = String(templateZoom);
                 if (zoomResetBtn) {
                     zoomResetBtn.textContent = Math.round(templateZoom * 100) + "%";
                 }
