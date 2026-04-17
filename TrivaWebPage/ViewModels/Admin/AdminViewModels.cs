@@ -297,6 +297,7 @@ public class TextsEditorPageData
     public int? TemplatePageId { get; set; }
     public string? TemplatePageName { get; set; }
     public string? TemplateHtml { get; set; }
+    public TemplateCanvasPaletteData? Palette { get; set; }
     public List<TextBoxEditorItemViewModel> Items { get; set; } = new();
 }
 
@@ -480,6 +481,17 @@ public class TemplateCanvasPageData
     public int PageHeight { get; set; }
     public string? TemplatePageName { get; set; }
     public string? HtmlContent { get; set; }
+    public TemplateCanvasPaletteData? Palette { get; set; }
+}
+
+public class TemplateCanvasPaletteData
+{
+    public int Id { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string PrimaryHex { get; set; } = "#111111";
+    public string SecondaryHex { get; set; } = "#333333";
+    public string MutedHex { get; set; } = "#777777";
+    public string AccentHex { get; set; } = "#00a19b";
 }
 
 public class TemplateCanvasSaveInputModel

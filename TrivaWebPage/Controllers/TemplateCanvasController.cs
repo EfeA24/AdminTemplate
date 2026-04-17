@@ -9,11 +9,16 @@ public partial class TemplateCanvasController : Controller
 {
     private readonly IPage _pageRepository;
     private readonly IPageTemplatePage _templatePageRepository;
+    private readonly IColorPalette _colorPaletteRepository;
 
-    public TemplateCanvasController(IPage pageRepository, IPageTemplatePage templatePageRepository)
+    public TemplateCanvasController(
+        IPage pageRepository,
+        IPageTemplatePage templatePageRepository,
+        IColorPalette colorPaletteRepository)
     {
         _pageRepository = pageRepository;
         _templatePageRepository = templatePageRepository;
+        _colorPaletteRepository = colorPaletteRepository;
     }
 
     [HttpGet]
@@ -65,7 +70,8 @@ public partial class TemplateCanvasController : Controller
                     PageWidth = page.Width,
                     PageHeight = page.Height,
                     TemplatePageName = templatePageName,
-                    HtmlContent = string.IsNullOrWhiteSpace(page.RenderedHtmlOverride) ? templateHtml : page.RenderedHtmlOverride
+                    HtmlContent = string.IsNullOrWhiteSpace(page.RenderedHtmlOverride) ? templateHtml : page.RenderedHtmlOverride,
+                    Palette = await ResolvePaletteAsync(page.ColorPaletteId, cancellationToken)
                 };
             }
         }
@@ -145,4 +151,28 @@ public partial class TemplateCanvasController : Controller
 
     [GeneratedRegex("\\son[a-z]+\\s*=\\s*(['\"]).*?\\1", RegexOptions.IgnoreCase | RegexOptions.Singleline)]
     private static partial Regex EventHandlerAttributeRegex();
+
+    private async Task<TemplateCanvasPaletteData?> ResolvePaletteAsync(int? colorPaletteId, CancellationToken cancellationToken)
+    {
+        if (colorPaletteId is not int id || id <= 0)
+        {
+            return null;
+        }
+
+        var palette = await _colorPaletteRepository.GetByIdAsync(id, cancellationToken);
+        if (palette is null)
+        {
+            return null;
+        }
+
+        return new TemplateCanvasPaletteData
+        {
+            Id = palette.Id,
+            Name = palette.Name,
+            PrimaryHex = palette.PrimaryHex,
+            SecondaryHex = palette.SecondaryHex,
+            MutedHex = palette.MutedHex,
+            AccentHex = palette.AccentHex
+        };
+    }
 }

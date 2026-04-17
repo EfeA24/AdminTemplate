@@ -9,11 +9,16 @@ public class TextsController : Controller
 {
     private readonly IPage _pageRepository;
     private readonly IPageTextBuilderRepository _textBuilderRepository;
+    private readonly IColorPalette _colorPaletteRepository;
 
-    public TextsController(IPage pageRepository, IPageTextBuilderRepository textBuilderRepository)
+    public TextsController(
+        IPage pageRepository,
+        IPageTextBuilderRepository textBuilderRepository,
+        IColorPalette colorPaletteRepository)
     {
         _pageRepository = pageRepository;
         _textBuilderRepository = textBuilderRepository;
+        _colorPaletteRepository = colorPaletteRepository;
     }
 
     [HttpGet]
@@ -44,6 +49,26 @@ public class TextsController : Controller
         if (activePageId is int validPageId)
         {
             activePage = await _textBuilderRepository.GetPageEditorDataAsync(validPageId, cancellationToken);
+            if (activePage is not null)
+            {
+                var page = await _pageRepository.GetByIdAsync(validPageId, cancellationToken);
+                if (page?.ColorPaletteId is int paletteId and > 0)
+                {
+                    var palette = await _colorPaletteRepository.GetByIdAsync(paletteId, cancellationToken);
+                    if (palette is not null)
+                    {
+                        activePage.Palette = new TemplateCanvasPaletteData
+                        {
+                            Id = palette.Id,
+                            Name = palette.Name,
+                            PrimaryHex = palette.PrimaryHex,
+                            SecondaryHex = palette.SecondaryHex,
+                            MutedHex = palette.MutedHex,
+                            AccentHex = palette.AccentHex
+                        };
+                    }
+                }
+            }
         }
 
         return View(new TextsBuilderViewModel

@@ -68,6 +68,7 @@
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <button type="button" id="deleteNodeBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçili öğeyi sil</button>
+                    <button type="button" id="clearSelectionBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçimi temizle</button>
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
@@ -84,6 +85,18 @@
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Style</label>
                     <textarea id="nodeStyleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="3"></textarea>
                 </div>
+                @if (activePage.Palette is not null)
+                {
+                    <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                        <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Aktif palet: @activePage.Palette.Name</label>
+                        <div class="flex gap-2">
+                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.PrimaryHex" title="Primary: @activePage.Palette.PrimaryHex"></span>
+                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.SecondaryHex" title="Secondary: @activePage.Palette.SecondaryHex"></span>
+                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.MutedHex" title="Muted: @activePage.Palette.MutedHex"></span>
+                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.AccentHex" title="Accent: @activePage.Palette.AccentHex"></span>
+                        </div>
+                    </div>
+                }
             </section>
 
             <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-auto">
@@ -101,11 +114,13 @@
     <script>
         (function () {
             const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
+            const palette = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.Palette));
             const frame = document.getElementById("canvasFrame");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
             const htmlInput = document.getElementById("canvasHtmlInput");
             const deleteNodeBtn = document.getElementById("deleteNodeBtn");
+            const clearSelectionBtn = document.getElementById("clearSelectionBtn");
             const textInput = document.getElementById("nodeTextInput");
             const hrefInput = document.getElementById("nodeHrefInput");
             const srcInput = document.getElementById("nodeSrcInput");
@@ -124,27 +139,94 @@
                 doc.close();
 
                 const style = doc.createElement("style");
-                style.textContent = ".__canvas-selected{outline:2px solid #00a19b !important;outline-offset:2px;}";
+                style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;box-shadow:none !important;opacity:1 !important;filter:none !important;}";
                 doc.head.appendChild(style);
+                applyPalette(doc);
 
                 doc.addEventListener("click", (e) => {
-                    e.preventDefault();
                     e.stopPropagation();
                     selectNode(e.target);
                 }, true);
             }
 
+            function applyPalette(doc) {
+                if (!palette || !doc?.documentElement) return;
+                const root = doc.documentElement;
+                root.style.setProperty("--color-primary", palette.PrimaryHex || "#111111");
+                root.style.setProperty("--color-secondary", palette.SecondaryHex || "#333333");
+                root.style.setProperty("--color-muted", palette.MutedHex || "#777777");
+                root.style.setProperty("--color-accent", palette.AccentHex || "#00a19b");
+                root.style.setProperty("--canvas-select-color", palette.AccentHex || "#00a19b");
+                replaceInlineColors(doc.body, {
+                    [palette.PrimaryHex]: "var(--color-primary)",
+                    [palette.SecondaryHex]: "var(--color-secondary)",
+                    [palette.MutedHex]: "var(--color-muted)",
+                    [palette.AccentHex]: "var(--color-accent)"
+                });
+            }
+
+            function replaceInlineColors(scope, paletteMap) {
+                if (!scope) return;
+                const defaults = {
+                    "#000000": "var(--color-primary)",
+                    "#111111": "var(--color-primary)",
+                    "#222222": "var(--color-secondary)",
+                    "#333333": "var(--color-secondary)",
+                    "#666666": "var(--color-muted)",
+                    "#777777": "var(--color-muted)",
+                    "#999999": "var(--color-muted)",
+                    "#ffffff": "var(--color-accent)"
+                };
+                const merged = { ...defaults };
+                Object.entries(paletteMap || {}).forEach(([hex, cssVar]) => {
+                    if (!hex || !cssVar) return;
+                    merged[String(hex).toLowerCase()] = cssVar;
+                });
+
+                const nodes = scope.querySelectorAll("*");
+                nodes.forEach((node) => {
+                    const inlineStyle = node.getAttribute("style");
+                    if (!inlineStyle) return;
+                    let updatedStyle = inlineStyle;
+                    Object.entries(merged).forEach(([hex, cssVar]) => {
+                        const regex = new RegExp(escapeRegExp(hex), "ig");
+                        updatedStyle = updatedStyle.replace(regex, cssVar);
+                    });
+                    if (updatedStyle !== inlineStyle) {
+                        node.setAttribute("style", updatedStyle);
+                    }
+                });
+            }
+
+            function escapeRegExp(text) {
+                return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            }
+
             function selectNode(node) {
                 if (!node || node.tagName === "HTML" || node.tagName === "BODY" || node.tagName === "HEAD") return;
-                if (selectedOutline) selectedOutline.classList.remove("__canvas-selected");
+                clearSelection();
                 selectedNode = node;
                 selectedOutline = node;
                 selectedOutline.classList.add("__canvas-selected");
                 syncInputsFromNode();
             }
 
+            function clearSelection() {
+                if (selectedOutline) selectedOutline.classList.remove("__canvas-selected");
+                selectedNode = null;
+                selectedOutline = null;
+            }
+
             function syncInputsFromNode() {
-                if (!selectedNode) return;
+                if (!selectedNode) {
+                    textInput.value = "";
+                    hrefInput.value = "";
+                    srcInput.value = "";
+                    altInput.value = "";
+                    classInput.value = "";
+                    styleInput.value = "";
+                    return;
+                }
                 textInput.value = selectedNode.textContent || "";
                 hrefInput.value = selectedNode.getAttribute?.("href") || "";
                 srcInput.value = selectedNode.getAttribute?.("src") || "";
@@ -155,7 +237,8 @@
 
             function applyInputsToNode() {
                 if (!selectedNode) return;
-                if (selectedNode.childNodes.length === 1 && selectedNode.childNodes[0].nodeType === Node.TEXT_NODE) {
+                const isContentNode = selectedNode.childNodes.length === 1 && selectedNode.childNodes[0].nodeType === Node.TEXT_NODE;
+                if (isContentNode || selectedNode.tagName === "P" || selectedNode.tagName === "SPAN" || selectedNode.tagName === "H1" || selectedNode.tagName === "H2" || selectedNode.tagName === "H3" || selectedNode.tagName === "H4" || selectedNode.tagName === "H5" || selectedNode.tagName === "H6" || selectedNode.tagName === "A" || selectedNode.tagName === "BUTTON" || selectedNode.tagName === "LI") {
                     selectedNode.textContent = textInput.value || "";
                 }
                 setAttr(selectedNode, "href", hrefInput.value);
@@ -182,10 +265,13 @@
                 if (!selectedNode) return;
                 const next = selectedNode.parentElement;
                 selectedNode.remove();
-                selectedNode = null;
-                if (selectedOutline) selectedOutline.classList.remove("__canvas-selected");
-                selectedOutline = null;
+                clearSelection();
+                syncInputsFromNode();
                 if (next) selectNode(next);
+            });
+            clearSelectionBtn?.addEventListener("click", () => {
+                clearSelection();
+                syncInputsFromNode();
             });
 
             saveBtn.addEventListener("click", () => {
