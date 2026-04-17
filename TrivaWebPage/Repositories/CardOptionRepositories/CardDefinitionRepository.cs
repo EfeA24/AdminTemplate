@@ -12,7 +12,7 @@ namespace TrivaWebPage.Repositories.CardOptionRepositories
             string keyColumnName = "Id")
             : base(
                   connectionFactory,
-                  tableName,
+                  tableName ?? "CardDefinitions",
                   keyColumnName)
         {
         }
