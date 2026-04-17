@@ -318,12 +318,15 @@
                 textArea.style.fontStyle = item.isItalic ? "italic" : "normal";
                 textArea.style.textDecoration = item.isUnderline ? "underline" : "none";
                 textArea.style.textAlign = item.textAlign || "left";
+                textArea.style.pointerEvents = "none";
+                textArea.style.cursor = "move";
                 textArea.addEventListener("input", () => {
                     state.items[index].content = textArea.value;
                 });
                 textArea.addEventListener("blur", () => {
-                    state.editingIndex = -1;
-                    textArea.readOnly = true;
+                    if (state.editingIndex === index) {
+                        setEditMode(textArea, index, false);
+                    }
                 });
                 textArea.addEventListener("mousedown", (e) => {
                     if (!textArea.readOnly) e.stopPropagation();
@@ -336,8 +339,7 @@
                 box.addEventListener("dblclick", (e) => {
                     e.preventDefault();
                     select(index);
-                    state.editingIndex = index;
-                    textArea.readOnly = false;
+                    setEditMode(textArea, index, true);
                     textArea.focus();
                 });
 
@@ -357,6 +359,30 @@
                 box.appendChild(textArea);
                 box.appendChild(handle);
                 return box;
+            }
+
+            function setEditMode(textArea, index, isEditing) {
+                state.editingIndex = isEditing ? index : -1;
+                textArea.readOnly = !isEditing;
+                textArea.style.pointerEvents = isEditing ? "auto" : "none";
+                textArea.style.cursor = isEditing ? "text" : "move";
+                const box = textArea.parentElement;
+                if (box) {
+                    box.style.cursor = isEditing ? "text" : "move";
+                }
+                if (!isEditing) {
+                    textArea.blur();
+                }
+            }
+
+            function closeEditingIfAny() {
+                if (state.editingIndex < 0) return;
+                const activeTextArea = canvas.querySelector(`.absolute[data-index="${state.editingIndex}"] textarea`);
+                if (activeTextArea) {
+                    setEditMode(activeTextArea, state.editingIndex, false);
+                } else {
+                    state.editingIndex = -1;
+                }
             }
 
             function select(index) {
@@ -529,7 +555,7 @@
                     width: 260,
                     height: 120,
                     isVisible: true,
-                    content: "Yeni metin",
+                    content: "",
                     fontFamily: "Inter",
                     fontSize: 16,
                     fontWeight: null,
@@ -545,6 +571,7 @@
             });
 
             removeBtn?.addEventListener("click", () => {
+                closeEditingIfAny();
                 if (state.selectedIndex < 0) return;
                 state.items.splice(state.selectedIndex, 1);
                 state.selectedIndex = Math.min(state.selectedIndex, state.items.length - 1);
@@ -592,6 +619,7 @@
             });
 
             saveBtn.addEventListener("click", () => {
+                closeEditingIfAny();
                 const payload = state.items.map((x, index) => ({
                     componentId: x.componentId || 0,
                     displayOrder: index + 1,
@@ -632,6 +660,19 @@
                 document.querySelectorAll(".resize-handle").forEach((h) => {
                     h.style.display = resizeToggle.checked ? "block" : "none";
                 });
+            });
+
+            document.addEventListener("pointerdown", (event) => {
+                if (!canvas.contains(event.target)) {
+                    closeEditingIfAny();
+                }
+            });
+
+            canvas.addEventListener("pointerdown", (event) => {
+                const clickedInsideTextBox = !!event.target.closest(".absolute[data-index]");
+                if (!clickedInsideTextBox) {
+                    closeEditingIfAny();
+                }
             });
 
             renderMediaThumbs();
