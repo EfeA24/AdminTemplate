@@ -9,6 +9,7 @@ public class PageTemplatePage
 
     public string Name { get; set; } = null!;
     public int DisplayOrder { get; set; }
+    public string? PreviewImagePath { get; set; }
     public string HtmlContent { get; set; } = null!;
 
     public ICollection<Page> Pages { get; set; } = new List<Page>();

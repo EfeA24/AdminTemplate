@@ -32,16 +32,16 @@ public class CuratorTemplateSeedService
             await _dbContext.SaveChangesAsync(cancellationToken);
         }
 
-        var fileMap = new (string Name, int DisplayOrder, string FileName)[]
+        var fileMap = new (string Name, int DisplayOrder, string FileName, string PreviewImagePath)[]
         {
-            ("Creative Main", 0, "creative-main.html"),
-            ("Creative Gallery", 1, "creative-gallery.html"),
-            ("Dark Main", 2, "dark-main.html"),
-            ("Dark Gallery", 3, "dark-gallery.html")
+            ("Creative Main", 0, "creative-main.html", "/pictures/template-previews/creative-main.png"),
+            ("Creative Gallery", 1, "creative-gallery.html", "/pictures/template-previews/creative-gallery.png"),
+            ("Dark Main", 2, "dark-main.html", "/pictures/template-previews/dark-main.png"),
+            ("Dark Gallery", 3, "dark-gallery.html", "/pictures/template-previews/dark-gallery.png")
         };
 
         var seedRoot = Path.Combine(_environment.ContentRootPath, "SeedData", "Curator");
-        foreach (var (name, displayOrder, fileName) in fileMap)
+        foreach (var (name, displayOrder, fileName, previewImagePath) in fileMap)
         {
             var fullPath = Path.Combine(seedRoot, fileName);
             if (!File.Exists(fullPath))
@@ -60,12 +60,14 @@ public class CuratorTemplateSeedService
                     PageTemplateId = template.Id,
                     Name = name,
                     DisplayOrder = displayOrder,
+                    PreviewImagePath = previewImagePath,
                     HtmlContent = html
                 });
             }
             else
             {
                 row.DisplayOrder = displayOrder;
+                row.PreviewImagePath = previewImagePath;
                 row.HtmlContent = html;
             }
         }

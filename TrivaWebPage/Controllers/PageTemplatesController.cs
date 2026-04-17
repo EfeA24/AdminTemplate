@@ -24,7 +24,14 @@ public class PageTemplatesController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         ViewBag.DisplayName = "Şablonlar";
-        return View("~/Views/Shared/AdminCrud/Index.cshtml", await _templateRepository.GetAllAsync(cancellationToken));
+        var templates = (await _templateRepository.GetAllAsync(cancellationToken))
+            .OrderBy(x => x.Name)
+            .ToList();
+        var templatePages = await _templatePageRepository.GetAllAsync(cancellationToken);
+        ViewBag.TemplatePagesLookup = templatePages
+            .GroupBy(x => x.PageTemplateId)
+            .ToDictionary(g => g.Key, g => g.OrderBy(x => x.DisplayOrder).ThenBy(x => x.Id).ToList());
+        return View("~/Views/PageTemplates/Index.cshtml", templates);
     }
 
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)

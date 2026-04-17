@@ -1,0 +1,64 @@
+@using TrivaWebPage.Models.General
+@model IReadOnlyList<PageTemplate>
+@{
+    ViewData["Title"] = "Şablonlar";
+    var pagesLookup = ViewBag.TemplatePagesLookup as Dictionary<int, List<PageTemplatePage>> ?? new();
+}
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Şablonlar</h1>
+        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Create</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 text-sm">
+            Kayıt bulunamadı.
+        </div>
+    }
+    else
+    {
+        <div class="space-y-6">
+            @foreach (var template in Model)
+            {
+                pagesLookup.TryGetValue(template.Id, out var pages);
+                pages ??= new List<PageTemplatePage>();
+                <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-hidden">
+                    <div class="px-4 py-3 bg-brand-lightPanel dark:bg-brand-darkPanel flex items-center justify-between">
+                        <div>
+                            <div class="font-semibold">@template.Name</div>
+                            <div class="text-xs opacity-70">@template.Code</div>
+                        </div>
+                        <div class="space-x-3 text-sm">
+                            <a asp-action="Details" asp-route-id="@template.Id">Details</a>
+                            <a asp-action="Edit" asp-route-id="@template.Id">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@template.Id">Delete</a>
+                        </div>
+                    </div>
+                    <div class="p-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                        @foreach (var page in pages)
+                        {
+                            <article class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel/30 dark:bg-brand-darkPanel/30 overflow-hidden">
+                                <div class="aspect-[9/16] bg-black/10">
+                                    @if (!string.IsNullOrWhiteSpace(page.PreviewImagePath))
+                                    {
+                                        <img src="@(page.PreviewImagePath)" alt="@(page.Name) preview" class="h-full w-full object-cover" loading="lazy" />
+                                    }
+                                    else
+                                    {
+                                        <div class="h-full w-full flex items-center justify-center text-xs opacity-70">Önizleme yok</div>
+                                    }
+                                </div>
+                                <div class="p-3">
+                                    <div class="font-medium text-sm">@(page.Name)</div>
+                                    <div class="text-xs opacity-70">Sıra: @(page.DisplayOrder)</div>
+                                </div>
+                            </article>
+                        }
+                    </div>
+                </section>
+            }
+        </div>
+    }
+</div>
