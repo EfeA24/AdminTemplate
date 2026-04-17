@@ -27,7 +27,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
                                p.[Height] AS [PageHeight],
                                p.[PageTemplatePageId] AS [TemplatePageId],
                                pt.[Name] AS [TemplatePageName],
-                               pt.[HtmlContent] AS [TemplateHtml]
+                               COALESCE(p.[RenderedHtmlOverride], pt.[HtmlContent]) AS [TemplateHtml]
                            FROM [Pages] p
                            LEFT JOIN [PageTemplatePages] pt ON pt.[Id] = p.[PageTemplatePageId]
                            WHERE p.[Id] = @PageId AND p.[IsDeleted] = 0;

@@ -464,3 +464,29 @@ public record CardBuilderSaveButtonInputModel
     public string? ActionUrl { get; init; }
     public string? ActionTarget { get; init; }
 }
+
+public class TemplateCanvasViewModel
+{
+    public int? ActivePageId { get; set; }
+    public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
+    public TemplateCanvasPageData? ActivePage { get; set; }
+}
+
+public class TemplateCanvasPageData
+{
+    public int PageId { get; set; }
+    public string PageName { get; set; } = string.Empty;
+    public int PageWidth { get; set; }
+    public int PageHeight { get; set; }
+    public string? TemplatePageName { get; set; }
+    public string? HtmlContent { get; set; }
+}
+
+public class TemplateCanvasSaveInputModel
+{
+    [Range(1, int.MaxValue)]
+    public int PageId { get; set; }
+
+    [Required]
+    public string HtmlContent { get; set; } = string.Empty;
+}

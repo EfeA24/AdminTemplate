@@ -1,0 +1,202 @@
+@model TrivaWebPage.ViewModels.Admin.TemplateCanvasViewModel
+@{
+    ViewData["Title"] = "Template Canvas";
+    var activePage = Model.ActivePage;
+}
+
+<div class="max-w-7xl mx-auto space-y-5">
+    <div class="flex items-center justify-between gap-3">
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Template Canvas</h1>
+        @if (activePage is not null)
+        {
+            <div class="flex gap-2">
+                <form asp-action="Reset" method="post">
+                    @Html.AntiForgeryToken()
+                    <input type="hidden" name="pageId" value="@activePage.PageId" />
+                    <button type="submit" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Varsayılana dön</button>
+                </form>
+                <button type="button" id="saveCanvasBtn" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">Kaydet</button>
+            </div>
+        }
+    </div>
+
+    @if (TempData["TemplateCanvasError"] is string err)
+    {
+        <div class="rounded-xl border border-red-300/80 bg-red-50 px-4 py-3 text-sm text-red-900 dark:border-red-800 dark:bg-red-950/50 dark:text-red-100">@err</div>
+    }
+    @if (TempData["TemplateCanvasMessage"] is string ok)
+    {
+        <div class="rounded-xl border border-emerald-300/80 bg-emerald-50 px-4 py-3 text-sm text-emerald-900 dark:border-emerald-800 dark:bg-emerald-950/50 dark:text-emerald-100">@ok</div>
+    }
+
+    <div class="flex flex-wrap gap-2 border-b border-brand-lightBorder dark:border-brand-darkBorder pb-2">
+        @foreach (var p in Model.Pages)
+        {
+            var active = Model.ActivePageId == p.Id;
+            <a asp-action="Index" asp-route-pageId="@p.Id"
+               class="rounded-t-lg px-4 py-2 text-sm font-medium transition max-w-[12rem] truncate @(active
+                   ? "bg-brand-lightPanel dark:bg-brand-darkPanel text-brand-lightText dark:text-brand-darkText border border-b-0 border-brand-lightBorder dark:border-brand-darkBorder -mb-px"
+                   : "text-brand-lightMuted dark:text-brand-darkMuted hover:text-brand-lightText dark:hover:text-brand-darkText")"
+               title="@p.Name">@p.Name</a>
+        }
+    </div>
+
+    @if (activePage is null)
+    {
+        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-6 text-sm text-brand-lightMuted dark:text-brand-darkMuted">
+            Düzenlenecek bir sayfa bulunamadı.
+        </div>
+    }
+    else
+    {
+        <form id="saveCanvasForm" asp-action="Save" method="post">
+            @Html.AntiForgeryToken()
+            <input type="hidden" name="PageId" value="@activePage.PageId" />
+            <input type="hidden" name="HtmlContent" id="canvasHtmlInput" />
+        </form>
+
+        <div class="grid gap-4 lg:grid-cols-[320px_1fr]">
+            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-3">
+                <div>
+                    <p class="text-xs uppercase tracking-wide text-brand-lightMuted dark:text-brand-darkMuted">Sayfa</p>
+                    <p class="font-medium">@activePage.PageName</p>
+                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">@activePage.PageWidth x @activePage.PageHeight px</p>
+                    <p class="mt-1 text-xs text-brand-lightMuted dark:text-brand-darkMuted">
+                        Şablon içi sayfa: @(string.IsNullOrWhiteSpace(activePage.TemplatePageName) ? "Seçili değil" : activePage.TemplatePageName)
+                    </p>
+                </div>
+
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <button type="button" id="deleteNodeBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Seçili öğeyi sil</button>
+                </div>
+
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Metin</label>
+                    <textarea id="nodeTextInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="4"></textarea>
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href)</label>
+                    <input id="nodeHrefInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Resim (src)</label>
+                    <input id="nodeSrcInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Alt metin (alt)</label>
+                    <input id="nodeAltInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Class</label>
+                    <input id="nodeClassInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Style</label>
+                    <textarea id="nodeStyleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="3"></textarea>
+                </div>
+            </section>
+
+            <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-auto">
+                <iframe id="canvasFrame"
+                        class="w-full rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white"
+                        style="height: min(75vh, @($"{activePage.PageHeight}px"));">
+                </iframe>
+            </section>
+        </div>
+    }
+</div>
+
+@if (activePage is not null)
+{
+    <script>
+        (function () {
+            const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
+            const frame = document.getElementById("canvasFrame");
+            const saveBtn = document.getElementById("saveCanvasBtn");
+            const saveForm = document.getElementById("saveCanvasForm");
+            const htmlInput = document.getElementById("canvasHtmlInput");
+            const deleteNodeBtn = document.getElementById("deleteNodeBtn");
+            const textInput = document.getElementById("nodeTextInput");
+            const hrefInput = document.getElementById("nodeHrefInput");
+            const srcInput = document.getElementById("nodeSrcInput");
+            const altInput = document.getElementById("nodeAltInput");
+            const classInput = document.getElementById("nodeClassInput");
+            const styleInput = document.getElementById("nodeStyleInput");
+            if (!frame || !saveBtn || !saveForm || !htmlInput) return;
+
+            let selectedNode = null;
+            let selectedOutline = null;
+
+            function loadFrame() {
+                const doc = frame.contentDocument;
+                doc.open();
+                doc.write(htmlContent);
+                doc.close();
+
+                const style = doc.createElement("style");
+                style.textContent = ".__canvas-selected{outline:2px solid #00a19b !important;outline-offset:2px;}";
+                doc.head.appendChild(style);
+
+                doc.addEventListener("click", (e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    selectNode(e.target);
+                }, true);
+            }
+
+            function selectNode(node) {
+                if (!node || node.tagName === "HTML" || node.tagName === "BODY" || node.tagName === "HEAD") return;
+                if (selectedOutline) selectedOutline.classList.remove("__canvas-selected");
+                selectedNode = node;
+                selectedOutline = node;
+                selectedOutline.classList.add("__canvas-selected");
+                syncInputsFromNode();
+            }
+
+            function syncInputsFromNode() {
+                if (!selectedNode) return;
+                textInput.value = selectedNode.textContent || "";
+                hrefInput.value = selectedNode.getAttribute?.("href") || "";
+                srcInput.value = selectedNode.getAttribute?.("src") || "";
+                altInput.value = selectedNode.getAttribute?.("alt") || "";
+                classInput.value = selectedNode.className || "";
+                styleInput.value = selectedNode.getAttribute?.("style") || "";
+            }
+
+            function applyInputsToNode() {
+                if (!selectedNode) return;
+                if (selectedNode.childNodes.length === 1 && selectedNode.childNodes[0].nodeType === Node.TEXT_NODE) {
+                    selectedNode.textContent = textInput.value || "";
+                }
+                setAttr(selectedNode, "href", hrefInput.value);
+                setAttr(selectedNode, "src", srcInput.value);
+                setAttr(selectedNode, "alt", altInput.value);
+                setAttr(selectedNode, "style", styleInput.value);
+                selectedNode.className = classInput.value || "";
+            }
+
+            function setAttr(node, key, value) {
+                if (!node || !node.setAttribute) return;
+                if (!value) {
+                    node.removeAttribute(key);
+                    return;
+                }
+                node.setAttribute(key, value);
+            }
+
+            [textInput, hrefInput, srcInput, altInput, classInput, styleInput].forEach((el) => {
+                el?.addEventListener("input", applyInputsToNode);
+            });
+
+            deleteNodeBtn?.addEventListener("click", () => {
+                if (!selectedNode) return;
+                const next = selectedNode.parentElement;
+                selectedNode.remove();
+                selectedNode = null;
+                if (selectedOutline) selectedOutline.classList.remove("__canvas-selected");
+                selectedOutline = null;
+                if (next) selectNode(next);
+            });
+
+            saveBtn.addEventListener("click", () => {
+                const doc = frame.contentDocument;
+                if (!doc) return;
+                doc.querySelectorAll(".__canvas-selected").forEach((x) => x.classList.remove("__canvas-selected"));
+                htmlInput.value = doc.documentElement.outerHTML;
+                saveForm.submit();
+            });
+
+            loadFrame();
+        })();
+    </script>
+}

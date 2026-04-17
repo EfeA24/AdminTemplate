@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html class="light" lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>The Curator | Creative Gallery</title>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <style>.masonry-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));grid-auto-rows:180px;gap:1.5rem}.masonry-tall{grid-row:span 3}.masonry-short{grid-row:span 2}.masonry-wide{grid-column:span 2}</style>
+</head>
+<body class="bg-[#f9f9f9] text-[#1a1c1c]">
+  <main class="pt-24 pb-20 px-8 max-w-[1920px] mx-auto">
+    <header class="flex flex-col md:flex-row md:items-end justify-between mb-16 gap-8">
+      <h1 class="text-7xl italic leading-none">Archive &amp; Curations</h1>
+      <div class="flex flex-wrap gap-3">
+        <button class="px-6 py-2 rounded-full bg-black text-white text-xs uppercase">All Projects</button>
+        <button class="px-6 py-2 rounded-full bg-[#e8e8e8] text-xs uppercase">Editorial</button>
+      </div>
+    </header>
+    <div class="masonry-grid">
+      <div class="masonry-tall overflow-hidden rounded-xl"><img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1495567720989-cebdbdd97913?q=80&w=1200&auto=format&fit=crop" alt="Project 1" /></div>
+      <div class="masonry-short overflow-hidden rounded-xl"><img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1489515217757-5fd1be406fef?q=80&w=1200&auto=format&fit=crop" alt="Project 2" /></div>
+      <div class="masonry-short masonry-wide overflow-hidden rounded-xl"><img class="w-full h-full object-cover" src="https://images.unsplash.com/photo-1505691938895-1758d7feb511?q=80&w=1200&auto=format&fit=crop" alt="Project 3" /></div>
+    </div>
+  </main>
+</body>
+</html>
