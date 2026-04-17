@@ -24,6 +24,19 @@ public class TemplateCanvasController : Controller
     [HttpGet]
     public async Task<IActionResult> Index(int? pageId, CancellationToken cancellationToken)
     {
+        var availablePalettes = (await _colorPaletteRepository.GetAllAsync(cancellationToken))
+            .OrderBy(x => x.Name)
+            .Select(x => new TemplateCanvasPaletteData
+            {
+                Id = x.Id,
+                Name = x.Name,
+                PrimaryHex = x.PrimaryHex,
+                SecondaryHex = x.SecondaryHex,
+                MutedHex = x.MutedHex,
+                AccentHex = x.AccentHex
+            })
+            .ToList();
+
         var pages = (await _pageRepository.GetAllAsync(cancellationToken))
             .Where(x => !x.IsDeleted)
             .OrderBy(x => x.DisplayOrder)
@@ -80,6 +93,7 @@ public class TemplateCanvasController : Controller
         {
             ActivePageId = activePageId,
             Pages = pages,
+            AvailablePalettes = availablePalettes,
             ActivePage = activePage
         });
     }
@@ -109,6 +123,7 @@ public class TemplateCanvasController : Controller
         }
 
         page.RenderedHtmlOverride = sanitized;
+        page.ColorPaletteId = model.ColorPaletteId > 0 ? model.ColorPaletteId : null;
         page.UpdatedDate = DateTime.UtcNow;
         await _pageRepository.UpdateAsync(page, cancellationToken);
         TempData["TemplateCanvasMessage"] = "Şablon düzeni kaydedildi.";

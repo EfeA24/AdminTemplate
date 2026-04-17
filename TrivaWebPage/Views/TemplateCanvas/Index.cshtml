@@ -52,6 +52,7 @@
         <form id="saveCanvasForm" asp-action="Save" method="post">
             @Html.AntiForgeryToken()
             <input type="hidden" name="PageId" value="@activePage.PageId" />
+            <input type="hidden" name="ColorPaletteId" id="canvasPaletteIdInput" value="@(activePage.Palette?.Id)" />
             <input type="hidden" name="HtmlContent" id="canvasHtmlInput" />
         </form>
 
@@ -72,6 +73,16 @@
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır kart ekle</label>
+                    <select id="cardTypeSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm">
+                        <option value="info">Bilgi kartı</option>
+                        <option value="cta">Aksiyon kartı</option>
+                        <option value="image">Görselli kart</option>
+                    </select>
+                    <button type="button" id="addCardBtn" class="w-full rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-3 py-2 text-sm font-medium text-white hover:opacity-90">Canvas içine kart ekle</button>
+                </div>
+
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Metin</label>
                     <textarea id="nodeTextInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="4"></textarea>
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href)</label>
@@ -85,18 +96,50 @@
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Style</label>
                     <textarea id="nodeStyleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="3"></textarea>
                 </div>
-                @if (activePage.Palette is not null)
-                {
-                    <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                        <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Aktif palet: @activePage.Palette.Name</label>
-                        <div class="flex gap-2">
-                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.PrimaryHex" title="Primary: @activePage.Palette.PrimaryHex"></span>
-                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.SecondaryHex" title="Secondary: @activePage.Palette.SecondaryHex"></span>
-                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.MutedHex" title="Muted: @activePage.Palette.MutedHex"></span>
-                            <span class="h-6 w-8 rounded border border-black/10" style="background:@activePage.Palette.AccentHex" title="Accent: @activePage.Palette.AccentHex"></span>
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Renk düzenleme</label>
+                    <div class="grid grid-cols-3 gap-2">
+                        <div>
+                            <label class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Arka plan</label>
+                            <input id="nodeBackgroundColorInput" type="color" class="mt-1 h-9 w-full rounded border bg-white p-1" value="#ffffff" />
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Yazı</label>
+                            <input id="nodeTextColorInput" type="color" class="mt-1 h-9 w-full rounded border bg-white p-1" value="#111111" />
+                        </div>
+                        <div>
+                            <label class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Kenarlık</label>
+                            <input id="nodeBorderColorInput" type="color" class="mt-1 h-9 w-full rounded border bg-white p-1" value="#d1d5db" />
                         </div>
                     </div>
-                }
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Sayfa arka planı</label>
+                    <input id="pageBackgroundColorInput" type="color" class="h-9 w-full rounded border bg-white p-1" value="#ffffff" />
+                </div>
+
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır renk paleti</label>
+                    <select id="paletteSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm">
+                        <option value="">Palet seçin</option>
+                        @foreach (var palette in Model.AvailablePalettes)
+                        {
+                            var isSelected = activePage.Palette?.Id == palette.Id;
+                            <option value="@palette.Id"
+                                    data-primary="@palette.PrimaryHex"
+                                    data-secondary="@palette.SecondaryHex"
+                                    data-muted="@palette.MutedHex"
+                                    data-accent="@palette.AccentHex"
+                                    selected="@(isSelected ? "selected" : null)">
+                                @palette.Name
+                            </option>
+                        }
+                    </select>
+                    <div id="activePaletteSwatches" class="flex gap-2">
+                        <span id="swatchPrimary" class="h-6 w-8 rounded border border-black/10" title="Primary"></span>
+                        <span id="swatchSecondary" class="h-6 w-8 rounded border border-black/10" title="Secondary"></span>
+                        <span id="swatchMuted" class="h-6 w-8 rounded border border-black/10" title="Muted"></span>
+                        <span id="swatchAccent" class="h-6 w-8 rounded border border-black/10" title="Accent"></span>
+                    </div>
+                </div>
             </section>
 
             <section class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 overflow-auto">
@@ -114,23 +157,36 @@
     <script>
         (function () {
             const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
-            const palette = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.Palette));
+            const initialPalette = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.Palette));
             const frame = document.getElementById("canvasFrame");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
             const htmlInput = document.getElementById("canvasHtmlInput");
+            const paletteIdInput = document.getElementById("canvasPaletteIdInput");
             const deleteNodeBtn = document.getElementById("deleteNodeBtn");
             const clearSelectionBtn = document.getElementById("clearSelectionBtn");
+            const addCardBtn = document.getElementById("addCardBtn");
+            const cardTypeSelect = document.getElementById("cardTypeSelect");
             const textInput = document.getElementById("nodeTextInput");
             const hrefInput = document.getElementById("nodeHrefInput");
             const srcInput = document.getElementById("nodeSrcInput");
             const altInput = document.getElementById("nodeAltInput");
             const classInput = document.getElementById("nodeClassInput");
             const styleInput = document.getElementById("nodeStyleInput");
+            const nodeBackgroundColorInput = document.getElementById("nodeBackgroundColorInput");
+            const nodeTextColorInput = document.getElementById("nodeTextColorInput");
+            const nodeBorderColorInput = document.getElementById("nodeBorderColorInput");
+            const pageBackgroundColorInput = document.getElementById("pageBackgroundColorInput");
+            const paletteSelect = document.getElementById("paletteSelect");
+            const swatchPrimary = document.getElementById("swatchPrimary");
+            const swatchSecondary = document.getElementById("swatchSecondary");
+            const swatchMuted = document.getElementById("swatchMuted");
+            const swatchAccent = document.getElementById("swatchAccent");
             if (!frame || !saveBtn || !saveForm || !htmlInput) return;
 
             let selectedNode = null;
             let selectedOutline = null;
+            let activePalette = initialPalette;
 
             function loadFrame() {
                 const doc = frame.contentDocument;
@@ -141,7 +197,7 @@
                 const style = doc.createElement("style");
                 style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;box-shadow:none !important;opacity:1 !important;filter:none !important;}";
                 doc.head.appendChild(style);
-                applyPalette(doc);
+                applyPalette(doc, activePalette);
 
                 doc.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -149,7 +205,7 @@
                 }, true);
             }
 
-            function applyPalette(doc) {
+            function applyPalette(doc, palette) {
                 if (!palette || !doc?.documentElement) return;
                 const root = doc.documentElement;
                 root.style.setProperty("--color-primary", palette.PrimaryHex || "#111111");
@@ -163,6 +219,9 @@
                     [palette.MutedHex]: "var(--color-muted)",
                     [palette.AccentHex]: "var(--color-accent)"
                 });
+                if (doc.body) {
+                    doc.body.style.backgroundColor = palette.SecondaryHex || "#ffffff";
+                }
             }
 
             function replaceInlineColors(scope, paletteMap) {
@@ -225,6 +284,9 @@
                     altInput.value = "";
                     classInput.value = "";
                     styleInput.value = "";
+                    nodeBackgroundColorInput.value = "#ffffff";
+                    nodeTextColorInput.value = "#111111";
+                    nodeBorderColorInput.value = "#d1d5db";
                     return;
                 }
                 textInput.value = selectedNode.textContent || "";
@@ -233,6 +295,10 @@
                 altInput.value = selectedNode.getAttribute?.("alt") || "";
                 classInput.value = selectedNode.className || "";
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
+                const computed = frame.contentWindow?.getComputedStyle(selectedNode);
+                nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
+                nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
+                nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
             }
 
             function applyInputsToNode() {
@@ -248,6 +314,85 @@
                 selectedNode.className = classInput.value || "";
             }
 
+            function applySelectedNodeColors() {
+                if (!selectedNode) return;
+                selectedNode.style.backgroundColor = nodeBackgroundColorInput.value || "";
+                selectedNode.style.color = nodeTextColorInput.value || "";
+                selectedNode.style.borderColor = nodeBorderColorInput.value || "";
+                styleInput.value = selectedNode.getAttribute?.("style") || "";
+            }
+
+            function applyPageBackgroundColor() {
+                const doc = frame.contentDocument;
+                if (!doc?.body) return;
+                doc.body.style.backgroundColor = pageBackgroundColorInput.value || "";
+            }
+
+            function toHexColor(colorValue, fallback) {
+                if (!colorValue) return fallback;
+                if (String(colorValue).startsWith("#")) return colorValue;
+                const match = String(colorValue).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
+                if (!match) return fallback;
+                const toHex = (v) => Number(v).toString(16).padStart(2, "0");
+                return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
+            }
+
+            function buildCardByType(type) {
+                const card = frame.contentDocument?.createElement("div");
+                if (!card) return null;
+                card.className = "canvas-card";
+                card.style.cssText = "border:1px solid #d1d5db;border-radius:12px;padding:16px;margin:12px 0;background:#ffffff;color:#111111;";
+                if (type === "cta") {
+                    card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Başlık</h3><p style='margin:0 0 12px;'>Bu bir aksiyon kartıdır. Metni düzenleyebilirsiniz.</p><a href='#' style='display:inline-block;padding:10px 14px;border-radius:8px;background:var(--color-accent, #00a19b);color:#fff;text-decoration:none;'>Hemen Başla</a>";
+                } else if (type === "image") {
+                    card.innerHTML = "<img src='https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80' alt='Kart görseli' style='width:100%;height:180px;object-fit:cover;border-radius:8px;margin-bottom:10px;'/><h3 style='margin:0 0 8px;font-size:20px;'>Görselli Kart</h3><p style='margin:0;'>Görsel ve metin alanını güncelleyebilirsiniz.</p>";
+                } else {
+                    card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Bilgi Kartı</h3><p style='margin:0;'>Canvas içine eklenen örnek kart. İçeriği düzenleyebilirsiniz.</p>";
+                }
+                return card;
+            }
+
+            function addCardToCanvas() {
+                const doc = frame.contentDocument;
+                if (!doc?.body) return;
+                const type = cardTypeSelect?.value || "info";
+                const card = buildCardByType(type);
+                if (!card) return;
+                const target = selectedNode && selectedNode.appendChild ? selectedNode : doc.body;
+                target.appendChild(card);
+                selectNode(card);
+            }
+
+            function setPaletteSwatches(palette) {
+                if (!swatchPrimary || !swatchSecondary || !swatchMuted || !swatchAccent) return;
+                swatchPrimary.style.background = palette?.PrimaryHex || "#111111";
+                swatchSecondary.style.background = palette?.SecondaryHex || "#333333";
+                swatchMuted.style.background = palette?.MutedHex || "#777777";
+                swatchAccent.style.background = palette?.AccentHex || "#00a19b";
+            }
+
+            function applyPaletteFromSelection() {
+                const selectedOption = paletteSelect?.selectedOptions?.[0];
+                if (!selectedOption || !selectedOption.value) {
+                    activePalette = null;
+                    if (paletteIdInput) paletteIdInput.value = "";
+                    return;
+                }
+                activePalette = {
+                    Id: Number(selectedOption.value),
+                    Name: selectedOption.textContent?.trim() || "",
+                    PrimaryHex: selectedOption.dataset.primary || "#111111",
+                    SecondaryHex: selectedOption.dataset.secondary || "#333333",
+                    MutedHex: selectedOption.dataset.muted || "#777777",
+                    AccentHex: selectedOption.dataset.accent || "#00a19b"
+                };
+                if (paletteIdInput) paletteIdInput.value = selectedOption.value;
+                const doc = frame.contentDocument;
+                applyPalette(doc, activePalette);
+                pageBackgroundColorInput.value = activePalette.SecondaryHex || "#ffffff";
+                setPaletteSwatches(activePalette);
+            }
+
             function setAttr(node, key, value) {
                 if (!node || !node.setAttribute) return;
                 if (!value) {
@@ -260,6 +405,12 @@
             [textInput, hrefInput, srcInput, altInput, classInput, styleInput].forEach((el) => {
                 el?.addEventListener("input", applyInputsToNode);
             });
+            [nodeBackgroundColorInput, nodeTextColorInput, nodeBorderColorInput].forEach((el) => {
+                el?.addEventListener("input", applySelectedNodeColors);
+            });
+            pageBackgroundColorInput?.addEventListener("input", applyPageBackgroundColor);
+            addCardBtn?.addEventListener("click", addCardToCanvas);
+            paletteSelect?.addEventListener("change", applyPaletteFromSelection);
 
             deleteNodeBtn?.addEventListener("click", () => {
                 if (!selectedNode) return;
@@ -283,6 +434,10 @@
             });
 
             loadFrame();
+            setPaletteSwatches(activePalette);
+            if (activePalette?.SecondaryHex && pageBackgroundColorInput) {
+                pageBackgroundColorInput.value = activePalette.SecondaryHex;
+            }
         })();
     </script>
 }

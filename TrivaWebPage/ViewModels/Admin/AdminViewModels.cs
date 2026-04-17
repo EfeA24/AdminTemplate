@@ -497,6 +497,7 @@ public class TemplateCanvasViewModel
 {
     public int? ActivePageId { get; set; }
     public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
+    public IReadOnlyList<TemplateCanvasPaletteData> AvailablePalettes { get; init; } = Array.Empty<TemplateCanvasPaletteData>();
     public TemplateCanvasPageData? ActivePage { get; set; }
 }
 
@@ -525,6 +526,8 @@ public class TemplateCanvasSaveInputModel
 {
     [Range(1, int.MaxValue)]
     public int PageId { get; set; }
+
+    public int? ColorPaletteId { get; set; }
 
     [Required]
     public string HtmlContent { get; set; } = string.Empty;
