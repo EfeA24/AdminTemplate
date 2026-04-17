@@ -48,6 +48,7 @@ public static class RepositoryServiceCollectionExtensions
         services.AddScoped<IPageComponent, PageComponentRepository>();
         services.AddScoped<IPageSection, PageSectionRepository>();
         services.AddScoped<IPageTextBuilderRepository, PageTextBuilderRepository>();
+        services.AddScoped<IPageCardBuilderRepository, PageCardBuilderRepository>();
 
         return services;
     }

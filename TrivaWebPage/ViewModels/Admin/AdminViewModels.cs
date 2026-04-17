@@ -348,3 +348,119 @@ public record TextBoxSaveItemInputModel
     public bool IsItalic { get; init; }
     public bool IsUnderline { get; init; }
 }
+
+public class CardsBuilderViewModel
+{
+    public int? ActivePageId { get; set; }
+    public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
+    public CardsEditorPageData? ActivePage { get; set; }
+    public IReadOnlyList<CardButtonPresetViewModel> ButtonPresets { get; init; } = Array.Empty<CardButtonPresetViewModel>();
+}
+
+public class CardsEditorPageData
+{
+    public int PageId { get; set; }
+    public string PageName { get; set; } = string.Empty;
+    public int PageWidth { get; set; }
+    public int PageHeight { get; set; }
+    public int? TemplatePageId { get; set; }
+    public string? TemplatePageName { get; set; }
+    public string? TemplateHtml { get; set; }
+    public List<CardEditorItemViewModel> Items { get; set; } = new();
+}
+
+public class CardEditorItemViewModel
+{
+    public int ComponentId { get; set; }
+    public int CardComponentId { get; set; }
+    public int DisplayOrder { get; set; }
+    public int X { get; set; }
+    public int Y { get; set; }
+    public int Width { get; set; }
+    public int Height { get; set; }
+    public bool IsVisible { get; set; } = true;
+    public int? CardDefinitionId { get; set; }
+    public string? Title { get; set; }
+    public string? Subtitle { get; set; }
+    public string? Description { get; set; }
+    public int? MediaFileId { get; set; }
+    public string? MediaFilePath { get; set; }
+    public bool ShowImage { get; set; }
+    public bool ShowButton { get; set; }
+    public string? BackgroundColor { get; set; }
+    public string? TextColor { get; set; }
+    public string? BorderColor { get; set; }
+    public List<CardEditorButtonViewModel> Buttons { get; set; } = new();
+}
+
+public class CardEditorButtonViewModel
+{
+    public int Id { get; set; }
+    public int DisplayOrder { get; set; }
+    public string Text { get; set; } = string.Empty;
+    public string? Icon { get; set; }
+    public string? BackgroundColor { get; set; }
+    public string? TextColor { get; set; }
+    public string? BorderColor { get; set; }
+    public int? ActionDefinitionId { get; set; }
+    public string? ActionUrl { get; set; }
+    public string? ActionTarget { get; set; }
+}
+
+public class CardButtonPresetViewModel
+{
+    public int PresetId { get; set; }
+    public string Name { get; set; } = string.Empty;
+    public string Text { get; set; } = string.Empty;
+    public string? BackgroundColor { get; set; }
+    public string? TextColor { get; set; }
+    public string? BorderColor { get; set; }
+    public string? UrlPlaceholder { get; set; }
+    public string? Target { get; set; }
+}
+
+public class CardsBuilderSaveInputModel
+{
+    [Range(1, int.MaxValue)]
+    public int PageId { get; set; }
+
+    [Required]
+    public string PayloadJson { get; set; } = "[]";
+}
+
+public record CardBuilderSaveItemInputModel
+{
+    public int ComponentId { get; init; }
+    public int CardComponentId { get; init; }
+    public int DisplayOrder { get; init; }
+    public int X { get; init; }
+    public int Y { get; init; }
+    public int Width { get; init; } = 320;
+    public int Height { get; init; } = 240;
+    public bool IsVisible { get; init; } = true;
+    public int? CardDefinitionId { get; init; }
+    public string? Title { get; init; }
+    public string? Subtitle { get; init; }
+    public string? Description { get; init; }
+    public int? MediaFileId { get; init; }
+    public bool ShowImage { get; init; }
+    public bool ShowButton { get; init; } = true;
+    public string? BackgroundColor { get; init; }
+    public string? TextColor { get; init; }
+    public string? BorderColor { get; init; }
+    public List<CardBuilderSaveButtonInputModel> Buttons { get; init; } = new();
+}
+
+public record CardBuilderSaveButtonInputModel
+{
+    public int Id { get; init; }
+    public int DisplayOrder { get; init; }
+    public string Text { get; init; } = string.Empty;
+    public string? Icon { get; init; }
+    public string? BackgroundColor { get; init; }
+    public string? TextColor { get; init; }
+    public string? BorderColor { get; init; }
+    public int? ActionDefinitionId { get; init; }
+    public string? ActionUrl { get; init; }
+    public string? ActionTarget { get; init; }
+}
