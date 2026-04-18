@@ -60,9 +60,7 @@ public class TemplateCanvasController : Controller
                 text = x.Text,
                 backgroundColor = x.BackgroundColor,
                 textColor = x.TextColor,
-                borderColor = x.BorderColor,
-                urlPlaceholder = x.UrlPlaceholder,
-                target = x.Target
+                borderColor = x.BorderColor
             })
             .ToList());
     }

@@ -453,8 +453,6 @@ public class CardButtonPresetViewModel
     public string? BackgroundColor { get; set; }
     public string? TextColor { get; set; }
     public string? BorderColor { get; set; }
-    public string? UrlPlaceholder { get; set; }
-    public string? Target { get; set; }
 }
 
 public class CardsBuilderSaveInputModel

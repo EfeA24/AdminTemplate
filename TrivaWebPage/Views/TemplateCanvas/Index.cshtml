@@ -89,17 +89,17 @@
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır buton yerleştir (Select2)</label>
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır buton tipi (yalnızca görünüm)</label>
                     <select id="buttonPresetSelect" class="w-full text-sm text-black"></select>
                     <button type="button" id="togglePlaceButtonModeBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Tıklayarak yerleştir: kapalı</button>
-                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Modu açın, yukarıdan bir hazır buton seçin; canvas önizlemesinde istediğiniz noktaya tıklayın.</p>
+                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Modu açın, bir buton tipi seçin; önizlemede konuma tıklayın. Linki aşağıdan siz verirsiniz; önizlemede bağlantılar açılmaz, yayında normal çalışır.</p>
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Metin</label>
                     <textarea id="nodeTextInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="4"></textarea>
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href)</label>
-                    <input id="nodeHrefInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href) — önizlemede tıklanmaz, canlı sayfada çalışır</label>
+                    <input id="nodeHrefInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" placeholder="/yol veya https://..." />
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Resim (src / URL)</label>
                     <input id="nodeSrcInput" type="text" class="w-full rounded border px-2 py-1.5 text-black text-sm" placeholder="https://... veya /uploads/..." autocomplete="off" />
                     <div class="flex flex-wrap gap-2">
@@ -282,14 +282,7 @@
 
             function placeButtonFromPreset(doc, ev, preset) {
                 const a = doc.createElement("a");
-                const href = preset.urlPlaceholder || "#";
-                a.setAttribute("href", href);
-                if (preset.target) {
-                    a.setAttribute("target", preset.target);
-                    if (String(preset.target).toLowerCase() === "_blank") {
-                        a.setAttribute("rel", "noopener noreferrer");
-                    }
-                }
+                a.setAttribute("href", "#");
                 a.textContent = preset.text || "Buton";
                 a.setAttribute("data-canvas-button-preset", String(preset.presetId ?? ""));
                 a.className = "canvas-placed-button";
@@ -358,6 +351,12 @@
                             placeButtonFromPreset(doc, e, preset);
                             return;
                         }
+                    }
+                    const anchor = e.target && typeof e.target.closest === "function" ? e.target.closest("a") : null;
+                    if (anchor) {
+                        e.preventDefault();
+                        selectNode(anchor);
+                        return;
                     }
                     selectNode(e.target);
                 }, true);

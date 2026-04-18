@@ -126,16 +126,16 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
     {
         var presets = new List<CardButtonPresetViewModel>
         {
-            new() { PresetId = 1, Name = "Detay", Text = "Detaya Git", BackgroundColor = "#00a19b", TextColor = "#ffffff", BorderColor = "#008f8a", UrlPlaceholder = "https://example.com/detay", Target = "_self" },
-            new() { PresetId = 2, Name = "Keşfet", Text = "Keşfet", BackgroundColor = "#fb3640", TextColor = "#ffffff", BorderColor = "#d12a33", UrlPlaceholder = "https://example.com/kesfet", Target = "_blank" },
-            new() { PresetId = 3, Name = "İncele", Text = "İncele", BackgroundColor = "#111827", TextColor = "#ffffff", BorderColor = "#111827", UrlPlaceholder = "https://example.com/incele", Target = "_blank" },
-            new() { PresetId = 4, Name = "Oku", Text = "Devamını Oku", BackgroundColor = "#ffffff", TextColor = "#111827", BorderColor = "#d1d5db", UrlPlaceholder = "https://example.com/oku", Target = "_self" },
-            new() { PresetId = 5, Name = "Demo", Text = "Demo Aç", BackgroundColor = "#4f46e5", TextColor = "#ffffff", BorderColor = "#4338ca", UrlPlaceholder = "https://example.com/demo", Target = "_blank" },
-            new() { PresetId = 6, Name = "Kaydol", Text = "Hemen Kaydol", BackgroundColor = "#16a34a", TextColor = "#ffffff", BorderColor = "#15803d", UrlPlaceholder = "https://example.com/kaydol", Target = "_self" },
-            new() { PresetId = 7, Name = "Teklif", Text = "Teklif Al", BackgroundColor = "#f59e0b", TextColor = "#111827", BorderColor = "#d97706", UrlPlaceholder = "https://example.com/teklif", Target = "_self" },
-            new() { PresetId = 8, Name = "Destek", Text = "Destek Talebi", BackgroundColor = "#0ea5e9", TextColor = "#ffffff", BorderColor = "#0284c7", UrlPlaceholder = "https://example.com/destek", Target = "_self" },
-            new() { PresetId = 9, Name = "İletişim", Text = "İletişime Geç", BackgroundColor = "#ec4899", TextColor = "#ffffff", BorderColor = "#db2777", UrlPlaceholder = "https://example.com/iletisim", Target = "_self" },
-            new() { PresetId = 10, Name = "Döküman", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937", UrlPlaceholder = "https://example.com/dokuman", Target = "_blank" }
+            new() { PresetId = 1, Name = "Detay", Text = "Detaya Git", BackgroundColor = "#00a19b", TextColor = "#ffffff", BorderColor = "#008f8a" },
+            new() { PresetId = 2, Name = "Keşfet", Text = "Keşfet", BackgroundColor = "#fb3640", TextColor = "#ffffff", BorderColor = "#d12a33" },
+            new() { PresetId = 3, Name = "İncele", Text = "İncele", BackgroundColor = "#111827", TextColor = "#ffffff", BorderColor = "#111827" },
+            new() { PresetId = 4, Name = "Oku", Text = "Devamını Oku", BackgroundColor = "#ffffff", TextColor = "#111827", BorderColor = "#d1d5db" },
+            new() { PresetId = 5, Name = "Demo", Text = "Demo Aç", BackgroundColor = "#4f46e5", TextColor = "#ffffff", BorderColor = "#4338ca" },
+            new() { PresetId = 6, Name = "Kaydol", Text = "Hemen Kaydol", BackgroundColor = "#16a34a", TextColor = "#ffffff", BorderColor = "#15803d" },
+            new() { PresetId = 7, Name = "Teklif", Text = "Teklif Al", BackgroundColor = "#f59e0b", TextColor = "#111827", BorderColor = "#d97706" },
+            new() { PresetId = 8, Name = "Destek", Text = "Destek Talebi", BackgroundColor = "#0ea5e9", TextColor = "#ffffff", BorderColor = "#0284c7" },
+            new() { PresetId = 9, Name = "İletişim", Text = "İletişime Geç", BackgroundColor = "#ec4899", TextColor = "#ffffff", BorderColor = "#db2777" },
+            new() { PresetId = 10, Name = "Döküman", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937" }
         };
 
         return Task.FromResult<IReadOnlyList<CardButtonPresetViewModel>>(presets);
