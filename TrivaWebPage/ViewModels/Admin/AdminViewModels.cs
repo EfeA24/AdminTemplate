@@ -453,6 +453,8 @@ public class CardButtonPresetViewModel
     public string? BackgroundColor { get; set; }
     public string? TextColor { get; set; }
     public string? BorderColor { get; set; }
+    /// <summary>Canvas / Select2: solid, pill, square, outline, elevated, ghost, dashed, bar, compact, wide</summary>
+    public string? StyleVariant { get; set; }
 }
 
 public class CardsBuilderSaveInputModel

@@ -60,7 +60,8 @@ public class TemplateCanvasController : Controller
                 text = x.Text,
                 backgroundColor = x.BackgroundColor,
                 textColor = x.TextColor,
-                borderColor = x.BorderColor
+                borderColor = x.BorderColor,
+                styleVariant = x.StyleVariant
             })
             .ToList());
     }

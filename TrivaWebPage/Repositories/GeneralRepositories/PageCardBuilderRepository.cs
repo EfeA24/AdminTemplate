@@ -126,16 +126,16 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
     {
         var presets = new List<CardButtonPresetViewModel>
         {
-            new() { PresetId = 1, Name = "Detay", Text = "Detaya Git", BackgroundColor = "#00a19b", TextColor = "#ffffff", BorderColor = "#008f8a" },
-            new() { PresetId = 2, Name = "Keşfet", Text = "Keşfet", BackgroundColor = "#fb3640", TextColor = "#ffffff", BorderColor = "#d12a33" },
-            new() { PresetId = 3, Name = "İncele", Text = "İncele", BackgroundColor = "#111827", TextColor = "#ffffff", BorderColor = "#111827" },
-            new() { PresetId = 4, Name = "Oku", Text = "Devamını Oku", BackgroundColor = "#ffffff", TextColor = "#111827", BorderColor = "#d1d5db" },
-            new() { PresetId = 5, Name = "Demo", Text = "Demo Aç", BackgroundColor = "#4f46e5", TextColor = "#ffffff", BorderColor = "#4338ca" },
-            new() { PresetId = 6, Name = "Kaydol", Text = "Hemen Kaydol", BackgroundColor = "#16a34a", TextColor = "#ffffff", BorderColor = "#15803d" },
-            new() { PresetId = 7, Name = "Teklif", Text = "Teklif Al", BackgroundColor = "#f59e0b", TextColor = "#111827", BorderColor = "#d97706" },
-            new() { PresetId = 8, Name = "Destek", Text = "Destek Talebi", BackgroundColor = "#0ea5e9", TextColor = "#ffffff", BorderColor = "#0284c7" },
-            new() { PresetId = 9, Name = "İletişim", Text = "İletişime Geç", BackgroundColor = "#ec4899", TextColor = "#ffffff", BorderColor = "#db2777" },
-            new() { PresetId = 10, Name = "Döküman", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937" }
+            new() { PresetId = 1, Name = "Detay — dolu", Text = "Detaya Git", BackgroundColor = "#00a19b", TextColor = "#ffffff", BorderColor = "#008f8a", StyleVariant = "solid" },
+            new() { PresetId = 2, Name = "Keşfet — hap", Text = "Keşfet", BackgroundColor = "#fb3640", TextColor = "#ffffff", BorderColor = "#d12a33", StyleVariant = "pill" },
+            new() { PresetId = 3, Name = "İncele — kare", Text = "İncele", BackgroundColor = "#111827", TextColor = "#ffffff", BorderColor = "#111827", StyleVariant = "square" },
+            new() { PresetId = 4, Name = "Oku — çerçeve", Text = "Devamını Oku", BackgroundColor = "#ffffff", TextColor = "#111827", BorderColor = "#d1d5db", StyleVariant = "outline" },
+            new() { PresetId = 5, Name = "Demo — gölge", Text = "Demo Aç", BackgroundColor = "#4f46e5", TextColor = "#ffffff", BorderColor = "#4338ca", StyleVariant = "elevated" },
+            new() { PresetId = 6, Name = "Kaydol — hayalet", Text = "Hemen Kaydol", BackgroundColor = "#16a34a", TextColor = "#ffffff", BorderColor = "#15803d", StyleVariant = "ghost" },
+            new() { PresetId = 7, Name = "Teklif — kesik çizgi", Text = "Teklif Al", BackgroundColor = "#f59e0b", TextColor = "#111827", BorderColor = "#d97706", StyleVariant = "dashed" },
+            new() { PresetId = 8, Name = "Destek — alt çizgi", Text = "Destek Talebi", BackgroundColor = "#0ea5e9", TextColor = "#ffffff", BorderColor = "#0284c7", StyleVariant = "bar" },
+            new() { PresetId = 9, Name = "İletişim — mini", Text = "İletişime Geç", BackgroundColor = "#ec4899", TextColor = "#ffffff", BorderColor = "#db2777", StyleVariant = "compact" },
+            new() { PresetId = 10, Name = "Döküman — geniş", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937", StyleVariant = "wide" }
         };
 
         return Task.FromResult<IReadOnlyList<CardButtonPresetViewModel>>(presets);

@@ -67,7 +67,7 @@
         </form>
 
         <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
-            <section class="min-w-0 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-3">
+            <section id="templateCanvasOptionsPanel" class="min-w-0 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 space-y-3">
                 <div>
                     <p class="text-xs uppercase tracking-wide text-brand-lightMuted dark:text-brand-darkMuted">Sayfa</p>
                     <p class="font-medium">@activePage.PageName</p>
@@ -113,7 +113,7 @@
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Style</label>
                     <textarea id="nodeStyleInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="3"></textarea>
                 </div>
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                <div id="canvasNodeColorsPanel" class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3 scroll-mt-3 rounded-lg transition-shadow duration-500">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Renk düzenleme</label>
                     <div class="grid grid-cols-3 gap-2">
                         <div>
@@ -208,6 +208,14 @@
 @if (activePage is not null)
 {
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" crossorigin="anonymous" />
+    <style>
+        #templateCanvasOptionsPanel .select2-container--default .select2-results > .select2-results__options {
+            max-height: 22rem;
+        }
+        #templateCanvasOptionsPanel .select2-results__option--highlighted .triva-preset-preview-btn {
+            filter: brightness(1.06);
+        }
+    </style>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" crossorigin="anonymous"></script>
     <script>
@@ -270,6 +278,158 @@
             let activePalette = initialPalette;
             let placeButtonMode = false;
             const buttonPresetById = new Map();
+            const canvasNodeColorsPanel = document.getElementById("canvasNodeColorsPanel");
+
+            function normalizePresetRow(item) {
+                const id = item.presetId ?? item.PresetId;
+                if (id == null) return null;
+                return {
+                    presetId: id,
+                    name: item.name || item.Name || ("Preset " + id),
+                    text: item.text || item.Text || "Buton",
+                    backgroundColor: item.backgroundColor || item.BackgroundColor || "#00a19b",
+                    textColor: item.textColor || item.TextColor || "#ffffff",
+                    borderColor: item.borderColor || item.BorderColor || "#008f8a",
+                    styleVariant: String(item.styleVariant || item.StyleVariant || "solid").toLowerCase()
+                };
+            }
+
+            /** Görsel varyant: canvas yerleştirme ve Select2 önizlemesi için ortak stiller (konum yok). */
+            function getCanvasButtonVisualCss(variant, bg, fg, br) {
+                const v = String(variant || "solid").toLowerCase();
+                const base = [
+                    "display:inline-flex",
+                    "align-items:center",
+                    "justify-content:center",
+                    "box-sizing:border-box",
+                    "text-decoration:none",
+                    "font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif",
+                    "line-height:1.2",
+                    "white-space:nowrap",
+                    "max-width:100%",
+                    "overflow:hidden",
+                    "text-overflow:ellipsis"
+                ];
+                const fill = ["background:" + bg, "color:" + fg, "border:1px solid " + br];
+                switch (v) {
+                    case "pill":
+                        return base.concat(fill, ["border-radius:9999px", "padding:10px 24px", "font-weight:600", "font-size:14px"]).join(";");
+                    case "square":
+                        return base.concat(fill, ["border-radius:2px", "padding:10px 14px", "font-weight:800", "font-size:11px", "text-transform:uppercase", "letter-spacing:.08em"]).join(";");
+                    case "outline":
+                        return base.concat([
+                            "background:transparent",
+                            "color:" + fg,
+                            "border:2px solid " + br,
+                            "border-radius:10px",
+                            "padding:8px 18px",
+                            "font-weight:600",
+                            "font-size:14px"
+                        ]).join(";");
+                    case "elevated":
+                        return base.concat(fill, [
+                            "border-radius:14px",
+                            "padding:11px 20px",
+                            "font-weight:600",
+                            "font-size:14px",
+                            "box-shadow:0 12px 28px rgba(15,23,42,.2)"
+                        ]).join(";");
+                    case "ghost":
+                        return base.concat([
+                            "background-color:" + bg,
+                            "background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.02))",
+                            "color:" + fg,
+                            "border:1px solid rgba(255,255,255,.45)",
+                            "border-radius:12px",
+                            "padding:10px 18px",
+                            "font-weight:600",
+                            "font-size:14px",
+                            "box-shadow:inset 0 1px 0 rgba(255,255,255,.35)"
+                        ]).join(";");
+                    case "dashed":
+                        return base.concat([
+                            "background:" + bg,
+                            "color:" + fg,
+                            "border:2px dashed " + br,
+                            "border-radius:12px",
+                            "padding:9px 18px",
+                            "font-weight:600",
+                            "font-size:14px"
+                        ]).join(";");
+                    case "bar":
+                        return base.concat([
+                            "background:" + bg,
+                            "color:" + fg,
+                            "border:none",
+                            "border-radius:8px",
+                            "padding:10px 16px 12px",
+                            "font-weight:600",
+                            "font-size:14px",
+                            "box-shadow:inset 0 -5px 0 0 " + br
+                        ]).join(";");
+                    case "compact":
+                        return base.concat(fill, ["border-radius:6px", "padding:5px 11px", "font-weight:600", "font-size:11px"]).join(";");
+                    case "wide":
+                        return base.concat(fill, [
+                            "border-radius:10px",
+                            "padding:12px 36px",
+                            "font-weight:600",
+                            "font-size:15px",
+                            "letter-spacing:.12em",
+                            "text-transform:uppercase"
+                        ]).join(";");
+                    default:
+                        return base.concat(fill, ["border-radius:8px", "padding:10px 16px", "font-weight:600", "font-size:14px"]).join(";");
+                }
+            }
+
+            function isCanvasPlacedButton(node) {
+                return !!(node && node.nodeType === 1 && node.tagName === "A" &&
+                    (node.classList?.contains("canvas-placed-button") || node.hasAttribute?.("data-canvas-button-preset")));
+            }
+
+            function focusCanvasNodeColorsPanel() {
+                if (!canvasNodeColorsPanel) return;
+                canvasNodeColorsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
+                canvasNodeColorsPanel.style.boxShadow = "0 0 0 3px rgba(0,161,155,.42)";
+                canvasNodeColorsPanel.style.transition = "box-shadow .35s ease";
+                window.clearTimeout(focusCanvasNodeColorsPanel._t);
+                focusCanvasNodeColorsPanel._t = window.setTimeout(() => {
+                    canvasNodeColorsPanel.style.boxShadow = "";
+                }, 1400);
+            }
+
+            function buildPresetSelect2Html(preset, mode) {
+                const isDropdown = mode === "dropdown";
+                const label = preset.name || ("Preset " + preset.presetId);
+                const raw = preset.text || "Buton";
+                const sample = raw.length > 20 ? raw.slice(0, 19) + "…" : raw;
+                const bg = preset.backgroundColor || "#00a19b";
+                const fg = preset.textColor || "#fff";
+                const br = preset.borderColor || bg;
+                const css = getCanvasButtonVisualCss(preset.styleVariant, bg, fg, br);
+                const rowPad = isDropdown ? "padding:6px 0" : "padding:2px 0";
+                const previewScale = isDropdown ? "" : "transform:scale(.9);transform-origin:left center;";
+                const rightStyle = isDropdown
+                    ? "flex:1;font-size:12px;color:#64748b;line-height:1.25"
+                    : "font-size:12px;color:#64748b;max-width:10rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
+                return (
+                    "<span style=\"display:flex;align-items:center;gap:10px;width:100%;" + rowPad + "\">" +
+                    "<span class=\"triva-preset-preview-btn\" style=\"" + previewScale + css + "\">" +
+                    escapeHtml(sample) +
+                    "</span>" +
+                    "<span style=\"" + rightStyle + "\">" + escapeHtml(label) + "</span>" +
+                    "</span>"
+                );
+            }
+
+            function escapeHtml(s) {
+                return String(s ?? "")
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\"/g, "&quot;");
+            }
 
             function getSelectedButtonPreset() {
                 if (!buttonPresetSelect) return null;
@@ -281,32 +441,26 @@
             }
 
             function placeButtonFromPreset(doc, ev, preset) {
+                const p = normalizePresetRow(preset) || preset;
                 const a = doc.createElement("a");
                 a.setAttribute("href", "#");
-                a.textContent = preset.text || "Buton";
-                a.setAttribute("data-canvas-button-preset", String(preset.presetId ?? ""));
+                a.textContent = p.text || "Buton";
+                a.setAttribute("data-canvas-button-preset", String(p.presetId ?? ""));
+                a.setAttribute("data-canvas-button-variant", p.styleVariant || "solid");
                 a.className = "canvas-placed-button";
-                const bg = preset.backgroundColor || "var(--color-accent, #00a19b)";
-                const fg = preset.textColor || "#ffffff";
-                const br = preset.borderColor || bg;
+                const bg = p.backgroundColor || "var(--color-accent, #00a19b)";
+                const fg = p.textColor || "#ffffff";
+                const br = p.borderColor || bg;
                 const left = typeof ev.pageX === "number" ? ev.pageX : ev.clientX;
                 const top = typeof ev.pageY === "number" ? ev.pageY : ev.clientY;
+                const visual = getCanvasButtonVisualCss(p.styleVariant, bg, fg, br);
                 a.style.cssText = [
                     "position:absolute",
                     "left:" + left + "px",
                     "top:" + top + "px",
                     "z-index:20",
-                    "display:inline-block",
-                    "padding:10px 16px",
-                    "border-radius:8px",
-                    "text-decoration:none",
-                    "font-size:14px",
-                    "font-weight:600",
-                    "box-sizing:border-box",
-                    "border:1px solid " + br,
-                    "background:" + bg,
-                    "color:" + fg,
-                    "cursor:pointer"
+                    "cursor:pointer",
+                    visual
                 ].join(";");
                 doc.body.appendChild(a);
                 selectNode(a);
@@ -425,6 +579,9 @@
                 selectedOutline = node;
                 selectedOutline.classList.add("__canvas-selected");
                 syncInputsFromNode();
+                if (isCanvasPlacedButton(node)) {
+                    window.requestAnimationFrame(() => focusCanvasNodeColorsPanel());
+                }
             }
 
             function clearSelection() {
@@ -563,13 +720,12 @@
                     empty.textContent = "";
                     buttonPresetSelect.appendChild(empty);
                     (list || []).forEach((item) => {
-                        const id = item.presetId ?? item.PresetId;
-                        if (id == null) return;
-                        buttonPresetById.set(String(id), item);
+                        const preset = normalizePresetRow(item);
+                        if (!preset) return;
+                        buttonPresetById.set(String(preset.presetId), preset);
                         const opt = document.createElement("option");
-                        opt.value = String(id);
-                        const label = item.name || item.Name || ("Preset " + id);
-                        opt.textContent = label;
+                        opt.value = String(preset.presetId);
+                        opt.textContent = preset.name;
                         buttonPresetSelect.appendChild(opt);
                     });
                     if (window.jQuery?.fn?.select2) {
@@ -580,9 +736,30 @@
                         const $panel = window.jQuery(buttonPresetSelect).closest("section.rounded-xl");
                         $s.select2({
                             width: "100%",
-                            placeholder: "Hazır buton seçin",
+                            placeholder: "Buton tipi seçin",
                             allowClear: true,
-                            dropdownParent: $panel.length ? $panel : window.jQuery("body")
+                            dropdownParent: $panel.length ? $panel : window.jQuery("body"),
+                            escapeMarkup: function (x) { return x; },
+                            templateResult: function (data) {
+                                if (!data.id) {
+                                    return window.jQuery("<span>").text(data.text || "");
+                                }
+                                const preset = buttonPresetById.get(String(data.id));
+                                if (!preset) {
+                                    return window.jQuery("<span>").text(data.text || "");
+                                }
+                                return window.jQuery("<span>").html(buildPresetSelect2Html(preset, "dropdown"));
+                            },
+                            templateSelection: function (data) {
+                                if (!data.id) {
+                                    return window.jQuery("<span>").text(data.text || "");
+                                }
+                                const preset = buttonPresetById.get(String(data.id));
+                                if (!preset) {
+                                    return window.jQuery("<span>").text(data.text || "");
+                                }
+                                return window.jQuery("<span>").html(buildPresetSelect2Html(preset, "selection"));
+                            }
                         });
                     }
                 } catch {
