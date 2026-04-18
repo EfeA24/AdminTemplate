@@ -181,10 +181,9 @@ public class CardDefinitionEditViewModel
     public int Id { get; set; }
     [Required] public string Name { get; set; } = string.Empty;
     [Required] public string Code { get; set; } = string.Empty;
-    [Required] public string CardType { get; set; } = "Info";
+    [Required] public string PreviewImageUrl { get; set; } = string.Empty;
     public string? Description { get; set; }
-    public string? PreviewHtml { get; set; }
-    public bool IsActive { get; set; } = true;
+    public bool IsSystem { get; set; }
 }
 
 public class CardDefinitionPresetViewModel
@@ -192,8 +191,7 @@ public class CardDefinitionPresetViewModel
     public int Id { get; init; }
     public string Name { get; init; } = string.Empty;
     public string Code { get; init; } = string.Empty;
-    public string CardType { get; init; } = string.Empty;
-    public string? PreviewHtml { get; init; }
+    public string PreviewImageUrl { get; init; } = string.Empty;
 }
 
 public class CardFieldDefinitionEditViewModel

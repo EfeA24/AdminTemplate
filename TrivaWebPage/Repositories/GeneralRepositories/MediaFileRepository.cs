@@ -27,8 +27,6 @@ namespace TrivaWebPage.Repositories.GeneralRepositories
             const string sql = """
                 SELECT CASE WHEN EXISTS (
                     SELECT 1 FROM [ImageComponents] WHERE [MediaFileId] = @Id
-                ) OR EXISTS (
-                    SELECT 1 FROM [CardDefinitions] WHERE [PreviewMediaFileId] = @Id
                 ) THEN 1 ELSE 0 END;
                 """;
             var blocked = await connection.ExecuteScalarAsync<int>(

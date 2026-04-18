@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using TrivaWebPage.Abstractions.CardOptionAbstractions;
-using TrivaWebPage.Helpers;
 using TrivaWebPage.Models.CardOptions;
 using TrivaWebPage.ViewModels.Admin;
 
@@ -21,113 +21,136 @@ public class CardDefinitionsController : Controller
         return View("~/Views/CardDefinitions/Index.cshtml", await _repository.GetAllAsync(cancellationToken));
     }
 
-    public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [Consumes("application/json")]
+    public async Task<IActionResult> CreateJson([FromBody] CardDefinitionEditViewModel model, CancellationToken cancellationToken)
     {
-        ViewBag.DisplayName = "Card Definitions";
-        var entity = await _repository.GetByIdAsync(id, cancellationToken);
-        return entity is null ? NotFound() : View("~/Views/CardDefinitions/Details.cshtml", entity);
-    }
+        if (!ModelState.IsValid)
+        {
+            return Json(new { ok = false, errors = FlattenErrors(ModelState) });
+        }
 
-    [HttpGet]
-    public IActionResult Create()
-    {
-        ViewBag.DisplayName = "Card Definitions";
-        ViewBag.FormAction = "Create";
-        return View("~/Views/CardDefinitions/Form.cshtml", new CardDefinitionEditViewModel());
+        var utc = DateTime.UtcNow;
+        var entity = new CardDefinition
+        {
+            Name = model.Name.Trim(),
+            Code = model.Code.Trim(),
+            PreviewImageUrl = string.IsNullOrWhiteSpace(model.PreviewImageUrl)
+                ? "/pictures/placeholder-card.svg"
+                : model.PreviewImageUrl.Trim(),
+            Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+            IsSystem = false,
+            CreatedDate = utc,
+            UpdatedDate = utc
+        };
+
+        try
+        {
+            await _repository.CreateAsync(entity, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return Json(new { ok = false, errors = new[] { ex.Message } });
+        }
+
+        return Json(new { ok = true });
     }
 
     [HttpPost]
     [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Create(CardDefinitionEditViewModel model, CancellationToken cancellationToken)
+    [Consumes("application/json")]
+    public async Task<IActionResult> EditJson(int id, [FromBody] CardDefinitionEditViewModel model, CancellationToken cancellationToken)
     {
-        ViewBag.DisplayName = "Card Definitions";
-        ViewBag.FormAction = "Create";
-        if (!ModelState.IsValid)
+        if (id != model.Id)
         {
-            return View("~/Views/CardDefinitions/Form.cshtml", model);
+            return Json(new { ok = false, errors = new[] { "Geçersiz istek." } });
         }
 
-        var preview = NormalizePreviewHtml(model.PreviewHtml);
-        var entity = new CardDefinition
+        if (!ModelState.IsValid)
         {
-            Name = model.Name,
-            Code = model.Code,
-            CardType = model.CardType,
-            Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
-            PreviewHtml = preview,
-            PreviewMediaFileId = null,
-            IsActive = model.IsActive
-        };
-        await _repository.CreateAsync(entity, cancellationToken);
-        return RedirectToAction(nameof(Index));
+            return Json(new { ok = false, errors = FlattenErrors(ModelState) });
+        }
+
+        var entity = await _repository.GetByIdAsync(id, cancellationToken);
+        if (entity is null)
+        {
+            return Json(new { ok = false, errors = new[] { "Kayıt bulunamadı." } });
+        }
+
+        if (entity.IsSystem)
+        {
+            entity.Name = model.Name.Trim();
+            entity.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
+            entity.PreviewImageUrl = string.IsNullOrWhiteSpace(model.PreviewImageUrl)
+                ? "/pictures/placeholder-card.svg"
+                : model.PreviewImageUrl.Trim();
+            entity.UpdatedDate = DateTime.UtcNow;
+        }
+        else
+        {
+            entity.Name = model.Name.Trim();
+            entity.Code = model.Code.Trim();
+            entity.PreviewImageUrl = string.IsNullOrWhiteSpace(model.PreviewImageUrl)
+                ? "/pictures/placeholder-card.svg"
+                : model.PreviewImageUrl.Trim();
+            entity.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
+            entity.UpdatedDate = DateTime.UtcNow;
+        }
+
+        try
+        {
+            await _repository.UpdateAsync(entity, cancellationToken);
+        }
+        catch (Exception ex)
+        {
+            return Json(new { ok = false, errors = new[] { ex.Message } });
+        }
+
+        return Json(new { ok = true });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    public async Task<IActionResult> DeleteJson(int id, CancellationToken cancellationToken)
+    {
+        var entity = await _repository.GetByIdAsync(id, cancellationToken);
+        if (entity is null)
+        {
+            return Json(new { ok = false, errors = new[] { "Kayıt bulunamadı." } });
+        }
+
+        if (entity.IsSystem)
+        {
+            return Json(new { ok = false, errors = new[] { "Sistem kartları silinemez." } });
+        }
+
+        var deleted = await _repository.DeleteAsync(id, cancellationToken);
+        return Json(new { ok = deleted, errors = deleted ? Array.Empty<string>() : new[] { "Silinemedi." } });
     }
 
     [HttpGet]
-    public async Task<IActionResult> Edit(int id, CancellationToken cancellationToken)
+    public async Task<IActionResult> GetJson(int id, CancellationToken cancellationToken)
     {
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
-        if (entity is null) return NotFound();
+        if (entity is null)
+        {
+            return NotFound();
+        }
 
-        ViewBag.DisplayName = "Card Definitions";
-        ViewBag.FormAction = "Edit";
-        return View("~/Views/CardDefinitions/Form.cshtml", new CardDefinitionEditViewModel
+        return Json(new CardDefinitionEditViewModel
         {
             Id = entity.Id,
             Name = entity.Name,
             Code = entity.Code,
-            CardType = entity.CardType,
+            PreviewImageUrl = entity.PreviewImageUrl,
             Description = entity.Description,
-            PreviewHtml = entity.PreviewHtml,
-            IsActive = entity.IsActive
+            IsSystem = entity.IsSystem
         });
     }
 
-    [HttpPost]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> Edit(int id, CardDefinitionEditViewModel model, CancellationToken cancellationToken)
+    private static string[] FlattenErrors(ModelStateDictionary modelState)
     {
-        ViewBag.DisplayName = "Card Definitions";
-        ViewBag.FormAction = "Edit";
-        if (id != model.Id) return BadRequest();
-        if (!ModelState.IsValid)
-        {
-            return View("~/Views/CardDefinitions/Form.cshtml", model);
-        }
-
-        var entity = await _repository.GetByIdAsync(id, cancellationToken);
-        if (entity is null) return NotFound();
-
-        entity.Name = model.Name;
-        entity.Code = model.Code;
-        entity.CardType = model.CardType;
-        entity.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
-        entity.PreviewHtml = NormalizePreviewHtml(model.PreviewHtml);
-        entity.PreviewMediaFileId = null;
-        entity.IsActive = model.IsActive;
-
-        await _repository.UpdateAsync(entity, cancellationToken);
-        return RedirectToAction(nameof(Index));
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
-    {
-        ViewBag.DisplayName = "Card Definitions";
-        var entity = await _repository.GetByIdAsync(id, cancellationToken);
-        return entity is null ? NotFound() : View("~/Views/Shared/AdminCrud/Delete.cshtml", entity);
-    }
-
-    [HttpPost, ActionName("Delete")]
-    [ValidateAntiForgeryToken]
-    public async Task<IActionResult> DeleteConfirmed(int id, CancellationToken cancellationToken)
-    {
-        await _repository.DeleteAsync(id, cancellationToken);
-        return RedirectToAction(nameof(Index));
-    }
-
-    private static string? NormalizePreviewHtml(string? raw)
-    {
-        var sanitized = AdminHtmlSanitizer.Sanitize(raw ?? string.Empty);
-        return string.IsNullOrWhiteSpace(sanitized) ? null : sanitized;
+        return modelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).Where(m => !string.IsNullOrEmpty(m)).ToArray();
     }
 }

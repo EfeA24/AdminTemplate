@@ -84,11 +84,7 @@
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır kart ekle</label>
-                    <select id="cardTypeSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm">
-                        <option value="info">Bilgi kartı</option>
-                        <option value="cta">Aksiyon kartı</option>
-                        <option value="image">Görselli kart</option>
-                    </select>
+                    <select id="cardTypeSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm"></select>
                     <button type="button" id="addCardBtn" class="w-full rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-3 py-2 text-sm font-medium text-white hover:opacity-90">Canvas içine kart ekle</button>
                 </div>
 
@@ -214,6 +210,7 @@
             const pageId = @activePage.PageId;
             const mediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadMedia", "TemplateCanvas")));
             const libraryMediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadLibraryMedia", "TemplateCanvas")));
+            const cardDefinitionsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListCardDefinitions", "TemplateCanvas")));
             const frame = document.getElementById("canvasFrame");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
@@ -409,26 +406,70 @@
                 return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
             }
 
-            function buildCardByType(type) {
-                const card = frame.contentDocument?.createElement("div");
+            function renderInfoCard(card) {
+                card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Bilgi Kartı</h3><p style='margin:0;'>Canvas içine eklenen örnek kart. İçeriği düzenleyebilirsiniz.</p>";
+            }
+
+            function renderCtaCard(card) {
+                card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Başlık</h3><p style='margin:0 0 12px;'>Bu bir aksiyon kartıdır. Metni düzenleyebilirsiniz.</p><a href='#' style='display:inline-block;padding:10px 14px;border-radius:8px;background:var(--color-accent, #00a19b);color:#fff;text-decoration:none;'>Hemen Başla</a>";
+            }
+
+            function renderImageCard(card) {
+                card.innerHTML = "<img src='https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80' alt='Kart görseli' style='width:100%;height:180px;object-fit:cover;border-radius:8px;margin-bottom:10px;'/><h3 style='margin:0 0 8px;font-size:20px;'>Görselli Kart</h3><p style='margin:0;'>Görsel ve metin alanını güncelleyebilirsiniz.</p>";
+            }
+
+            function renderDefaultCard(card) {
+                card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Kart</h3><p style='margin:0;'>Şablon içeriğini düzenleyebilirsiniz.</p>";
+            }
+
+            const CARD_RENDERERS = {
+                info: renderInfoCard,
+                cta: renderCtaCard,
+                image: renderImageCard,
+                default: renderDefaultCard
+            };
+
+            function createCanvasCardElement(doc, cardCode) {
+                const card = doc.createElement("div");
                 if (!card) return null;
                 card.className = "canvas-card";
                 card.style.cssText = "border:1px solid #d1d5db;border-radius:12px;padding:16px;margin:12px 0;background:#ffffff;color:#111111;";
-                if (type === "cta") {
-                    card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Başlık</h3><p style='margin:0 0 12px;'>Bu bir aksiyon kartıdır. Metni düzenleyebilirsiniz.</p><a href='#' style='display:inline-block;padding:10px 14px;border-radius:8px;background:var(--color-accent, #00a19b);color:#fff;text-decoration:none;'>Hemen Başla</a>";
-                } else if (type === "image") {
-                    card.innerHTML = "<img src='https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=800&q=80' alt='Kart görseli' style='width:100%;height:180px;object-fit:cover;border-radius:8px;margin-bottom:10px;'/><h3 style='margin:0 0 8px;font-size:20px;'>Görselli Kart</h3><p style='margin:0;'>Görsel ve metin alanını güncelleyebilirsiniz.</p>";
-                } else {
-                    card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Bilgi Kartı</h3><p style='margin:0;'>Canvas içine eklenen örnek kart. İçeriği düzenleyebilirsiniz.</p>";
-                }
+                const key = String(cardCode || "").toLowerCase();
+                card.setAttribute("data-card-template-code", key || "default");
+                const render = CARD_RENDERERS[key] || CARD_RENDERERS.default;
+                render(card);
                 return card;
+            }
+
+            async function loadCardDefinitionOptions() {
+                if (!cardTypeSelect || !cardDefinitionsListUrl) return;
+                try {
+                    const res = await fetch(cardDefinitionsListUrl, { credentials: "same-origin" });
+                    if (!res.ok) return;
+                    const list = await res.json();
+                    cardTypeSelect.innerHTML = "";
+                    (list || []).forEach((item) => {
+                        const code = item.code || item.Code;
+                        const name = item.name || item.Name;
+                        if (!code) return;
+                        const opt = document.createElement("option");
+                        opt.value = code;
+                        opt.textContent = name || code;
+                        cardTypeSelect.appendChild(opt);
+                    });
+                } catch {
+                    /* ignore */
+                }
             }
 
             function addCardToCanvas() {
                 const doc = frame.contentDocument;
                 if (!doc?.body) return;
-                const type = cardTypeSelect?.value || "info";
-                const card = buildCardByType(type);
+                let code = cardTypeSelect?.value;
+                if (!code && cardTypeSelect?.options?.length)
+                    code = cardTypeSelect.options[0].value;
+                if (!code) code = "info";
+                const card = createCanvasCardElement(doc, code);
                 if (!card) return;
                 const target = selectedNode && selectedNode.appendChild ? selectedNode : doc.body;
                 target.appendChild(card);
@@ -695,7 +736,9 @@
                 saveForm.submit();
             });
 
-            loadFrame();
+            loadCardDefinitionOptions().finally(() => {
+                loadFrame();
+            });
             setPaletteSwatches(activePalette);
             if (activePalette?.SecondaryHex && pageBackgroundColorInput) {
                 pageBackgroundColorInput.value = activePalette.SecondaryHex;

@@ -159,10 +159,7 @@ namespace TrivaWebPage.Data.Connection
 
             modelBuilder.Entity<CardDefinition>(entity =>
             {
-                entity.HasOne(d => d.PreviewMediaFile)
-                    .WithMany(m => m.CardDefinitions)
-                    .HasForeignKey(d => d.PreviewMediaFileId)
-                    .OnDelete(DeleteBehavior.SetNull);
+                entity.HasIndex(e => e.Code).IsUnique();
 
                 entity.HasMany(d => d.FieldDefinitions)
                     .WithOne(f => f.CardDefinition)

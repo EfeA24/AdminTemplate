@@ -1,5 +1,4 @@
-﻿using TrivaWebPage.Models.CardOptions;
-using TrivaWebPage.Models.Contents;
+﻿using TrivaWebPage.Models.Contents;
 
 namespace TrivaWebPage.Models.General
 {
@@ -23,7 +22,6 @@ namespace TrivaWebPage.Models.General
 
         public ICollection<ImageComponent> ImageComponents { get; set; } = new List<ImageComponent>();
         public ICollection<CardComponent> CardComponents { get; set; } = new List<CardComponent>();
-        public ICollection<CardDefinition> CardDefinitions { get; set; } = new List<CardDefinition>();
         public ICollection<PageMediaFile> PageMediaFiles { get; set; } = new List<PageMediaFile>();
     }
 }

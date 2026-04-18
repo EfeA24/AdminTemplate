@@ -50,6 +50,7 @@ public static class RepositoryServiceCollectionExtensions
         services.AddScoped<IPageTextBuilderRepository, PageTextBuilderRepository>();
         services.AddScoped<IPageCardBuilderRepository, PageCardBuilderRepository>();
         services.AddScoped<CuratorTemplateSeedService>();
+        services.AddScoped<CardDefinitionSeedService>();
 
         return services;
     }

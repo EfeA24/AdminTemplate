@@ -1,44 +1,229 @@
+@using System.Text.Json
 @model IReadOnlyList<TrivaWebPage.Models.CardOptions.CardDefinition>
 @{
-    ViewData["Title"] = "Card Definitions";
+    ViewData["Title"] = ViewBag.DisplayName ?? "Kart şablonları";
 }
 
-<div class="space-y-4">
-    <div class="flex items-center justify-between">
-        <h1 class="text-2xl font-semibold">Card Definitions</h1>
-        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Create</a>
+<div class="max-w-6xl mx-auto space-y-6 p-4">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Kart şablonları</h1>
+        <button type="button" id="openCreateModalBtn"
+                class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">
+            Yeni kart
+        </button>
     </div>
 
-    @if (Model.Count == 0)
-    {
-        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 text-sm">
-            No records found.
-        </div>
-    }
-    else
-    {
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            @foreach (var item in Model)
-            {
-                <article class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-hidden">
-                    <div class="aspect-[9/16] bg-white border-b border-brand-lightBorder dark:border-brand-darkBorder">
-                        @await Html.PartialAsync("~/Views/CardDefinitions/_CardDefinitionLightPreviewIframe.cshtml", item.PreviewHtml)
+    <p class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">
+        Her kayıt bir UI şablonu meta verisidir; HTML veritabanında saklanmaz. Canvas ve diğer ekranlar <code class="text-xs">Code</code> ile eşleştirir.
+    </p>
+
+    <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        @foreach (var item in Model)
+        {
+            <div class="card-def-tile group flex flex-col overflow-hidden rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel shadow-sm transition hover:border-brand-lightAccent/50 dark:hover:border-brand-darkAccent/50 cursor-pointer"
+                 data-id="@item.Id"
+                 role="button"
+                 tabindex="0">
+                <div class="aspect-[16/10] w-full overflow-hidden bg-black/5 dark:bg-white/5">
+                    <img src="@item.PreviewImageUrl" alt="" class="h-full w-full object-cover" loading="lazy" />
+                </div>
+                <div class="flex flex-1 flex-col gap-2 p-4">
+                    <div>
+                        <p class="font-semibold text-brand-lightText dark:text-brand-darkText">@item.Name</p>
+                        <p class="text-xs font-mono text-brand-lightMuted dark:text-brand-darkMuted">@item.Code</p>
                     </div>
-                    <div class="p-4 space-y-2">
-                        <div>
-                            <div class="font-semibold">@item.Name</div>
-                            <div class="text-xs opacity-70">@item.Code</div>
-                        </div>
-                        <div class="text-xs opacity-80">Type: @item.CardType</div>
-                        <div class="text-xs opacity-80">Status: @(item.IsActive ? "Active" : "Passive")</div>
-                        <div class="pt-1 space-x-3 text-sm">
-                            <a asp-action="Details" asp-route-id="@item.Id">Details</a>
-                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
-                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
-                        </div>
+                    <div class="mt-auto flex flex-wrap gap-2">
+                        <button type="button" class="edit-card-btn rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-1.5 text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5">Düzenle</button>
+                        <button type="button" class="delete-card-btn rounded-lg border border-red-300/80 px-3 py-1.5 text-xs font-medium text-red-800 hover:bg-red-50 dark:border-red-800 dark:text-red-200 dark:hover:bg-red-950/40 @(item.IsSystem ? "opacity-40 cursor-not-allowed" : "")"
+                                data-id="@item.Id"
+                                data-system="@(item.IsSystem ? "true" : "false")"
+                                @(item.IsSystem ? "disabled" : null)>
+                            Sil
+                        </button>
                     </div>
-                </article>
-            }
-        </div>
-    }
+                </div>
+            </div>
+        }
+    </div>
 </div>
+
+<form id="antiForgeryForm" class="hidden">@Html.AntiForgeryToken()</form>
+
+<div id="cardDefModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="cardDefModalTitle">
+    <div class="max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-6 shadow-lg" onclick="event.stopPropagation()">
+        <h2 id="cardDefModalTitle" class="text-lg font-semibold text-brand-lightText dark:text-brand-darkText">Kart şablonu</h2>
+        <div class="mt-4 space-y-3">
+            <input type="hidden" id="cdfId" value="0" />
+            <input type="hidden" id="cdfIsSystem" value="false" />
+            <div>
+                <label class="block text-xs font-medium text-brand-lightMuted dark:text-brand-darkMuted" for="cdfName">Ad</label>
+                <input id="cdfName" class="mt-1 w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-2 text-sm text-black" maxlength="200" />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-brand-lightMuted dark:text-brand-darkMuted" for="cdfCode">Kod</label>
+                <input id="cdfCode" class="mt-1 w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-2 text-sm text-black font-mono" maxlength="100" />
+                <p class="mt-1 text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Benzersiz; canvas bileşeni bu değerle eşlenir.</p>
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-brand-lightMuted dark:text-brand-darkMuted" for="cdfPreviewUrl">Önizleme görseli URL</label>
+                <input id="cdfPreviewUrl" type="text" class="mt-1 w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-2 text-sm text-black" placeholder="/pictures/..." />
+            </div>
+            <div>
+                <label class="block text-xs font-medium text-brand-lightMuted dark:text-brand-darkMuted" for="cdfDescription">Açıklama</label>
+                <textarea id="cdfDescription" rows="3" class="mt-1 w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-2 text-sm text-black"></textarea>
+            </div>
+            <p id="cdfError" class="hidden text-sm text-red-700 dark:text-red-300"></p>
+        </div>
+        <div class="mt-6 flex justify-end gap-2">
+            <button type="button" id="closeCardDefModalBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-4 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">İptal</button>
+            <button type="button" id="saveCardDefModalBtn" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white hover:opacity-90">Kaydet</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        const modal = document.getElementById("cardDefModal");
+        const form = document.getElementById("antiForgeryForm");
+        const tokenInput = form?.querySelector('input[name="__RequestVerificationToken"]');
+        const token = tokenInput?.value || "";
+        const getJsonUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("GetJson", "CardDefinitions")));
+        const createUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("CreateJson", "CardDefinitions")));
+        const editUrlTemplate = @Html.Raw(JsonSerializer.Serialize(Url.Action("EditJson", "CardDefinitions", new { id = 999999 })));
+        const deleteUrlTemplate = @Html.Raw(JsonSerializer.Serialize(Url.Action("DeleteJson", "CardDefinitions", new { id = 999999 })));
+
+        function editUrl(id) { return editUrlTemplate.replace("999999", String(id)); }
+        function deleteUrl(id) { return deleteUrlTemplate.replace("999999", String(id)); }
+
+        function showModal() {
+            if (!modal) return;
+            modal.classList.remove("hidden");
+            modal.classList.add("flex");
+        }
+        function hideModal() {
+            if (!modal) return;
+            modal.classList.add("hidden");
+            modal.classList.remove("flex");
+            const err = document.getElementById("cdfError");
+            if (err) { err.classList.add("hidden"); err.textContent = ""; }
+        }
+
+        function headersJson() {
+            return {
+                "Content-Type": "application/json",
+                "RequestVerificationToken": token
+            };
+        }
+
+        function showError(msg) {
+            const el = document.getElementById("cdfError");
+            if (!el) return;
+            el.textContent = msg || "";
+            el.classList.toggle("hidden", !msg);
+        }
+
+        document.getElementById("openCreateModalBtn")?.addEventListener("click", () => {
+            document.getElementById("cardDefModalTitle").textContent = "Yeni kart şablonu";
+            document.getElementById("cdfId").value = "0";
+            document.getElementById("cdfIsSystem").value = "false";
+            document.getElementById("cdfName").value = "";
+            document.getElementById("cdfCode").value = "";
+            document.getElementById("cdfCode").disabled = false;
+            document.getElementById("cdfPreviewUrl").value = "/pictures/placeholder-card.svg";
+            document.getElementById("cdfDescription").value = "";
+            showError("");
+            showModal();
+        });
+
+        document.getElementById("closeCardDefModalBtn")?.addEventListener("click", hideModal);
+        modal?.addEventListener("click", (e) => { if (e.target === modal) hideModal(); });
+
+        async function openEdit(id) {
+            showError("");
+            const res = await fetch(getJsonUrl + "?id=" + encodeURIComponent(id), { credentials: "same-origin" });
+            if (!res.ok) { showError("Kayıt yüklenemedi."); showModal(); return; }
+            const data = await res.json();
+            document.getElementById("cardDefModalTitle").textContent = "Kart şablonunu düzenle";
+            document.getElementById("cdfId").value = String(data.id);
+            document.getElementById("cdfIsSystem").value = data.isSystem ? "true" : "false";
+            document.getElementById("cdfName").value = data.name || "";
+            document.getElementById("cdfCode").value = data.code || "";
+            document.getElementById("cdfCode").disabled = !!data.isSystem;
+            document.getElementById("cdfPreviewUrl").value = data.previewImageUrl || "";
+            document.getElementById("cdfDescription").value = data.description || "";
+            showModal();
+        }
+
+        document.querySelectorAll(".card-def-tile").forEach((tile) => {
+            tile.addEventListener("click", (e) => {
+                if (e.target.closest(".edit-card-btn") || e.target.closest(".delete-card-btn")) return;
+                const id = tile.getAttribute("data-id");
+                if (id) openEdit(id);
+            });
+            tile.addEventListener("keydown", (e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    if (!e.target.closest(".delete-card-btn")) {
+                        const id = tile.getAttribute("data-id");
+                        if (id) openEdit(id);
+                    }
+                }
+            });
+        });
+
+        document.querySelectorAll(".edit-card-btn").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+                e.stopPropagation();
+                const tile = btn.closest(".card-def-tile");
+                const id = tile?.getAttribute("data-id");
+                if (id) openEdit(id);
+            });
+        });
+
+        document.querySelectorAll(".delete-card-btn").forEach((btn) => {
+            btn.addEventListener("click", async (e) => {
+                e.stopPropagation();
+                if (btn.disabled || btn.getAttribute("data-system") === "true") return;
+                const id = btn.getAttribute("data-id");
+                if (!id || !confirm("Bu kart şablonunu silmek istediğinize emin misiniz?")) return;
+                const fd = new FormData();
+                fd.append("__RequestVerificationToken", token);
+                const res = await fetch(deleteUrl(id), { method: "POST", body: fd, credentials: "same-origin" });
+                const data = await res.json().catch(() => ({}));
+                if (!data.ok) {
+                    alert((data.errors && data.errors[0]) || "Silinemedi.");
+                    return;
+                }
+                window.location.reload();
+            });
+        });
+
+        document.getElementById("saveCardDefModalBtn")?.addEventListener("click", async () => {
+            showError("");
+            const id = parseInt(document.getElementById("cdfId").value || "0", 10);
+            const isSystem = document.getElementById("cdfIsSystem").value === "true";
+            const payload = {
+                id: id,
+                name: document.getElementById("cdfName").value,
+                code: document.getElementById("cdfCode").value,
+                previewImageUrl: document.getElementById("cdfPreviewUrl").value,
+                description: document.getElementById("cdfDescription").value,
+                isSystem: isSystem
+            };
+            const url = id > 0 ? editUrl(id) : createUrl;
+            const res = await fetch(url, {
+                method: "POST",
+                headers: headersJson(),
+                credentials: "same-origin",
+                body: JSON.stringify(payload)
+            });
+            const data = await res.json().catch(() => ({}));
+            if (!data.ok) {
+                const msg = (data.errors && data.errors.length) ? data.errors.join(" ") : "Kayıt başarısız.";
+                showError(msg);
+                return;
+            }
+            window.location.reload();
+        });
+    })();
+</script>

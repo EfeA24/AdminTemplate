@@ -17,7 +17,7 @@ namespace TrivaWebPage.Models.Contents
         public string? Subtitle { get; set; }
         public string? Description { get; set; }
 
-        /// <summary>Optional raw HTML for custom cards (see CardDefinitions code html-embed).</summary>
+        /// <summary>Optional raw HTML for custom cards (Cards builder); FK uses a normal definition (e.g. info).</summary>
         public string? HtmlFragment { get; set; }
 
         public int? MediaFileId { get; set; }

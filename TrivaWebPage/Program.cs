@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Authentication.Cookies;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
+using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using TrivaWebPage.Data.Connection;
 using TrivaWebPage.DependencyInjection;
@@ -26,7 +27,13 @@ builder.Services.AddControllersWithViews(options =>
         options.Filters.Add(new AuthorizeFilter(
             new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build()));
     })
-    .AddRazorRuntimeCompilation();
+    .AddRazorRuntimeCompilation()
+    .AddJsonOptions(options =>
+    {
+        options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+    });
+
+builder.Services.AddAntiforgery(options => options.HeaderName = "RequestVerificationToken");
 
 // EF Core DbContext
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -43,6 +50,7 @@ using (var scope = app.Services.CreateScope())
     try
     {
         await scope.ServiceProvider.GetRequiredService<CuratorTemplateSeedService>().SeedAsync();
+        await scope.ServiceProvider.GetRequiredService<CardDefinitionSeedService>().SeedAsync();
     }
     catch (Exception ex)
     {

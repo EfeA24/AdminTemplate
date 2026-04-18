@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
+using TrivaWebPage.Abstractions.CardOptionAbstractions;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
 using TrivaWebPage.Helpers;
 using TrivaWebPage.ViewModels.Admin;
@@ -14,6 +15,7 @@ public class TemplateCanvasController : Controller
     private readonly IPageMediaFile _pageMediaFile;
     private readonly IMediaFile _mediaFile;
     private readonly IWebHostEnvironment _environment;
+    private readonly ICardDefinition _cardDefinitionRepository;
 
     public TemplateCanvasController(
         IPage pageRepository,
@@ -21,7 +23,8 @@ public class TemplateCanvasController : Controller
         IColorPalette colorPaletteRepository,
         IPageMediaFile pageMediaFile,
         IMediaFile mediaFile,
-        IWebHostEnvironment environment)
+        IWebHostEnvironment environment,
+        ICardDefinition cardDefinitionRepository)
     {
         _pageRepository = pageRepository;
         _templatePageRepository = templatePageRepository;
@@ -29,6 +32,17 @@ public class TemplateCanvasController : Controller
         _pageMediaFile = pageMediaFile;
         _mediaFile = mediaFile;
         _environment = environment;
+        _cardDefinitionRepository = cardDefinitionRepository;
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ListCardDefinitions(CancellationToken cancellationToken)
+    {
+        var list = (await _cardDefinitionRepository.GetAllAsync(cancellationToken))
+            .OrderBy(x => x.Name)
+            .Select(x => new { x.Id, x.Code, x.Name, x.PreviewImageUrl })
+            .ToList();
+        return Json(list);
     }
 
     [HttpGet]

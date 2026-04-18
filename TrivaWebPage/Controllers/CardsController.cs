@@ -77,15 +77,13 @@ public class CardsController : Controller
         }
 
         var definitions = (await _cardDefinitionRepository.GetAllAsync(cancellationToken))
-            .Where(d => d.IsActive)
             .OrderBy(d => d.Name)
             .Select(d => new CardDefinitionPresetViewModel
             {
                 Id = d.Id,
                 Name = d.Name,
                 Code = d.Code,
-                CardType = d.CardType,
-                PreviewHtml = d.PreviewHtml
+                PreviewImageUrl = d.PreviewImageUrl
             })
             .ToList();
 

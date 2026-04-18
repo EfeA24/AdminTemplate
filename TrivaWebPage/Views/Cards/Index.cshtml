@@ -212,8 +212,7 @@
             modal?.addEventListener("click", (e) => { if (e.target === modal) closePicker(); });
 
             function addPresetFromDefinition(def) {
-                const preview = (def.previewHtml || "").trim();
-                const hasHtml = preview.length > 0;
+                const previewUrl = (def.previewImageUrl || "").trim();
                 state.cards.push({
                     componentId: 0,
                     cardComponentId: 0,
@@ -224,14 +223,14 @@
                     height: 200,
                     isVisible: true,
                     cardDefinitionId: def.id || 0,
-                    title: hasHtml ? "" : (def.name || "Kart"),
+                    title: def.name || "Kart",
                     subtitle: "",
                     description: "",
-                    htmlFragment: hasHtml ? preview : "",
+                    htmlFragment: "",
                     mediaFileId: null,
-                    mediaFilePath: "",
-                    showImage: !hasHtml,
-                    showButton: !hasHtml,
+                    mediaFilePath: previewUrl,
+                    showImage: true,
+                    showButton: true,
                     backgroundColor: "#ffffff",
                     textColor: "#111827",
                     borderColor: "#d1d5db",
@@ -247,7 +246,7 @@
                     b.type = "button";
                     b.className = "rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-50";
                     b.textContent = def.name || ("#" + def.id);
-                    b.title = def.code ? def.code + " · " + (def.cardType || "") : (def.cardType || "");
+                    b.title = def.code ? String(def.code) : "";
                     b.addEventListener("click", () => addPresetFromDefinition(def));
                     presetsHost.appendChild(b);
                 });

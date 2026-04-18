@@ -161,19 +161,19 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
             }
 
             var sectionId = await EnsureSectionAsync(connection, tx, pageId, cancellationToken);
-            var htmlEmbedDefinitionId = await connection.QuerySingleOrDefaultAsync<int?>(
+            var htmlCardDefinitionId = await connection.QuerySingleOrDefaultAsync<int?>(
                 new CommandDefinition(
                     "SELECT TOP (1) [Id] FROM [CardDefinitions] WHERE [Code] = @Code;",
-                    new { Code = "html-embed" },
+                    new { Code = "info" },
                     tx,
                     cancellationToken: cancellationToken));
-            if (!htmlEmbedDefinitionId.HasValue)
+            if (!htmlCardDefinitionId.HasValue)
             {
-                throw new InvalidOperationException("CardDefinitions içinde 'html-embed' kodu bulunamadı. Migration uygulandığından emin olun.");
+                throw new InvalidOperationException("CardDefinitions içinde 'info' kodu bulunamadı. Migration uygulandığından emin olun.");
             }
 
             var incoming = items
-                .Select((item, idx) => Normalize(item, page.Width, page.Height, idx + 1, htmlEmbedDefinitionId.Value))
+                .Select((item, idx) => Normalize(item, page.Width, page.Height, idx + 1, htmlCardDefinitionId.Value))
                 .ToList();
 
             var existing = (await connection.QueryAsync<ExistingCardRow>(
@@ -409,7 +409,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
         int pageWidth,
         int pageHeight,
         int displayOrder,
-        int htmlEmbedDefinitionId)
+        int htmlCardDefinitionId)
     {
         var width = Math.Clamp(item.Width <= 0 ? 320 : item.Width, 160, pageWidth);
         var height = Math.Clamp(item.Height <= 0 ? 220 : item.Height, 120, pageHeight);
@@ -447,7 +447,7 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
             TextColor = NormalizeColor(item.TextColor, "#111827"),
             BorderColor = NormalizeColor(item.BorderColor, "#d1d5db"),
             CardDefinitionId = isHtmlCard
-                ? htmlEmbedDefinitionId
+                ? htmlCardDefinitionId
                 : item.CardDefinitionId is > 0
                     ? item.CardDefinitionId
                     : 1,
