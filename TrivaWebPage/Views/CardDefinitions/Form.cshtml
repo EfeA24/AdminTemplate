@@ -47,7 +47,7 @@
 
         <div class="space-y-2 rounded-lg border border-dashed border-brand-lightBorder dark:border-brand-darkBorder p-3 bg-white">
             <p class="text-xs font-medium text-brand-lightText dark:text-brand-darkText">Light önizleme</p>
-            @await Html.PartialAsync("CardDefinitions/_CardDefinitionLightPreviewIframe", Model.PreviewHtml)
+            @await Html.PartialAsync("~/Views/CardDefinitions/_CardDefinitionLightPreviewIframe.cshtml", Model.PreviewHtml)
         </div>
 
         <div class="flex items-center gap-2">
