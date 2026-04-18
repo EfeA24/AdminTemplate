@@ -40,6 +40,16 @@ namespace TrivaWebPage.Repositories.GeneralRepositories
 
         public async Task<Page?> GetDefaultPublishedHomePageAsync(CancellationToken cancellationToken = default)
         {
+            var slugHomeMatches = await GetByConditionAsync(
+                "[Slug] = @Slug AND [IsPublished] = 1 AND [IsDeleted] = 0 ORDER BY [DisplayOrder], [Id]",
+                new { Slug = SlugNormalizer.Normalize("home") },
+                cancellationToken);
+
+            if (slugHomeMatches.Count > 0)
+            {
+                return slugHomeMatches[0];
+            }
+
             var homeCandidates = await GetByConditionAsync(
                 "[IsHomePage] = 1 AND [IsPublished] = 1 AND [IsDeleted] = 0 ORDER BY [DisplayOrder], [Id]",
                 null,

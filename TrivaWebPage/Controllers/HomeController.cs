@@ -3,16 +3,19 @@ using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
 using TrivaWebPage.Models;
+using TrivaWebPage.Services;
 
 namespace TrivaWebPage.Controllers
 {
     public class HomeController : Controller
     {
         private readonly IPage _pageRepository;
+        private readonly PublicSitePageRenderer _publicSitePageRenderer;
 
-        public HomeController(IPage pageRepository)
+        public HomeController(IPage pageRepository, PublicSitePageRenderer publicSitePageRenderer)
         {
             _pageRepository = pageRepository;
+            _publicSitePageRenderer = publicSitePageRenderer;
         }
 
         [AllowAnonymous]
@@ -21,7 +24,7 @@ namespace TrivaWebPage.Controllers
             var page = await _pageRepository.GetDefaultPublishedHomePageAsync(cancellationToken);
             if (page is not null)
             {
-                return RedirectToRoute("public-site-page", new { slug = page.Slug });
+                return await _publicSitePageRenderer.RenderAsync(this, page, cancellationToken);
             }
 
             return View();

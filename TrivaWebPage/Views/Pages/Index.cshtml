@@ -2,6 +2,7 @@
 @{
     ViewData["Title"] = "Sayfalar";
     var items = Model ?? Array.Empty<TrivaWebPage.Models.General.Page>();
+    var canonicalHomeId = ViewBag.CanonicalHomePageId as int?;
 }
 
 <div class="space-y-4">
@@ -31,7 +32,8 @@
                     <td class="px-4 py-3 space-x-3 whitespace-nowrap">
                         @if (p.IsPublished && !string.IsNullOrWhiteSpace(p.Slug))
                         {
-                            <a href="@Url.RouteUrl("public-site-page", new { slug = p.Slug })"
+                            var canonicalRoot = canonicalHomeId is int hid && hid == p.Id;
+                            <a href="@(canonicalRoot ? Url.Content("~/") : Url.RouteUrl("public-site-page", new { slug = p.Slug }))"
                                target="_blank" rel="noopener noreferrer"
                                class="text-brand-lightAccent dark:text-brand-darkAccent font-medium">Sitede aç</a>
                             <span class="text-brand-lightMuted dark:text-brand-darkMuted">·</span>

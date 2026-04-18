@@ -25,6 +25,8 @@ public class PagesController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         var list = await _pageRepository.GetAllAsync(cancellationToken);
+        var canonicalHome = await _pageRepository.GetDefaultPublishedHomePageAsync(cancellationToken);
+        ViewBag.CanonicalHomePageId = canonicalHome?.Id;
         return View("~/Views/Pages/Index.cshtml", list);
     }
 

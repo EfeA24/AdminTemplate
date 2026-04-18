@@ -26,6 +26,12 @@ public class SitePageController : Controller
             return NotFound();
         }
 
+        var canonicalHome = await _pageRepository.GetDefaultPublishedHomePageAsync(cancellationToken);
+        if (canonicalHome is not null && canonicalHome.Id == page.Id)
+        {
+            return RedirectPermanent(Url.Content("~/")!);
+        }
+
         return await _renderer.RenderAsync(this, page, cancellationToken);
     }
 }
