@@ -1,8 +1,10 @@
 @using System.Text.Encodings.Web
+@using System.Net
 @using TrivaWebPage.Helpers
 @model string?
 @{
-    var inner = AdminHtmlSanitizer.Sanitize(Model ?? string.Empty);
+    var decodedHtml = WebUtility.HtmlDecode(Model ?? string.Empty);
+    var inner = AdminHtmlSanitizer.Sanitize(decodedHtml);
     if (string.IsNullOrWhiteSpace(inner))
     {
         inner = "<p style=\"margin:0;color:#6b7280;font-size:13px;\">Önizleme HTML’i yok.</p>";
