@@ -190,7 +190,7 @@
                     <button type="button" id="closeLibraryMediaModalBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-1 text-xs hover:bg-black/5 dark:hover:bg-white/5">Kapat</button>
                 </div>
                 <div class="space-y-3 overflow-y-auto p-4">
-                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Resimler ekranındaki gibi tüm yüklenen dosyalar. Küçük resme tıklayınca seçili öğedeki görsel güncellenir. Yalnızca dosya yüklemesi; adres (URL) ile ekleme yok.</p>
+                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Resimler ekranındaki gibi tüm yüklenen dosyalar. Küçük resme tıklayınca seçili öğedeki görsel güncellenir. İsterseniz soldaki alana harici URL de yazabilirsiniz.</p>
                     <form id="libraryMediaUploadForm" class="space-y-2">
                         <input type="file" id="libraryMediaFileInput" name="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="block w-full text-xs text-black" />
                         <button type="submit" class="w-full rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-3 py-2 text-xs font-medium text-white hover:opacity-90">Resim yükle</button>
@@ -226,7 +226,6 @@
             const textInput = document.getElementById("nodeTextInput");
             const hrefInput = document.getElementById("nodeHrefInput");
             const srcInput = document.getElementById("nodeSrcInput");
-            const srcSummary = document.getElementById("nodeSrcSummary");
             const altInput = document.getElementById("nodeAltInput");
             const classInput = document.getElementById("nodeClassInput");
             const styleInput = document.getElementById("nodeStyleInput");
@@ -349,18 +348,6 @@
                 selectedOutline = null;
             }
 
-            function updateSrcSummary() {
-                if (!srcSummary) return;
-                const v = (srcInput?.value || "").trim();
-                if (!v) {
-                    srcSummary.textContent = "Henüz src yok — “Sayfa görselleri” veya “Resim kütüphanesi” ile seçin.";
-                    srcSummary.removeAttribute("title");
-                    return;
-                }
-                srcSummary.textContent = v;
-                srcSummary.title = v;
-            }
-
             function syncInputsFromNode() {
                 if (!selectedNode) {
                     textInput.value = "";
@@ -372,7 +359,6 @@
                     nodeBackgroundColorInput.value = "#ffffff";
                     nodeTextColorInput.value = "#111111";
                     nodeBorderColorInput.value = "#d1d5db";
-                    updateSrcSummary();
                     return;
                 }
                 textInput.value = selectedNode.textContent || "";
@@ -385,7 +371,6 @@
                 nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
                 nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
                 nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
-                updateSrcSummary();
             }
 
             function applyInputsToNode() {
@@ -679,7 +664,7 @@
                 }
             });
 
-            [textInput, hrefInput, altInput, classInput, styleInput].forEach((el) => {
+            [textInput, hrefInput, srcInput, altInput, classInput, styleInput].forEach((el) => {
                 el?.addEventListener("input", applyInputsToNode);
             });
             [nodeBackgroundColorInput, nodeTextColorInput, nodeBorderColorInput].forEach((el) => {
