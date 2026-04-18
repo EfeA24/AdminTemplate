@@ -15,6 +15,9 @@ namespace TrivaWebPage.Models.CardOptions
         public int? PreviewMediaFileId { get; set; }
         public MediaFile? PreviewMediaFile { get; set; }
 
+        /// <summary>HTML shell shown as definition preview (admin) and optional Cards preset; light-theme sandbox.</summary>
+        public string? PreviewHtml { get; set; }
+
         public bool IsActive { get; set; } = true;
 
         public ICollection<CardFieldDefinition> FieldDefinitions { get; set; } = new List<CardFieldDefinition>();

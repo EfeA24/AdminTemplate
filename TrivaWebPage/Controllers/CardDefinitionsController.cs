@@ -1,7 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
-using Microsoft.AspNetCore.Mvc.Rendering;
 using TrivaWebPage.Abstractions.CardOptionAbstractions;
-using TrivaWebPage.Abstractions.GeneralAbstactions;
+using TrivaWebPage.Helpers;
 using TrivaWebPage.Models.CardOptions;
 using TrivaWebPage.ViewModels.Admin;
 
@@ -10,12 +9,10 @@ namespace TrivaWebPage.Controllers;
 public class CardDefinitionsController : Controller
 {
     private readonly ICardDefinition _repository;
-    private readonly IMediaFile _mediaFileRepository;
 
-    public CardDefinitionsController(ICardDefinition repository, IMediaFile mediaFileRepository)
+    public CardDefinitionsController(ICardDefinition repository)
     {
         _repository = repository;
-        _mediaFileRepository = mediaFileRepository;
     }
 
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
@@ -28,16 +25,15 @@ public class CardDefinitionsController : Controller
     {
         ViewBag.DisplayName = "Card Definitions";
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
-        return entity is null ? NotFound() : View("~/Views/Shared/AdminCrud/Details.cshtml", entity);
+        return entity is null ? NotFound() : View("~/Views/CardDefinitions/Details.cshtml", entity);
     }
 
     [HttpGet]
-    public async Task<IActionResult> Create(CancellationToken cancellationToken)
+    public IActionResult Create()
     {
-        await PopulateMediaFilesAsync(cancellationToken, null);
         ViewBag.DisplayName = "Card Definitions";
         ViewBag.FormAction = "Create";
-        return View("~/Views/Shared/AdminCrud/Form.cshtml", new CardDefinitionEditViewModel());
+        return View("~/Views/CardDefinitions/Form.cshtml", new CardDefinitionEditViewModel());
     }
 
     [HttpPost]
@@ -48,17 +44,18 @@ public class CardDefinitionsController : Controller
         ViewBag.FormAction = "Create";
         if (!ModelState.IsValid)
         {
-            await PopulateMediaFilesAsync(cancellationToken, model.PreviewMediaFileId);
-            return View("~/Views/Shared/AdminCrud/Form.cshtml", model);
+            return View("~/Views/CardDefinitions/Form.cshtml", model);
         }
 
+        var preview = NormalizePreviewHtml(model.PreviewHtml);
         var entity = new CardDefinition
         {
             Name = model.Name,
             Code = model.Code,
             CardType = model.CardType,
-            Description = model.Description,
-            PreviewMediaFileId = model.PreviewMediaFileId,
+            Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim(),
+            PreviewHtml = preview,
+            PreviewMediaFileId = null,
             IsActive = model.IsActive
         };
         await _repository.CreateAsync(entity, cancellationToken);
@@ -70,18 +67,17 @@ public class CardDefinitionsController : Controller
     {
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
         if (entity is null) return NotFound();
-        await PopulateMediaFilesAsync(cancellationToken, entity.PreviewMediaFileId);
 
         ViewBag.DisplayName = "Card Definitions";
         ViewBag.FormAction = "Edit";
-        return View("~/Views/Shared/AdminCrud/Form.cshtml", new CardDefinitionEditViewModel
+        return View("~/Views/CardDefinitions/Form.cshtml", new CardDefinitionEditViewModel
         {
             Id = entity.Id,
             Name = entity.Name,
             Code = entity.Code,
             CardType = entity.CardType,
             Description = entity.Description,
-            PreviewMediaFileId = entity.PreviewMediaFileId,
+            PreviewHtml = entity.PreviewHtml,
             IsActive = entity.IsActive
         });
     }
@@ -95,8 +91,7 @@ public class CardDefinitionsController : Controller
         if (id != model.Id) return BadRequest();
         if (!ModelState.IsValid)
         {
-            await PopulateMediaFilesAsync(cancellationToken, model.PreviewMediaFileId);
-            return View("~/Views/Shared/AdminCrud/Form.cshtml", model);
+            return View("~/Views/CardDefinitions/Form.cshtml", model);
         }
 
         var entity = await _repository.GetByIdAsync(id, cancellationToken);
@@ -105,8 +100,9 @@ public class CardDefinitionsController : Controller
         entity.Name = model.Name;
         entity.Code = model.Code;
         entity.CardType = model.CardType;
-        entity.Description = model.Description;
-        entity.PreviewMediaFileId = model.PreviewMediaFileId;
+        entity.Description = string.IsNullOrWhiteSpace(model.Description) ? null : model.Description.Trim();
+        entity.PreviewHtml = NormalizePreviewHtml(model.PreviewHtml);
+        entity.PreviewMediaFileId = null;
         entity.IsActive = model.IsActive;
 
         await _repository.UpdateAsync(entity, cancellationToken);
@@ -129,9 +125,9 @@ public class CardDefinitionsController : Controller
         return RedirectToAction(nameof(Index));
     }
 
-    private async Task PopulateMediaFilesAsync(CancellationToken cancellationToken, int? selectedPreviewMediaFileId)
+    private static string? NormalizePreviewHtml(string? raw)
     {
-        var mediaFiles = await _mediaFileRepository.GetAllAsync(cancellationToken);
-        ViewBag.PreviewMediaFileId = new SelectList(mediaFiles, "Id", "FileName", selectedPreviewMediaFileId);
+        var sanitized = AdminHtmlSanitizer.Sanitize(raw ?? string.Empty);
+        return string.IsNullOrWhiteSpace(sanitized) ? null : sanitized;
     }
 }

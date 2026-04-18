@@ -1,5 +1,6 @@
 using System.Text.Json;
 using Microsoft.AspNetCore.Mvc;
+using TrivaWebPage.Abstractions.CardOptionAbstractions;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
 using TrivaWebPage.ViewModels.Admin;
 
@@ -11,17 +12,20 @@ public class CardsController : Controller
     private readonly IPageCardBuilderRepository _cardBuilderRepository;
     private readonly IPageMediaFile _pageMediaFile;
     private readonly IMediaFile _mediaFile;
+    private readonly ICardDefinition _cardDefinitionRepository;
 
     public CardsController(
         IPage pageRepository,
         IPageCardBuilderRepository cardBuilderRepository,
         IPageMediaFile pageMediaFile,
-        IMediaFile mediaFile)
+        IMediaFile mediaFile,
+        ICardDefinition cardDefinitionRepository)
     {
         _pageRepository = pageRepository;
         _cardBuilderRepository = cardBuilderRepository;
         _pageMediaFile = pageMediaFile;
         _mediaFile = mediaFile;
+        _cardDefinitionRepository = cardDefinitionRepository;
     }
 
     [HttpGet]
@@ -72,13 +76,27 @@ public class CardsController : Controller
             pageMedia = mediaList;
         }
 
+        var definitions = (await _cardDefinitionRepository.GetAllAsync(cancellationToken))
+            .Where(d => d.IsActive)
+            .OrderBy(d => d.Name)
+            .Select(d => new CardDefinitionPresetViewModel
+            {
+                Id = d.Id,
+                Name = d.Name,
+                Code = d.Code,
+                CardType = d.CardType,
+                PreviewHtml = d.PreviewHtml
+            })
+            .ToList();
+
         return View(new CardsBuilderViewModel
         {
             ActivePageId = activePageId,
             Pages = pages,
             ActivePage = activePage,
             ButtonPresets = Array.Empty<CardButtonPresetViewModel>(),
-            PageMedia = pageMedia
+            PageMedia = pageMedia,
+            CardDefinitions = definitions
         });
     }
 

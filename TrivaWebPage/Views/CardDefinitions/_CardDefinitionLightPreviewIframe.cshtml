@@ -1,0 +1,19 @@
+@using System.Text.Encodings.Web
+@using TrivaWebPage.Helpers
+@model string?
+@{
+    var inner = AdminHtmlSanitizer.Sanitize(Model ?? string.Empty);
+    if (string.IsNullOrWhiteSpace(inner))
+    {
+        inner = "<p style=\"margin:0;color:#6b7280;font-size:13px;\">Önizleme HTML’i yok.</p>";
+    }
+
+    var doc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"color-scheme\" content=\"light\"><style>body{margin:0;padding:10px;font-family:system-ui,sans-serif;background:#fff;color:#111;}</style></head><body>"
+              + inner
+              + "</body></html>";
+    var srcdoc = HtmlEncoder.Default.Encode(doc);
+}
+<iframe class="w-full min-h-[220px] rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white"
+        title="Kart önizlemesi (light)"
+        sandbox="allow-same-origin"
+        srcdoc="@srcdoc"></iframe>

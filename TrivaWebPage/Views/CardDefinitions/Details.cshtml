@@ -1,0 +1,36 @@
+@model TrivaWebPage.Models.CardOptions.CardDefinition
+@{
+    ViewData["Title"] = "Card Definitions Details";
+    var title = (ViewBag.DisplayName as string) ?? "Card Definitions";
+}
+
+<div class="space-y-4 max-w-4xl">
+    <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">@title Details</h1>
+
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 space-y-3">
+        <dl class="grid gap-2 text-sm sm:grid-cols-[8rem_1fr]">
+            <dt class="text-brand-lightMuted dark:text-brand-darkMuted">Id</dt><dd>@Model.Id</dd>
+            <dt class="text-brand-lightMuted dark:text-brand-darkMuted">Name</dt><dd>@Model.Name</dd>
+            <dt class="text-brand-lightMuted dark:text-brand-darkMuted">Code</dt><dd>@Model.Code</dd>
+            <dt class="text-brand-lightMuted dark:text-brand-darkMuted">CardType</dt><dd>@Model.CardType</dd>
+            <dt class="text-brand-lightMuted dark:text-brand-darkMuted">IsActive</dt><dd>@Model.IsActive</dd>
+        </dl>
+        @if (!string.IsNullOrWhiteSpace(Model.Description))
+        {
+            <div>
+                <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Description</p>
+                <p class="text-sm whitespace-pre-wrap">@Model.Description</p>
+            </div>
+        }
+    </div>
+
+    <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 space-y-2">
+        <h2 class="text-sm font-semibold text-brand-lightText dark:text-brand-darkText">Preview HTML (light)</h2>
+        @await Html.PartialAsync("CardDefinitions/_CardDefinitionLightPreviewIframe", Model.PreviewHtml)
+    </div>
+
+    <div class="flex gap-3">
+        <a asp-action="Edit" asp-route-id="@Model.Id" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2 text-sm">Edit</a>
+        <a asp-action="Index" class="px-2 py-2 text-sm">Back to List</a>
+    </div>
+</div>

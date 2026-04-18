@@ -129,6 +129,9 @@ namespace TrivaWebPage.Migrations
                     b.Property<int?>("PreviewMediaFileId")
                         .HasColumnType("int");
 
+                    b.Property<string>("PreviewHtml")
+                        .HasColumnType("nvarchar(max)");
+
                     b.HasKey("Id");
 
                     b.HasIndex("PreviewMediaFileId");

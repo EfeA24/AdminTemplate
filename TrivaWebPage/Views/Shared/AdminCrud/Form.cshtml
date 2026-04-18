@@ -29,6 +29,10 @@
                     <input type="checkbox" name="@prop.Name" value="true" @(value is true ? "checked" : "") />
                     <input type="hidden" name="@prop.Name" value="false" />
                 }
+                else if (type == typeof(string) && prop.Name.EndsWith("Html", StringComparison.OrdinalIgnoreCase))
+                {
+                    <textarea class="w-full rounded border px-3 py-2 text-black font-mono text-sm min-h-[160px]" rows="12" name="@prop.Name" spellcheck="false">@value</textarea>
+                }
                 else
                 {
                     var inputType = type == typeof(int) || type == typeof(long) || type == typeof(decimal) ? "number" : (prop.Name.Contains("Color", StringComparison.OrdinalIgnoreCase) ? "color" : "text");

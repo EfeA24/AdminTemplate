@@ -7,8 +7,10 @@
     var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
     var cardsPayload = JsonSerializer.Serialize(activePage?.Items ?? [], jsonOpts);
     var mediaPayload = JsonSerializer.Serialize(Model.PageMedia ?? [], jsonOpts);
+    var defsPayload = JsonSerializer.Serialize(Model.CardDefinitions ?? [], jsonOpts);
     var safeCardsPayload = JavaScriptEncoder.Default.Encode(cardsPayload);
     var safeMediaPayload = JavaScriptEncoder.Default.Encode(mediaPayload);
+    var safeDefsPayload = JavaScriptEncoder.Default.Encode(defsPayload);
 }
 
 <div class="max-w-[1600px] mx-auto space-y-4">
@@ -64,6 +66,12 @@
                 <button type="button" id="addHtmlCardBtn" class="rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-4 py-2 text-sm font-medium text-white">Kartı ekle</button>
             </div>
 
+            <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                <label class="text-sm font-semibold text-brand-lightText dark:text-brand-darkText">Hazır kart tanımları</label>
+                <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Card Definitions kayıtlarından; HTML önizlemesi light ortamda canvas’ta gösterilir.</p>
+                <div id="cardDefPresets" class="flex flex-wrap gap-2"></div>
+            </div>
+
             <div class="flex flex-wrap gap-3 items-center border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                 <button type="button" id="removeCardBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm">Seçili kartı sil</button>
                 <span class="text-xs text-brand-lightMuted">Kart üzerine tıklayarak seçin. Varsayılan kartlarda görsele çift tıklayınca sayfa görsellerinden seçebilirsiniz.</span>
@@ -91,6 +99,7 @@
         (function () {
             const initialCards = JSON.parse("@Html.Raw(safeCardsPayload)");
             const pageMedia = JSON.parse("@Html.Raw(safeMediaPayload)");
+            const cardDefinitions = JSON.parse("@Html.Raw(safeDefsPayload)");
             const pageId = @activePage.PageId;
             const canvas = document.getElementById("cardsRow");
             const saveBtn = document.getElementById("saveCardsBtn");
@@ -102,6 +111,7 @@
             const modal = document.getElementById("imagePickerModal");
             const modalGrid = document.getElementById("imagePickerGrid");
             const closeModal = document.getElementById("closeImageModal");
+            const presetsHost = document.getElementById("cardDefPresets");
             const token = document.querySelector('#saveCardsForm input[name="__RequestVerificationToken"]')?.value || "";
 
             if (!canvas || !saveBtn || !payloadInput || !saveForm) return;
@@ -201,6 +211,48 @@
             closeModal?.addEventListener("click", closePicker);
             modal?.addEventListener("click", (e) => { if (e.target === modal) closePicker(); });
 
+            function addPresetFromDefinition(def) {
+                const preview = (def.previewHtml || "").trim();
+                const hasHtml = preview.length > 0;
+                state.cards.push({
+                    componentId: 0,
+                    cardComponentId: 0,
+                    displayOrder: state.cards.length + 1,
+                    x: 0,
+                    y: 0,
+                    width: 280,
+                    height: 200,
+                    isVisible: true,
+                    cardDefinitionId: def.id || 0,
+                    title: hasHtml ? "" : (def.name || "Kart"),
+                    subtitle: "",
+                    description: "",
+                    htmlFragment: hasHtml ? preview : "",
+                    mediaFileId: null,
+                    mediaFilePath: "",
+                    showImage: !hasHtml,
+                    showButton: !hasHtml,
+                    backgroundColor: "#ffffff",
+                    textColor: "#111827",
+                    borderColor: "#d1d5db",
+                    buttons: []
+                });
+                selectedIndex = state.cards.length - 1;
+                render();
+            }
+
+            if (presetsHost && Array.isArray(cardDefinitions)) {
+                cardDefinitions.forEach((def) => {
+                    const b = document.createElement("button");
+                    b.type = "button";
+                    b.className = "rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-3 py-1.5 text-xs font-medium text-gray-900 hover:bg-gray-50";
+                    b.textContent = def.name || ("#" + def.id);
+                    b.title = def.code ? def.code + " · " + (def.cardType || "") : (def.cardType || "");
+                    b.addEventListener("click", () => addPresetFromDefinition(def));
+                    presetsHost.appendChild(b);
+                });
+            }
+
             function render() {
                 canvas.innerHTML = "";
                 state.cards.forEach((card, idx) => {
@@ -212,7 +264,10 @@
 
                     if (card.htmlFragment) {
                         const wrap = document.createElement("div");
-                        wrap.className = "prose prose-sm max-w-none text-xs overflow-auto max-h-48";
+                        wrap.className = "prose prose-sm max-w-none text-xs overflow-auto max-h-48 rounded-md p-1";
+                        wrap.style.colorScheme = "light";
+                        wrap.style.backgroundColor = "#ffffff";
+                        wrap.style.color = "#111827";
                         wrap.innerHTML = card.htmlFragment;
                         el.appendChild(wrap);
                     } else {

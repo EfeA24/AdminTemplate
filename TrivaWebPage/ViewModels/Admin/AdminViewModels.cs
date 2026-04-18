@@ -183,8 +183,17 @@ public class CardDefinitionEditViewModel
     [Required] public string Code { get; set; } = string.Empty;
     [Required] public string CardType { get; set; } = "Info";
     public string? Description { get; set; }
-    public int? PreviewMediaFileId { get; set; }
+    public string? PreviewHtml { get; set; }
     public bool IsActive { get; set; } = true;
+}
+
+public class CardDefinitionPresetViewModel
+{
+    public int Id { get; init; }
+    public string Name { get; init; } = string.Empty;
+    public string Code { get; init; } = string.Empty;
+    public string CardType { get; init; } = string.Empty;
+    public string? PreviewHtml { get; init; }
 }
 
 public class CardFieldDefinitionEditViewModel
@@ -381,6 +390,7 @@ public class CardsBuilderViewModel
     public CardsEditorPageData? ActivePage { get; set; }
     public IReadOnlyList<CardButtonPresetViewModel> ButtonPresets { get; init; } = Array.Empty<CardButtonPresetViewModel>();
     public IReadOnlyList<PageEditMediaItemViewModel> PageMedia { get; init; } = Array.Empty<PageEditMediaItemViewModel>();
+    public IReadOnlyList<CardDefinitionPresetViewModel> CardDefinitions { get; init; } = Array.Empty<CardDefinitionPresetViewModel>();
 }
 
 public class CardsEditorPageData
