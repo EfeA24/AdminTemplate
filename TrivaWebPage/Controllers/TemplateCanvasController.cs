@@ -16,6 +16,7 @@ public class TemplateCanvasController : Controller
     private readonly IMediaFile _mediaFile;
     private readonly IWebHostEnvironment _environment;
     private readonly ICardDefinition _cardDefinitionRepository;
+    private readonly IPageCardBuilderRepository _pageCardBuilderRepository;
 
     public TemplateCanvasController(
         IPage pageRepository,
@@ -24,7 +25,8 @@ public class TemplateCanvasController : Controller
         IPageMediaFile pageMediaFile,
         IMediaFile mediaFile,
         IWebHostEnvironment environment,
-        ICardDefinition cardDefinitionRepository)
+        ICardDefinition cardDefinitionRepository,
+        IPageCardBuilderRepository pageCardBuilderRepository)
     {
         _pageRepository = pageRepository;
         _templatePageRepository = templatePageRepository;
@@ -33,6 +35,7 @@ public class TemplateCanvasController : Controller
         _mediaFile = mediaFile;
         _environment = environment;
         _cardDefinitionRepository = cardDefinitionRepository;
+        _pageCardBuilderRepository = pageCardBuilderRepository;
     }
 
     [HttpGet]
@@ -43,6 +46,25 @@ public class TemplateCanvasController : Controller
             .Select(x => new { x.Id, x.Code, x.Name, x.PreviewImageUrl })
             .ToList();
         return Json(list);
+    }
+
+    [HttpGet]
+    public async Task<IActionResult> ListButtonPresets(CancellationToken cancellationToken)
+    {
+        var presets = await _pageCardBuilderRepository.GetButtonPresetsAsync(cancellationToken);
+        return Json(presets
+            .Select(x => new
+            {
+                presetId = x.PresetId,
+                name = x.Name,
+                text = x.Text,
+                backgroundColor = x.BackgroundColor,
+                textColor = x.TextColor,
+                borderColor = x.BorderColor,
+                urlPlaceholder = x.UrlPlaceholder,
+                target = x.Target
+            })
+            .ToList());
     }
 
     [HttpGet]

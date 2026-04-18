@@ -89,6 +89,13 @@
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
+                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır buton yerleştir (Select2)</label>
+                    <select id="buttonPresetSelect" class="w-full text-sm text-black"></select>
+                    <button type="button" id="togglePlaceButtonModeBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Tıklayarak yerleştir: kapalı</button>
+                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Modu açın, yukarıdan bir hazır buton seçin; canvas önizlemesinde istediğiniz noktaya tıklayın.</p>
+                </div>
+
+                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Metin</label>
                     <textarea id="nodeTextInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" rows="4"></textarea>
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href)</label>
@@ -200,6 +207,9 @@
 
 @if (activePage is not null)
 {
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" crossorigin="anonymous" />
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" crossorigin="anonymous"></script>
     <script>
         (function () {
             const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
@@ -210,6 +220,7 @@
             const mediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadMedia", "TemplateCanvas")));
             const libraryMediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadLibraryMedia", "TemplateCanvas")));
             const cardDefinitionsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListCardDefinitions", "TemplateCanvas")));
+            const buttonPresetsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListButtonPresets", "TemplateCanvas")));
             const frame = document.getElementById("canvasFrame");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
@@ -219,6 +230,8 @@
             const clearSelectionBtn = document.getElementById("clearSelectionBtn");
             const addCardBtn = document.getElementById("addCardBtn");
             const cardTypeSelect = document.getElementById("cardTypeSelect");
+            const buttonPresetSelect = document.getElementById("buttonPresetSelect");
+            const togglePlaceButtonModeBtn = document.getElementById("togglePlaceButtonModeBtn");
             const textInput = document.getElementById("nodeTextInput");
             const hrefInput = document.getElementById("nodeHrefInput");
             const srcInput = document.getElementById("nodeSrcInput");
@@ -255,6 +268,69 @@
             let selectedNode = null;
             let selectedOutline = null;
             let activePalette = initialPalette;
+            let placeButtonMode = false;
+            const buttonPresetById = new Map();
+
+            function getSelectedButtonPreset() {
+                if (!buttonPresetSelect) return null;
+                const id = window.jQuery?.fn?.select2
+                    ? String(window.jQuery(buttonPresetSelect).val() || "")
+                    : String(buttonPresetSelect.value || "");
+                if (!id) return null;
+                return buttonPresetById.get(id) || null;
+            }
+
+            function placeButtonFromPreset(doc, ev, preset) {
+                const a = doc.createElement("a");
+                const href = preset.urlPlaceholder || "#";
+                a.setAttribute("href", href);
+                if (preset.target) {
+                    a.setAttribute("target", preset.target);
+                    if (String(preset.target).toLowerCase() === "_blank") {
+                        a.setAttribute("rel", "noopener noreferrer");
+                    }
+                }
+                a.textContent = preset.text || "Buton";
+                a.setAttribute("data-canvas-button-preset", String(preset.presetId ?? ""));
+                a.className = "canvas-placed-button";
+                const bg = preset.backgroundColor || "var(--color-accent, #00a19b)";
+                const fg = preset.textColor || "#ffffff";
+                const br = preset.borderColor || bg;
+                const left = typeof ev.pageX === "number" ? ev.pageX : ev.clientX;
+                const top = typeof ev.pageY === "number" ? ev.pageY : ev.clientY;
+                a.style.cssText = [
+                    "position:absolute",
+                    "left:" + left + "px",
+                    "top:" + top + "px",
+                    "z-index:20",
+                    "display:inline-block",
+                    "padding:10px 16px",
+                    "border-radius:8px",
+                    "text-decoration:none",
+                    "font-size:14px",
+                    "font-weight:600",
+                    "box-sizing:border-box",
+                    "border:1px solid " + br,
+                    "background:" + bg,
+                    "color:" + fg,
+                    "cursor:pointer"
+                ].join(";");
+                doc.body.appendChild(a);
+                selectNode(a);
+            }
+
+            function setPlaceButtonMode(on) {
+                placeButtonMode = !!on;
+                if (togglePlaceButtonModeBtn) {
+                    togglePlaceButtonModeBtn.textContent = placeButtonMode
+                        ? "Tıklayarak yerleştir: açık (kapat)"
+                        : "Tıklayarak yerleştir: kapalı";
+                }
+                if (frame) {
+                    frame.style.outline = placeButtonMode ? "3px solid #00a19b" : "";
+                    frame.style.outlineOffset = placeButtonMode ? "2px" : "";
+                }
+            }
 
             function loadFrame() {
                 const doc = frame.contentDocument;
@@ -266,9 +342,23 @@
                 style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;box-shadow:none !important;opacity:1 !important;filter:none !important;}";
                 doc.head.appendChild(style);
                 applyPalette(doc, activePalette);
+                if (doc.body) {
+                    const pos = doc.defaultView?.getComputedStyle(doc.body)?.position;
+                    if (!pos || pos === "static") {
+                        doc.body.style.position = "relative";
+                    }
+                }
 
                 doc.addEventListener("click", (e) => {
                     e.stopPropagation();
+                    if (placeButtonMode) {
+                        const preset = getSelectedButtonPreset();
+                        if (preset) {
+                            e.preventDefault();
+                            placeButtonFromPreset(doc, e, preset);
+                            return;
+                        }
+                    }
                     selectNode(e.target);
                 }, true);
             }
@@ -456,6 +546,46 @@
                         opt.textContent = name || code;
                         cardTypeSelect.appendChild(opt);
                     });
+                } catch {
+                    /* ignore */
+                }
+            }
+
+            async function loadButtonPresetOptions() {
+                if (!buttonPresetSelect || !buttonPresetsListUrl) return;
+                try {
+                    const res = await fetch(buttonPresetsListUrl, { credentials: "same-origin" });
+                    if (!res.ok) return;
+                    const list = await res.json();
+                    buttonPresetById.clear();
+                    buttonPresetSelect.innerHTML = "";
+                    const empty = document.createElement("option");
+                    empty.value = "";
+                    empty.textContent = "";
+                    buttonPresetSelect.appendChild(empty);
+                    (list || []).forEach((item) => {
+                        const id = item.presetId ?? item.PresetId;
+                        if (id == null) return;
+                        buttonPresetById.set(String(id), item);
+                        const opt = document.createElement("option");
+                        opt.value = String(id);
+                        const label = item.name || item.Name || ("Preset " + id);
+                        opt.textContent = label;
+                        buttonPresetSelect.appendChild(opt);
+                    });
+                    if (window.jQuery?.fn?.select2) {
+                        const $s = window.jQuery(buttonPresetSelect);
+                        if ($s.hasClass("select2-hidden-accessible")) {
+                            $s.select2("destroy");
+                        }
+                        const $panel = window.jQuery(buttonPresetSelect).closest("section.rounded-xl");
+                        $s.select2({
+                            width: "100%",
+                            placeholder: "Hazır buton seçin",
+                            allowClear: true,
+                            dropdownParent: $panel.length ? $panel : window.jQuery("body")
+                        });
+                    }
                 } catch {
                     /* ignore */
                 }
@@ -712,6 +842,7 @@
             });
             pageBackgroundColorInput?.addEventListener("input", applyPageBackgroundColor);
             addCardBtn?.addEventListener("click", addCardToCanvas);
+            togglePlaceButtonModeBtn?.addEventListener("click", () => setPlaceButtonMode(!placeButtonMode));
             paletteSelect?.addEventListener("change", applyPaletteFromSelection);
 
             deleteNodeBtn?.addEventListener("click", () => {
@@ -735,7 +866,7 @@
                 saveForm.submit();
             });
 
-            loadCardDefinitionOptions().finally(() => {
+            Promise.all([loadCardDefinitionOptions(), loadButtonPresetOptions()]).finally(() => {
                 loadFrame();
             });
             setPaletteSwatches(activePalette);
