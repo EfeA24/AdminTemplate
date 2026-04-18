@@ -1,8 +1,17 @@
 ﻿@{
-    ViewData["Title"] = "Home Page";
+    ViewData["Title"] = "Sayfa yok";
 }
 
-<div class="text-center">
-    <h1 class="display-4">Welcome</h1>
-    <p>Learn about <a href="https://learn.microsoft.com/aspnet/core">building Web apps with ASP.NET Core</a>.</p>
+<div class="mx-auto flex max-w-lg flex-col items-center justify-center gap-6 py-16 text-center">
+    <p class="font-headline text-xl font-semibold text-brand-lightText dark:text-brand-darkText md:text-2xl">
+        Sayfa oluşturulmamıştır
+    </p>
+    <p class="text-base leading-relaxed text-brand-lightMuted dark:text-brand-darkMuted">
+        Sayfa oluşturmak için lütfen
+        <a asp-controller="Account"
+           asp-action="Login"
+           class="font-semibold text-brand-lightAccent underline decoration-brand-lightAccent/40 underline-offset-2 hover:text-brand-lightAccent/90 dark:text-brand-darkAccent dark:decoration-brand-darkAccent/40 dark:hover:text-brand-darkAccent/90">
+            Giriş Yap
+        </a>ınız
+    </p>
 </div>
