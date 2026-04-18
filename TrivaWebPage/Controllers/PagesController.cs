@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
 using TrivaWebPage.Helpers;
 using TrivaWebPage.Models.General;
+using TrivaWebPage.Routing;
 using TrivaWebPage.ViewModels.Admin;
 
 namespace TrivaWebPage.Controllers;
@@ -66,6 +67,7 @@ public class PagesController : Controller
     {
         ViewBag.FormAction = "Create";
         NormalizePageSlug(model);
+        ValidateSlugNotReserved(model);
         await PopulatePageFormLookupsAsync(cancellationToken, model.PageTemplateId);
         await ValidatePageDesignAsync(model, cancellationToken);
         await ValidateSlugUniqueAsync(model, exceptPageId: null, cancellationToken);
@@ -142,6 +144,7 @@ public class PagesController : Controller
         if (id != model.Id) return BadRequest();
 
         NormalizePageSlug(model);
+        ValidateSlugNotReserved(model);
         await PopulatePageFormLookupsAsync(cancellationToken, model.PageTemplateId);
         await ValidatePageDesignAsync(model, cancellationToken);
         await ValidateSlugUniqueAsync(model, exceptPageId: model.Id, cancellationToken);
@@ -216,6 +219,21 @@ public class PagesController : Controller
     private static void NormalizePageSlug(PageEditViewModel model)
     {
         model.Slug = SlugNormalizer.Normalize(model.Slug);
+    }
+
+    private void ValidateSlugNotReserved(PageEditViewModel model)
+    {
+        if (string.IsNullOrEmpty(model.Slug))
+        {
+            return;
+        }
+
+        if (ReservedPublicRouteSegments.IsReserved(model.Slug))
+        {
+            ModelState.AddModelError(
+                nameof(model.Slug),
+                "Bu kısa adres uygulama yollarıyla çakışır. Lütfen farklı bir değer seçin.");
+        }
     }
 
     private async Task ValidateSlugUniqueAsync(PageEditViewModel model, int? exceptPageId, CancellationToken cancellationToken)

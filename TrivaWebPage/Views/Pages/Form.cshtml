@@ -65,7 +65,7 @@
             <div class="space-y-1">
                 <label class="block text-sm font-medium" asp-for="Slug"></label>
                 <input class="w-full rounded border px-3 py-2 text-black" asp-for="Slug" />
-                <p class="text-xs text-gray-500">Yayın URL’si: <code class="rounded bg-gray-100 px-1">/sayfa/<span id="slugPreview">@(string.IsNullOrWhiteSpace(Model.Slug) ? "slug" : Model.Slug)</span></code> (küçük harf, rakam ve tire)</p>
+                <p class="text-xs text-gray-500">Yayın URL’si: <code class="rounded bg-gray-100 px-1">/<span id="slugPreview">@(string.IsNullOrWhiteSpace(Model.Slug) ? "slug" : Model.Slug)</span></code> (küçük harf, rakam ve tire; uygulama menüleriyle çakışan kısa adresler kullanılamaz)</p>
             </div>
             <div class="space-y-1">
                 <label class="block text-sm font-medium" asp-for="Title"></label>
@@ -94,7 +94,7 @@
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" asp-for="IsPublished" /> @Html.DisplayNameFor(m => m.IsPublished)</label>
                 <label class="flex items-center gap-2 text-sm"><input type="checkbox" asp-for="IsDeleted" /> @Html.DisplayNameFor(m => m.IsDeleted)</label>
             </div>
-            <p class="text-xs text-gray-500">Ziyaretçiler yalnızca <strong>Yayında</strong> işaretli sayfaları görür (<code class="rounded bg-gray-100 px-1">/sayfa/kısa-adres</code>). Taslaklar yalnızca yönetimde kalır.</p>
+            <p class="text-xs text-gray-500">Ziyaretçiler yalnızca <strong>Yayında</strong> işaretli sayfaları görür (<code class="rounded bg-gray-100 px-1">/kısa-adres</code>). Taslaklar yalnızca yönetimde kalır.</p>
         </div>
 
         <div class="flex gap-3">

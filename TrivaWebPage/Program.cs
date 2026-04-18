@@ -4,11 +4,18 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Authorization;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Routing;
 using TrivaWebPage.Data.Connection;
 using TrivaWebPage.DependencyInjection;
 using TrivaWebPage.Models;
+using TrivaWebPage.Routing;
 using TrivaWebPage.Services;
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.Configure<RouteOptions>(options =>
+{
+    options.ConstraintMap.Add("publicPageSlug", typeof(PublicPageSlugRouteConstraint));
+});
 
 builder.Services.AddSingleton<IPasswordHasher<User>, PasswordHasher<User>>();
 
@@ -75,11 +82,34 @@ app.UseRouting();
 app.UseAuthentication();
 app.UseAuthorization();
 
+app.Use(async (context, next) =>
+{
+    var path = context.Request.Path.Value ?? string.Empty;
+    const string legacyPrefix = "/sayfa/";
+    if (path.StartsWith(legacyPrefix, StringComparison.OrdinalIgnoreCase))
+    {
+        var slug = path[legacyPrefix.Length..];
+        if (slug.Length > 0 && slug.IndexOf('/') < 0)
+        {
+            var target = "/" + slug;
+            if (context.Request.QueryString.HasValue)
+            {
+                target += context.Request.QueryString.Value;
+            }
+
+            context.Response.Redirect(target, permanent: true);
+            return;
+        }
+    }
+
+    await next();
+});
+
 app.MapStaticAssets();
 
 app.MapControllerRoute(
         name: "public-site-page",
-        pattern: "sayfa/{slug}",
+        pattern: "{slug:publicPageSlug}",
         defaults: new { controller = "SitePage", action = "BySlug" })
     .WithStaticAssets();
 
