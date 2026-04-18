@@ -41,6 +41,7 @@ builder.Services.AddDbContext<AppDbContext>(options =>
 
 // Data access / repositories
 builder.Services.AddDataAccess(builder.Configuration);
+
 var app = builder.Build();
 
 using (var scope = app.Services.CreateScope())
@@ -75,6 +76,12 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapStaticAssets();
+
+app.MapControllerRoute(
+        name: "public-site-page",
+        pattern: "sayfa/{slug}",
+        defaults: new { controller = "SitePage", action = "BySlug" })
+    .WithStaticAssets();
 
 app.MapControllerRoute(
         name: "default",

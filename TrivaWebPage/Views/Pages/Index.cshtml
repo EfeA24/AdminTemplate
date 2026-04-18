@@ -28,7 +28,14 @@
                         <div class="text-xs opacity-70">#@p.Id @(p.IsPublished ? "Yayında" : "Taslak")@(p.IsHomePage ? " · Ana sayfa" : "")</div>
                     </td>
                     <td class="px-4 py-3 font-mono text-xs">@p.Slug</td>
-                    <td class="px-4 py-3 space-x-3">
+                    <td class="px-4 py-3 space-x-3 whitespace-nowrap">
+                        @if (p.IsPublished && !string.IsNullOrWhiteSpace(p.Slug))
+                        {
+                            <a href="@Url.RouteUrl("public-site-page", new { slug = p.Slug })"
+                               target="_blank" rel="noopener noreferrer"
+                               class="text-brand-lightAccent dark:text-brand-darkAccent font-medium">Sitede aç</a>
+                            <span class="text-brand-lightMuted dark:text-brand-darkMuted">·</span>
+                        }
                         <a asp-action="Details" asp-route-id="@p.Id">Detay</a>
                         <a asp-action="Edit" asp-route-id="@p.Id">Düzenle</a>
                         <a asp-action="Delete" asp-route-id="@p.Id">Sil</a>

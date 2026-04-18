@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
+using TrivaWebPage.Helpers;
 using TrivaWebPage.Models.General;
 using TrivaWebPage.ViewModels.Admin;
 
@@ -62,9 +63,16 @@ public class PagesController : Controller
     public async Task<IActionResult> Create(PageEditViewModel model, CancellationToken cancellationToken)
     {
         ViewBag.FormAction = "Create";
+        NormalizePageSlug(model);
         await PopulatePageFormLookupsAsync(cancellationToken, model.PageTemplateId);
         await ValidatePageDesignAsync(model, cancellationToken);
+        await ValidateSlugUniqueAsync(model, exceptPageId: null, cancellationToken);
         if (!ModelState.IsValid) return View("~/Views/Pages/Form.cshtml", model);
+
+        if (model.IsHomePage)
+        {
+            await _pageRepository.ClearHomePageFlagExceptAsync(null, cancellationToken);
+        }
 
         var entity = new Page
         {
@@ -131,12 +139,19 @@ public class PagesController : Controller
         ViewBag.FormAction = "Edit";
         if (id != model.Id) return BadRequest();
 
+        NormalizePageSlug(model);
         await PopulatePageFormLookupsAsync(cancellationToken, model.PageTemplateId);
         await ValidatePageDesignAsync(model, cancellationToken);
+        await ValidateSlugUniqueAsync(model, exceptPageId: model.Id, cancellationToken);
         if (!ModelState.IsValid) return View("~/Views/Pages/Form.cshtml", model);
 
         var entity = await _pageRepository.GetByIdAsync(id, cancellationToken);
         if (entity is null) return NotFound();
+
+        if (model.IsHomePage)
+        {
+            await _pageRepository.ClearHomePageFlagExceptAsync(model.Id, cancellationToken);
+        }
 
         entity.Name = model.Name;
         entity.Slug = model.Slug;
@@ -193,6 +208,26 @@ public class PagesController : Controller
         else
         {
             ViewBag.TemplateInnerPages = Array.Empty<PageTemplatePage>();
+        }
+    }
+
+    private static void NormalizePageSlug(PageEditViewModel model)
+    {
+        model.Slug = SlugNormalizer.Normalize(model.Slug);
+    }
+
+    private async Task ValidateSlugUniqueAsync(PageEditViewModel model, int? exceptPageId, CancellationToken cancellationToken)
+    {
+        if (string.IsNullOrEmpty(model.Slug))
+        {
+            return;
+        }
+
+        if (await _pageRepository.SlugExistsForAnotherPageAsync(model.Slug, exceptPageId, cancellationToken))
+        {
+            ModelState.AddModelError(
+                nameof(model.Slug),
+                "Bu kısa adres başka bir sayfa tarafından kullanılıyor. Lütfen farklı bir değer seçin.");
         }
     }
 

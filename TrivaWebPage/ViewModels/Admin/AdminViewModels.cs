@@ -13,6 +13,9 @@ public class PageEditViewModel
 
     [Display(Name = "Kısa adres")]
     [Required(ErrorMessage = "Kısa adres zorunludur.")]
+    [RegularExpression(
+        "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+        ErrorMessage = "Kısa adres yalnızca küçük harf, rakam ve tire içerebilir; tire ile başlayıp bitemez.")]
     public string Slug { get; set; } = string.Empty;
 
     [Display(Name = "Başlık")]
@@ -33,7 +36,7 @@ public class PageEditViewModel
     public bool IsHomePage { get; set; }
 
     [Display(Name = "Yayında")]
-    public bool IsPublished { get; set; }
+    public bool IsPublished { get; set; } = true;
 
     [Display(Name = "Silinmiş")]
     public bool IsDeleted { get; set; }

@@ -55,6 +55,10 @@ namespace TrivaWebPage.Data.Connection
 
             modelBuilder.Entity<Page>(entity =>
             {
+                entity.HasIndex(e => e.Slug)
+                    .IsUnique()
+                    .HasFilter("[IsDeleted] = 0");
+
                 entity.HasOne(p => p.PageTemplatePage)
                     .WithMany(t => t.Pages)
                     .HasForeignKey(p => p.PageTemplatePageId)

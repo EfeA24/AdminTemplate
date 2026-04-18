@@ -104,6 +104,9 @@
         })();
     </script>
 </head>
+@{
+    var isAdmin = User.Identity?.IsAuthenticated == true;
+}
 <body class="theme-transition bg-brand-lightBg text-brand-lightText dark:bg-brand-darkBg dark:text-brand-darkText min-h-screen">
     <!-- Top Navbar -->
     <header class="fixed top-0 left-0 right-0 z-50 h-16 px-4 md:px-8 flex items-center gap-3 md:gap-4
@@ -124,7 +127,7 @@
         </div>
 
         <div class="flex-1 min-w-0 flex justify-center px-1 md:px-2">
-            @if (User.Identity?.IsAuthenticated == true)
+            @if (isAdmin)
             {
                 <div id="adminSearchRoot"
                      class="relative w-full max-w-md"
@@ -168,17 +171,26 @@
                 <span class="material-symbols-outlined">notifications</span>
             </button>
 
-            @if (User.Identity?.IsAuthenticated == true)
+            @if (isAdmin)
             {
                 <div class="hidden sm:flex items-center gap-2 pl-1 border-l border-brand-lightBorder dark:border-brand-darkBorder ml-1">
                     <span class="material-symbols-outlined text-brand-lightMuted dark:text-brand-darkMuted text-[22px]" aria-hidden="true">person</span>
                     <span class="text-sm font-medium text-brand-lightText dark:text-brand-darkText max-w-[10rem] truncate" title="@User.Identity!.Name">@User.Identity.Name</span>
                 </div>
             }
+            else
+            {
+                <a asp-controller="Account" asp-action="Login"
+                   class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm font-medium text-brand-lightText dark:text-brand-darkText hover:bg-black/5 dark:hover:bg-white/5">
+                    Yönetim girişi
+                </a>
+            }
         </div>
     </header>
 
     <div class="flex pt-16 min-h-screen">
+        @if (isAdmin)
+        {
         <!-- Sidebar -->
         <aside class="hidden md:flex fixed left-0 top-16 bottom-0 w-64 flex-col px-4 py-6
             bg-brand-lightSidebar dark:bg-brand-darkSidebar
@@ -236,9 +248,10 @@
                 </a>
             </div>
         </aside>
+        }
 
         <!-- Page Content -->
-        <div class="flex flex-col flex-1 md:ml-64 min-h-[calc(100vh-4rem)]">
+        <div class="flex flex-col flex-1 @(isAdmin ? "md:ml-64" : "md:ml-0") min-h-[calc(100vh-4rem)]">
             <main class="flex-1 p-6 md:p-8 bg-brand-lightBg dark:bg-brand-darkBg">
                 @RenderBody()
             </main>
@@ -250,9 +263,12 @@
                     © @DateTime.Now.Year Triva
                 </span>
 
-                <span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">
-                    Admin Panel
-                </span>
+                @if (isAdmin)
+                {
+                    <span class="text-sm text-brand-lightMuted dark:text-brand-darkMuted">
+                        Admin Panel
+                    </span>
+                }
             </footer>
         </div>
     </div>
