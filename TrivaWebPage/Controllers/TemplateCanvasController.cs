@@ -70,6 +70,18 @@ public class TemplateCanvasController : Controller
 
         TemplateCanvasPageData? activePage = null;
         IReadOnlyList<PageEditMediaItemViewModel> pageMedia = Array.Empty<PageEditMediaItemViewModel>();
+        var allMediaEntities = (await _mediaFile.GetAllAsync(cancellationToken))
+            .OrderByDescending(m => m.UploadedDate)
+            .ToList();
+        var libraryMedia = allMediaEntities
+            .Select(m => new PageEditMediaItemViewModel
+            {
+                MediaFileId = m.Id,
+                FilePath = m.FilePath,
+                DisplayName = m.OriginalFileName
+            })
+            .ToList();
+
         if (activePageId is int selectedPageId)
         {
             var page = await _pageRepository.GetByIdAsync(selectedPageId, cancellationToken);
@@ -108,7 +120,8 @@ public class TemplateCanvasController : Controller
             Pages = pages,
             AvailablePalettes = availablePalettes,
             ActivePage = activePage,
-            PageMedia = pageMedia
+            PageMedia = pageMedia,
+            LibraryMedia = libraryMedia
         });
     }
 
@@ -130,6 +143,31 @@ public class TemplateCanvasController : Controller
             _mediaFile,
             pageId,
             _pageMediaFile,
+            cancellationToken);
+
+        if (!outcome.Success)
+        {
+            return BadRequest(new { error = outcome.ErrorMessage });
+        }
+
+        return Json(new
+        {
+            mediaFileId = outcome.MediaFileId,
+            filePath = outcome.FilePath,
+            displayName = outcome.DisplayName
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestFormLimits(MultipartBodyLengthLimit = AdminPageMediaUpload.MaxUploadBytes)]
+    [RequestSizeLimit(AdminPageMediaUpload.MaxUploadBytes)]
+    public async Task<IActionResult> UploadLibraryMedia(IFormFile? file, CancellationToken cancellationToken)
+    {
+        var outcome = await AdminPageMediaUpload.TryCreateMediaFileAsync(
+            file,
+            _environment,
+            _mediaFile,
             cancellationToken);
 
         if (!outcome.Success)
