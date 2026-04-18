@@ -499,6 +499,10 @@ public class TemplateCanvasViewModel
     public IReadOnlyList<PageTabItem> Pages { get; init; } = Array.Empty<PageTabItem>();
     public IReadOnlyList<TemplateCanvasPaletteData> AvailablePalettes { get; init; } = Array.Empty<TemplateCanvasPaletteData>();
     public TemplateCanvasPageData? ActivePage { get; set; }
+    /// <summary>Page-scoped media for Template Canvas modal (active page).</summary>
+    public IReadOnlyList<PageEditMediaItemViewModel> PageMedia { get; init; } = Array.Empty<PageEditMediaItemViewModel>();
+    /// <summary>All uploaded images (Resimler / kütüphane) for the library picker modal.</summary>
+    public IReadOnlyList<PageEditMediaItemViewModel> LibraryMedia { get; init; } = Array.Empty<PageEditMediaItemViewModel>();
 }
 
 public class TemplateCanvasPageData

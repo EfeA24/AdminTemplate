@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.Mvc;
 using TrivaWebPage.Abstractions.GeneralAbstactions;
 using TrivaWebPage.Helpers;
@@ -10,15 +11,24 @@ public class TemplateCanvasController : Controller
     private readonly IPage _pageRepository;
     private readonly IPageTemplatePage _templatePageRepository;
     private readonly IColorPalette _colorPaletteRepository;
+    private readonly IPageMediaFile _pageMediaFile;
+    private readonly IMediaFile _mediaFile;
+    private readonly IWebHostEnvironment _environment;
 
     public TemplateCanvasController(
         IPage pageRepository,
         IPageTemplatePage templatePageRepository,
-        IColorPalette colorPaletteRepository)
+        IColorPalette colorPaletteRepository,
+        IPageMediaFile pageMediaFile,
+        IMediaFile mediaFile,
+        IWebHostEnvironment environment)
     {
         _pageRepository = pageRepository;
         _templatePageRepository = templatePageRepository;
         _colorPaletteRepository = colorPaletteRepository;
+        _pageMediaFile = pageMediaFile;
+        _mediaFile = mediaFile;
+        _environment = environment;
     }
 
     [HttpGet]
@@ -59,6 +69,7 @@ public class TemplateCanvasController : Controller
         }
 
         TemplateCanvasPageData? activePage = null;
+        IReadOnlyList<PageEditMediaItemViewModel> pageMedia = Array.Empty<PageEditMediaItemViewModel>();
         if (activePageId is int selectedPageId)
         {
             var page = await _pageRepository.GetByIdAsync(selectedPageId, cancellationToken);
@@ -86,6 +97,8 @@ public class TemplateCanvasController : Controller
                     HtmlContent = string.IsNullOrWhiteSpace(page.RenderedHtmlOverride) ? templateHtml : page.RenderedHtmlOverride,
                     Palette = await ResolvePaletteAsync(page.ColorPaletteId, cancellationToken)
                 };
+
+                pageMedia = await AdminPageMediaUpload.LoadPageMediaAsync(selectedPageId, _pageMediaFile, _mediaFile, cancellationToken);
             }
         }
 
@@ -94,7 +107,41 @@ public class TemplateCanvasController : Controller
             ActivePageId = activePageId,
             Pages = pages,
             AvailablePalettes = availablePalettes,
-            ActivePage = activePage
+            ActivePage = activePage,
+            PageMedia = pageMedia
+        });
+    }
+
+    [HttpPost]
+    [ValidateAntiForgeryToken]
+    [RequestFormLimits(MultipartBodyLengthLimit = AdminPageMediaUpload.MaxUploadBytes)]
+    [RequestSizeLimit(AdminPageMediaUpload.MaxUploadBytes)]
+    public async Task<IActionResult> UploadMedia(int pageId, IFormFile? file, CancellationToken cancellationToken)
+    {
+        var page = await _pageRepository.GetByIdAsync(pageId, cancellationToken);
+        if (page is null || page.IsDeleted)
+        {
+            return BadRequest(new { error = "Sayfa bulunamadı." });
+        }
+
+        var outcome = await AdminPageMediaUpload.TryUploadAndLinkAsync(
+            file,
+            _environment,
+            _mediaFile,
+            pageId,
+            _pageMediaFile,
+            cancellationToken);
+
+        if (!outcome.Success)
+        {
+            return BadRequest(new { error = outcome.ErrorMessage });
+        }
+
+        return Json(new
+        {
+            mediaFileId = outcome.MediaFileId,
+            filePath = outcome.FilePath,
+            displayName = outcome.DisplayName
         });
     }
 

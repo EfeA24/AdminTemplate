@@ -1,12 +1,20 @@
+@using System.Text.Encodings.Web
+@using System.Text.Json
 @model TrivaWebPage.ViewModels.Admin.TemplateCanvasViewModel
 @{
-    ViewData["Title"] = "Template Canvas";
+    ViewData["Title"] = "SayfaDuzenle";
     var activePage = Model.ActivePage;
+    string? safeTemplateCanvasMediaJson = null;
+    if (activePage is not null)
+    {
+        var jsonOpts = new JsonSerializerOptions { PropertyNamingPolicy = JsonNamingPolicy.CamelCase };
+        safeTemplateCanvasMediaJson = JavaScriptEncoder.Default.Encode(JsonSerializer.Serialize(Model.PageMedia, jsonOpts));
+    }
 }
 
 <div class="max-w-7xl mx-auto space-y-5">
     <div class="flex items-center justify-between gap-3">
-        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Template Canvas</h1>
+        <h1 class="text-2xl font-semibold text-brand-lightText dark:text-brand-darkText">Sayfa Düzenle</h1>
         @if (activePage is not null)
         {
             <div class="flex gap-2">
@@ -88,7 +96,10 @@
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Link (href)</label>
                     <input id="nodeHrefInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Resim (src)</label>
-                    <input id="nodeSrcInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
+                    <div class="flex gap-2">
+                        <input id="nodeSrcInput" class="min-w-0 flex-1 rounded border px-2 py-1.5 text-black text-sm" />
+                        <button type="button" id="openCanvasMediaModalBtn" class="shrink-0 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-1.5 text-xs font-medium hover:bg-black/5 dark:hover:bg-white/5" title="Sayfa görselleri">Medya</button>
+                    </div>
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Alt metin (alt)</label>
                     <input id="nodeAltInput" class="w-full rounded border px-2 py-1.5 text-black text-sm" />
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Class</label>
@@ -149,6 +160,24 @@
                 </iframe>
             </section>
         </div>
+
+        <div id="canvasMediaModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true" aria-labelledby="canvasMediaModalTitle">
+            <div class="max-h-[90vh] w-full max-w-lg overflow-hidden rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel shadow-lg flex flex-col" onclick="event.stopPropagation()">
+                <div class="flex items-center justify-between gap-2 border-b border-brand-lightBorder dark:border-brand-darkBorder px-4 py-3">
+                    <h2 id="canvasMediaModalTitle" class="text-sm font-semibold text-brand-lightText dark:text-brand-darkText">Sayfa görselleri</h2>
+                    <button type="button" id="closeCanvasMediaModalBtn" class="rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-2 py-1 text-xs hover:bg-black/5 dark:hover:bg-white/5">Kapat</button>
+                </div>
+                <div class="space-y-3 overflow-y-auto p-4">
+                    <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Yükleyin veya küçük resme tıklayarak seçili öğedeki resme yerleştirin (img veya içinde img olan blok).</p>
+                    <form id="canvasMediaUploadForm" class="space-y-2">
+                        <input type="file" id="canvasMediaFileInput" name="file" accept=".jpg,.jpeg,.png,.gif,.webp" class="block w-full text-xs text-black" />
+                        <button type="submit" class="w-full rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-3 py-2 text-xs font-medium text-white hover:opacity-90">Yükle</button>
+                    </form>
+                    <p id="canvasMediaUploadError" class="hidden text-xs text-red-700 dark:text-red-300"></p>
+                    <div id="canvasMediaGrid" class="grid grid-cols-3 gap-2"></div>
+                </div>
+            </div>
+        </div>
     }
 </div>
 
@@ -158,6 +187,9 @@
         (function () {
             const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
             const initialPalette = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.Palette));
+            const pageMedia = JSON.parse("@Html.Raw(safeTemplateCanvasMediaJson)");
+            const pageId = @activePage.PageId;
+            const mediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadMedia", "TemplateCanvas")));
             const frame = document.getElementById("canvasFrame");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
@@ -182,7 +214,16 @@
             const swatchSecondary = document.getElementById("swatchSecondary");
             const swatchMuted = document.getElementById("swatchMuted");
             const swatchAccent = document.getElementById("swatchAccent");
+            const canvasMediaModal = document.getElementById("canvasMediaModal");
+            const openCanvasMediaModalBtn = document.getElementById("openCanvasMediaModalBtn");
+            const closeCanvasMediaModalBtn = document.getElementById("closeCanvasMediaModalBtn");
+            const canvasMediaUploadForm = document.getElementById("canvasMediaUploadForm");
+            const canvasMediaFileInput = document.getElementById("canvasMediaFileInput");
+            const canvasMediaGrid = document.getElementById("canvasMediaGrid");
+            const canvasMediaUploadError = document.getElementById("canvasMediaUploadError");
             if (!frame || !saveBtn || !saveForm || !htmlInput) return;
+
+            const requestToken = saveForm.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 
             let selectedNode = null;
             let selectedOutline = null;
@@ -401,6 +442,103 @@
                 }
                 node.setAttribute(key, value);
             }
+
+            function resolveTargetImg() {
+                if (!selectedNode || !frame.contentDocument) return null;
+                if (selectedNode.tagName === "IMG") return selectedNode;
+                return selectedNode.querySelector?.("img") || null;
+            }
+
+            function showCanvasMediaError(msg) {
+                if (!canvasMediaUploadError) return;
+                if (!msg) {
+                    canvasMediaUploadError.classList.add("hidden");
+                    canvasMediaUploadError.textContent = "";
+                    return;
+                }
+                canvasMediaUploadError.textContent = msg;
+                canvasMediaUploadError.classList.remove("hidden");
+            }
+
+            function renderCanvasMediaGrid() {
+                if (!canvasMediaGrid) return;
+                canvasMediaGrid.innerHTML = "";
+                (pageMedia || []).forEach((item) => {
+                    const wrap = document.createElement("button");
+                    wrap.type = "button";
+                    wrap.className = "group relative overflow-hidden rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white text-left focus:outline-none focus:ring-2 focus:ring-brand-lightAccent";
+                    wrap.title = item.displayName || item.filePath || "";
+                    const thumb = document.createElement("img");
+                    thumb.src = item.filePath || "";
+                    thumb.alt = item.displayName || "";
+                    thumb.className = "h-20 w-full object-cover";
+                    thumb.loading = "lazy";
+                    wrap.appendChild(thumb);
+                    const cap = document.createElement("span");
+                    cap.className = "block truncate px-1 py-0.5 text-[10px] text-brand-lightMuted dark:text-brand-darkMuted";
+                    cap.textContent = item.displayName || "";
+                    wrap.appendChild(cap);
+                    wrap.addEventListener("click", () => {
+                        const img = resolveTargetImg();
+                        if (!img) {
+                            alert("Önce canvas üzerinde bir resim (img) veya içinde resim olan bir öğe seçin.");
+                            return;
+                        }
+                        img.setAttribute("src", item.filePath || "");
+                        selectNode(img);
+                        closeCanvasMediaModal();
+                    });
+                    canvasMediaGrid.appendChild(wrap);
+                });
+            }
+
+            function openCanvasMediaModal() {
+                if (!canvasMediaModal) return;
+                showCanvasMediaError("");
+                renderCanvasMediaGrid();
+                canvasMediaModal.classList.remove("hidden");
+                canvasMediaModal.classList.add("flex");
+            }
+
+            function closeCanvasMediaModal() {
+                if (!canvasMediaModal) return;
+                canvasMediaModal.classList.add("hidden");
+                canvasMediaModal.classList.remove("flex");
+            }
+
+            openCanvasMediaModalBtn?.addEventListener("click", openCanvasMediaModal);
+            closeCanvasMediaModalBtn?.addEventListener("click", closeCanvasMediaModal);
+            canvasMediaModal?.addEventListener("click", closeCanvasMediaModal);
+            canvasMediaUploadForm?.addEventListener("submit", async (e) => {
+                e.preventDefault();
+                showCanvasMediaError("");
+                const file = canvasMediaFileInput?.files?.[0];
+                if (!file) {
+                    showCanvasMediaError("Lütfen bir dosya seçin.");
+                    return;
+                }
+                const fd = new FormData();
+                fd.append("__RequestVerificationToken", requestToken);
+                fd.append("pageId", String(pageId));
+                fd.append("file", file);
+                try {
+                    const res = await fetch(mediaUploadUrl, { method: "POST", body: fd, credentials: "same-origin" });
+                    const data = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                        showCanvasMediaError(data.error || "Yükleme başarısız.");
+                        return;
+                    }
+                    pageMedia.push({
+                        mediaFileId: data.mediaFileId,
+                        filePath: data.filePath,
+                        displayName: data.displayName || ""
+                    });
+                    if (canvasMediaFileInput) canvasMediaFileInput.value = "";
+                    renderCanvasMediaGrid();
+                } catch {
+                    showCanvasMediaError("Ağ hatası.");
+                }
+            });
 
             [textInput, hrefInput, srcInput, altInput, classInput, styleInput].forEach((el) => {
                 el?.addEventListener("input", applyInputsToNode);
