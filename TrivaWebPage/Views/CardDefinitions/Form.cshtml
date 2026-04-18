@@ -39,15 +39,20 @@
             <textarea class="w-full rounded border px-3 py-2 text-black text-sm min-h-[72px]" asp-for="Description"></textarea>
         </div>
 
-        <div class="space-y-1">
-            <label class="block text-sm font-medium" asp-for="PreviewHtml">Preview HTML (light önizleme)</label>
-            <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Şablon içi sayfa HTML’i gibi; kartın varsayılan gövdesi ve Kartlar ekranında hazır şablon olarak kullanılır.</p>
-            <textarea class="w-full rounded border px-3 py-2 text-black font-mono text-sm min-h-[180px]" asp-for="PreviewHtml" spellcheck="false"></textarea>
-        </div>
+        <input type="hidden" asp-for="PreviewHtml" />
 
         <div class="space-y-2 rounded-lg border border-dashed border-brand-lightBorder dark:border-brand-darkBorder p-3 bg-white">
-            <p class="text-xs font-medium text-brand-lightText dark:text-brand-darkText">Light önizleme</p>
-            @await Html.PartialAsync("~/Views/CardDefinitions/_CardDefinitionLightPreviewIframe.cshtml", Model.PreviewHtml)
+            <p class="text-xs font-medium text-brand-lightText dark:text-brand-darkText">Render edilmiş kart önizlemesi (HTML kodu gizli)</p>
+            @if (string.IsNullOrWhiteSpace(Model.PreviewHtml))
+            {
+                <p class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">
+                    Bu tanımda gösterilecek HTML bulunamadı. Kartlar ekranından yüklenen HTML kartlar burada yalnızca render edilmiş haliyle görünür.
+                </p>
+            }
+            else
+            {
+                @await Html.PartialAsync("~/Views/CardDefinitions/_CardDefinitionLightPreviewIframe.cshtml", Model.PreviewHtml)
+            }
         </div>
 
         <div class="flex items-center gap-2">
