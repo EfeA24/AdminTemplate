@@ -6,11 +6,11 @@
   <title>Triva | Ana Sayfa 1</title>
   <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
 </head>
-<body class="bg-slate-50 text-slate-900">
+<body class="bg-white text-slate-900 antialiased">
   <header class="border-b border-slate-200 bg-white">
-    <div class="mx-auto flex max-w-6xl items-center justify-between px-6 py-5">
-      <span class="text-xl font-bold tracking-tight text-teal-700">Triva</span>
-      <nav class="hidden gap-8 text-sm font-medium text-slate-600 md:flex">
+    <div class="mx-auto flex max-w-7xl flex-wrap items-center justify-between gap-4 px-6 py-6 sm:px-8 lg:px-12 lg:py-8">
+      <span class="text-xl font-bold tracking-tight text-teal-700 sm:text-2xl">Triva</span>
+      <nav class="flex flex-wrap items-center justify-end gap-x-8 gap-y-2 text-sm font-medium text-slate-600">
         <a href="#" class="hover:text-teal-700">Hizmetler</a>
         <a href="#" class="hover:text-teal-700">Projeler</a>
         <a href="#" class="hover:text-teal-700">İletişim</a>
@@ -18,32 +18,34 @@
     </div>
   </header>
   <main>
-    <section class="mx-auto grid max-w-6xl gap-10 px-6 py-16 md:grid-cols-2 md:items-center">
-      <div>
-        <p class="text-sm font-semibold uppercase tracking-wide text-teal-600">Ana sayfa · düzen 1</p>
-        <h1 class="mt-3 text-4xl font-bold leading-tight md:text-5xl">Dijital deneyimlerinizi güçlendirin</h1>
-        <p class="mt-4 text-lg text-slate-600">Yerleşim: sol metin, sağ görsel. Metin kutularını sayfa düzenle üzerinden ekleyin.</p>
-      </div>
-      <div class="overflow-hidden rounded-2xl border border-slate-200 shadow-lg">
-        <img data-triva-img="hero" class="h-72 w-full object-cover md:h-96" src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80" alt="Ofis" />
+    <section class="bg-[#f8f9fa]">
+      <div class="mx-auto grid max-w-7xl grid-cols-1 gap-12 px-6 py-16 sm:grid-cols-2 sm:items-center sm:gap-x-12 sm:gap-y-10 sm:px-8 sm:py-20 lg:gap-x-20 lg:gap-y-12 lg:px-12 lg:py-28">
+        <div class="max-w-xl sm:pr-4 lg:pr-8">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-teal-600">ANA SAYFA · DÜZEN 1</p>
+          <h1 class="mt-5 text-4xl font-bold leading-[1.1] tracking-tight text-slate-900 sm:mt-6 sm:text-5xl lg:text-6xl">Dijital deneyimlerinizi güçlendirin</h1>
+          <p class="mt-6 text-base leading-relaxed text-slate-600 sm:text-lg lg:mt-8">Yerleşim: sol metin, sağ görsel. Metin kutularını sayfa düzenle üzerinden ekleyin.</p>
+        </div>
+        <div class="min-w-0 overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-xl shadow-slate-900/10 ring-1 ring-slate-200/60">
+          <img data-triva-img="hero" class="aspect-[4/3] w-full object-cover sm:aspect-[16/10] sm:min-h-[280px] lg:min-h-[380px]" src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=1200&q=80" alt="Ofis" />
+        </div>
       </div>
     </section>
-    <section class="border-t border-slate-200 bg-white py-14">
-      <div class="mx-auto max-w-6xl px-6">
-        <h2 class="text-2xl font-semibold">Öne çıkanlar</h2>
-        <div class="mt-8 grid gap-6 sm:grid-cols-2">
-          <article class="overflow-hidden rounded-xl border border-slate-200">
-            <img data-triva-img="card-a" class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Ekip" />
-            <div class="p-4">
-              <h3 class="font-semibold">İş birliği</h3>
-              <p class="mt-1 text-sm text-slate-600">Kısa açıklama alanı.</p>
+    <section class="border-t border-slate-200 bg-white py-16 sm:py-20 lg:py-24">
+      <div class="mx-auto max-w-7xl px-6 sm:px-8 lg:px-12">
+        <h2 class="text-2xl font-bold text-slate-900 sm:text-3xl">Öne çıkanlar</h2>
+        <div class="mt-10 grid grid-cols-1 gap-8 sm:mt-12 sm:grid-cols-2 lg:gap-10">
+          <article class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/60">
+            <img data-triva-img="card-a" class="h-52 w-full object-cover sm:h-56 lg:h-64" src="https://images.unsplash.com/photo-1522071820081-009f0129c71c?w=800&q=80" alt="Ekip" />
+            <div class="p-6 lg:p-8">
+              <h3 class="text-lg font-semibold text-slate-900">İş birliği</h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">Kısa açıklama alanı.</p>
             </div>
           </article>
-          <article class="overflow-hidden rounded-xl border border-slate-200">
-            <img data-triva-img="card-b" class="h-48 w-full object-cover" src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80" alt="Çalışma" />
-            <div class="p-4">
-              <h3 class="font-semibold">Sonuç odaklı</h3>
-              <p class="mt-1 text-sm text-slate-600">Kısa açıklama alanı.</p>
+          <article class="overflow-hidden rounded-3xl border border-slate-200/80 bg-white shadow-lg shadow-slate-900/10 ring-1 ring-slate-200/60">
+            <img data-triva-img="card-b" class="h-52 w-full object-cover sm:h-56 lg:h-64" src="https://images.unsplash.com/photo-1553877522-43269d4ea984?w=800&q=80" alt="Çalışma" />
+            <div class="p-6 lg:p-8">
+              <h3 class="text-lg font-semibold text-slate-900">Sonuç odaklı</h3>
+              <p class="mt-2 text-sm leading-relaxed text-slate-600 sm:text-base">Kısa açıklama alanı.</p>
             </div>
           </article>
         </div>
