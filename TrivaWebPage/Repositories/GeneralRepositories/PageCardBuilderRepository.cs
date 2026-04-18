@@ -135,7 +135,10 @@ public class PageCardBuilderRepository : IPageCardBuilderRepository
             new() { PresetId = 7, Name = "Teklif — kesik çizgi", Text = "Teklif Al", BackgroundColor = "#f59e0b", TextColor = "#111827", BorderColor = "#d97706", StyleVariant = "dashed" },
             new() { PresetId = 8, Name = "Destek — alt çizgi", Text = "Destek Talebi", BackgroundColor = "#0ea5e9", TextColor = "#ffffff", BorderColor = "#0284c7", StyleVariant = "bar" },
             new() { PresetId = 9, Name = "İletişim — mini", Text = "İletişime Geç", BackgroundColor = "#ec4899", TextColor = "#ffffff", BorderColor = "#db2777", StyleVariant = "compact" },
-            new() { PresetId = 10, Name = "Döküman — geniş", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937", StyleVariant = "wide" }
+            new() { PresetId = 10, Name = "Döküman — geniş", Text = "Döküman İndir", BackgroundColor = "#374151", TextColor = "#ffffff", BorderColor = "#1f2937", StyleVariant = "wide" },
+            new() { PresetId = 11, Name = "Parla — neon", Text = "Parla", BackgroundColor = "#7c3aed", TextColor = "#ffffff", BorderColor = "#5b21b6", StyleVariant = "glow" },
+            new() { PresetId = 12, Name = "Bas — 3D", Text = "Buna Bas", BackgroundColor = "#ea580c", TextColor = "#ffffff", BorderColor = "#c2410c", StyleVariant = "soft3d" },
+            new() { PresetId = 13, Name = "Buzlu — cam", Text = "Şeffaf", BackgroundColor = "#0d9488", TextColor = "#f0fdfa", BorderColor = "#0f766e", StyleVariant = "glass" }
         };
 
         return Task.FromResult<IReadOnlyList<CardButtonPresetViewModel>>(presets);

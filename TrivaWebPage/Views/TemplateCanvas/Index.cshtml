@@ -215,6 +215,11 @@
         #templateCanvasOptionsPanel .select2-results__option--highlighted .triva-preset-preview-btn {
             filter: brightness(1.06);
         }
+        #templateCanvasOptionsPanel .select2-results__option:hover .triva-preset-preview-btn {
+            filter: brightness(1.08);
+            transform: scale(1.02);
+            transition: transform .18s ease, filter .18s ease;
+        }
     </style>
     <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" crossorigin="anonymous"></script>
@@ -290,13 +295,22 @@
                     backgroundColor: item.backgroundColor || item.BackgroundColor || "#00a19b",
                     textColor: item.textColor || item.TextColor || "#ffffff",
                     borderColor: item.borderColor || item.BorderColor || "#008f8a",
-                    styleVariant: String(item.styleVariant || item.StyleVariant || "solid").toLowerCase()
+                    styleVariant: sanitizeCanvasVariantKey(item.styleVariant || item.StyleVariant || "solid")
                 };
             }
 
-            /** Görsel varyant: canvas yerleştirme ve Select2 önizlemesi için ortak stiller (konum yok). */
+            function sanitizeCanvasVariantKey(v) {
+                const s = String(v || "solid").toLowerCase().replace(/[^a-z0-9-]/g, "");
+                const allowed = new Set([
+                    "solid", "pill", "square", "outline", "elevated", "ghost", "dashed", "bar", "compact", "wide",
+                    "glow", "soft3d", "glass"
+                ]);
+                return allowed.has(s) ? s : "solid";
+            }
+
+            /** Görsel varyant: yalnızca Select2 önizlemesi (iframe içi canlı görünüm CSS ile). */
             function getCanvasButtonVisualCss(variant, bg, fg, br) {
-                const v = String(variant || "solid").toLowerCase();
+                const v = sanitizeCanvasVariantKey(variant);
                 const base = [
                     "display:inline-flex",
                     "align-items:center",
@@ -378,9 +392,128 @@
                             "letter-spacing:.12em",
                             "text-transform:uppercase"
                         ]).join(";");
+                    case "glow":
+                        return base.concat(fill, [
+                            "border-radius:12px",
+                            "padding:11px 22px",
+                            "font-weight:700",
+                            "font-size:14px",
+                            "box-shadow:0 0 0 1px rgba(255,255,255,.25),0 10px 26px rgba(15,23,42,.25)"
+                        ]).join(";");
+                    case "soft3d":
+                        return base.concat(fill, [
+                            "border-radius:10px",
+                            "padding:10px 20px",
+                            "font-weight:700",
+                            "font-size:14px",
+                            "border:1px solid " + br,
+                            "box-shadow:0 5px 0 rgba(0,0,0,.22),0 8px 16px rgba(15,23,42,.12)"
+                        ]).join(";");
+                    case "glass":
+                        return base.concat([
+                            "background:linear-gradient(135deg,rgba(255,255,255,.42),rgba(255,255,255,.08))",
+                            "background-color:" + bg,
+                            "color:" + fg,
+                            "border:1px solid rgba(255,255,255,.55)",
+                            "border-radius:14px",
+                            "padding:10px 20px",
+                            "font-weight:600",
+                            "font-size:14px",
+                            "backdrop-filter:blur(8px)",
+                            "box-shadow:inset 0 1px 0 rgba(255,255,255,.5)"
+                        ]).join(";");
                     default:
                         return base.concat(fill, ["border-radius:8px", "padding:10px 16px", "font-weight:600", "font-size:14px"]).join(";");
                 }
+            }
+
+            /** Iframe: token renkleri (--cb-*) + varyanta özel hover. */
+            function getCanvasButtonVariantStylesheet() {
+                const g = (sel, rules) => sel + "{" + rules + "}";
+                const h = (sel, rules) => sel + ":hover{" + rules + "}";
+                const b = [
+                    "display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;",
+                    "text-decoration:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;",
+                    "line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;",
+                    "transition:transform .22s ease,box-shadow .22s ease,filter .22s ease,background-color .22s ease,",
+                    "background .22s ease,border-color .22s ease,letter-spacing .22s ease,border-style .2s ease,backdrop-filter .28s ease"
+                ].join("");
+                const base = "a.canvas-placed-button[data-canvas-button-variant]";
+                const t = [];
+                const V = (name, normal, hover) => {
+                    t.push(g(base + '="' + name + '"]', b + normal));
+                    t.push(h(base + '="' + name + '"]', hover));
+                };
+                V("solid",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:8px;padding:10px 16px;font-weight:600;font-size:14px;",
+                    "filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.2);");
+                V("pill",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:9999px;padding:10px 24px;font-weight:600;font-size:14px;",
+                    "transform:scale(1.05);filter:saturate(1.12) brightness(1.05);box-shadow:0 10px 26px rgba(15,23,42,.22);");
+                V("square",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:2px;padding:10px 14px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;",
+                    "filter:brightness(1.12);letter-spacing:.14em;transform:translateY(-1px);box-shadow:0 6px 14px rgba(15,23,42,.18);");
+                V("outline",
+                    "background:transparent;color:var(--cb-fg);border:2px solid var(--cb-br);border-radius:10px;padding:8px 18px;font-weight:600;font-size:14px;",
+                    "background:rgba(15,23,42,.06);border-color:var(--cb-bg);transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.12);");
+                V("elevated",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:14px;padding:11px 20px;font-weight:600;font-size:14px;box-shadow:0 12px 28px rgba(15,23,42,.2);",
+                    "transform:translateY(-4px);box-shadow:0 18px 36px rgba(15,23,42,.28);filter:brightness(1.06);");
+                V("ghost",
+                    "background-color:var(--cb-bg);background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.04));color:var(--cb-fg);border:1px solid rgba(255,255,255,.45);border-radius:12px;padding:10px 18px;font-weight:600;font-size:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);",
+                    "filter:brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 22px rgba(15,23,42,.18);transform:translateY(-1px);");
+                V("dashed",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:2px dashed var(--cb-br);border-radius:12px;padding:9px 18px;font-weight:600;font-size:14px;",
+                    "border-style:solid;border-width:2px;transform:scale(1.03);filter:brightness(1.06);box-shadow:0 6px 18px rgba(15,23,42,.15);");
+                V("bar",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:none;border-radius:8px;padding:10px 16px 12px;font-weight:600;font-size:14px;box-shadow:inset 0 -5px 0 0 var(--cb-br);",
+                    "box-shadow:inset 0 -9px 0 0 var(--cb-br);transform:translateY(-2px);filter:brightness(1.05);");
+                V("compact",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:6px;padding:5px 11px;font-weight:600;font-size:11px;",
+                    "transform:scale(1.1);filter:brightness(1.08);box-shadow:0 6px 14px rgba(15,23,42,.16);");
+                V("wide",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:10px;padding:12px 36px;font-weight:600;font-size:15px;letter-spacing:.12em;text-transform:uppercase;",
+                    "letter-spacing:.18em;filter:brightness(1.08);transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.2);");
+                V("glow",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:12px;padding:11px 22px;font-weight:700;font-size:14px;box-shadow:0 0 0 1px rgba(255,255,255,.2),0 10px 26px rgba(15,23,42,.22);",
+                    "filter:brightness(1.1) drop-shadow(0 0 14px var(--cb-bg));box-shadow:0 0 0 2px rgba(255,255,255,.38),0 14px 34px rgba(15,23,42,.3);transform:translateY(-2px);");
+                V("soft3d",
+                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;box-shadow:0 5px 0 rgba(0,0,0,.24),0 8px 16px rgba(15,23,42,.12);",
+                    "transform:translateY(-3px);box-shadow:0 7px 0 rgba(0,0,0,.22),0 14px 28px rgba(15,23,42,.2);filter:brightness(1.06);");
+                V("glass",
+                    "background:linear-gradient(135deg,rgba(255,255,255,.4),rgba(255,255,255,.06));background-color:var(--cb-bg);color:var(--cb-fg);border:1px solid rgba(255,255,255,.55);border-radius:14px;padding:10px 20px;font-weight:600;font-size:14px;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.45);",
+                    "backdrop-filter:blur(12px);filter:brightness(1.06);border-color:rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 12px 28px rgba(15,23,42,.18);transform:translateY(-2px);");
+                return t.join("");
+            }
+
+            function ensureCanvasButtonTokens(anchor) {
+                if (!anchor || anchor.tagName !== "A") return;
+                const isPlaced = anchor.classList?.contains("canvas-placed-button") || anchor.hasAttribute?.("data-canvas-button-preset");
+                if (!isPlaced) return;
+                if (!anchor.classList.contains("canvas-placed-button")) anchor.classList.add("canvas-placed-button");
+                const win = anchor.ownerDocument?.defaultView;
+                if (!win) return;
+                let vk = sanitizeCanvasVariantKey(anchor.getAttribute("data-canvas-button-variant"));
+                anchor.setAttribute("data-canvas-button-variant", vk);
+                if (anchor.style.getPropertyValue("--cb-bg")) return;
+                const cs = win.getComputedStyle(anchor);
+                const bg = toHexColor(cs.backgroundColor, "#00a19b");
+                const fg = toHexColor(cs.color, "#ffffff");
+                const br = toHexColor(cs.borderColor, bg);
+                const pos = anchor.style.position || "absolute";
+                const left = anchor.style.left || "";
+                const top = anchor.style.top || "";
+                const zi = anchor.style.zIndex || "20";
+                anchor.style.cssText = [
+                    "position:" + pos,
+                    left ? "left:" + left : "",
+                    top ? "top:" + top : "",
+                    "z-index:" + zi,
+                    "cursor:pointer",
+                    "--cb-bg:" + bg,
+                    "--cb-fg:" + fg,
+                    "--cb-br:" + br
+                ].filter(Boolean).join(";");
             }
 
             function isCanvasPlacedButton(node) {
@@ -442,25 +575,27 @@
 
             function placeButtonFromPreset(doc, ev, preset) {
                 const p = normalizePresetRow(preset) || preset;
+                const vk = sanitizeCanvasVariantKey(p.styleVariant);
                 const a = doc.createElement("a");
                 a.setAttribute("href", "#");
                 a.textContent = p.text || "Buton";
                 a.setAttribute("data-canvas-button-preset", String(p.presetId ?? ""));
-                a.setAttribute("data-canvas-button-variant", p.styleVariant || "solid");
+                a.setAttribute("data-canvas-button-variant", vk);
                 a.className = "canvas-placed-button";
                 const bg = p.backgroundColor || "var(--color-accent, #00a19b)";
                 const fg = p.textColor || "#ffffff";
                 const br = p.borderColor || bg;
                 const left = typeof ev.pageX === "number" ? ev.pageX : ev.clientX;
                 const top = typeof ev.pageY === "number" ? ev.pageY : ev.clientY;
-                const visual = getCanvasButtonVisualCss(p.styleVariant, bg, fg, br);
                 a.style.cssText = [
                     "position:absolute",
                     "left:" + left + "px",
                     "top:" + top + "px",
                     "z-index:20",
                     "cursor:pointer",
-                    visual
+                    "--cb-bg:" + bg,
+                    "--cb-fg:" + fg,
+                    "--cb-br:" + br
                 ].join(";");
                 doc.body.appendChild(a);
                 selectNode(a);
@@ -486,8 +621,12 @@
                 doc.close();
 
                 const style = doc.createElement("style");
-                style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;box-shadow:none !important;opacity:1 !important;filter:none !important;}";
+                style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;opacity:1 !important;}";
                 doc.head.appendChild(style);
+                const variantStyle = doc.createElement("style");
+                variantStyle.id = "triva-canvas-btn-variants";
+                variantStyle.textContent = getCanvasButtonVariantStylesheet();
+                doc.head.appendChild(variantStyle);
                 applyPalette(doc, activePalette);
                 if (doc.body) {
                     const pos = doc.defaultView?.getComputedStyle(doc.body)?.position;
@@ -495,6 +634,9 @@
                         doc.body.style.position = "relative";
                     }
                 }
+                window.requestAnimationFrame(() => {
+                    doc.querySelectorAll("a.canvas-placed-button,a[data-canvas-button-preset]").forEach((a) => ensureCanvasButtonTokens(a));
+                });
 
                 doc.addEventListener("click", (e) => {
                     e.stopPropagation();
@@ -607,12 +749,22 @@
                 hrefInput.value = selectedNode.getAttribute?.("href") || "";
                 if (srcInput) srcInput.value = selectedNode.getAttribute?.("src") || "";
                 altInput.value = selectedNode.getAttribute?.("alt") || "";
-                classInput.value = selectedNode.className || "";
+                const cls = (selectedNode.className || "").split(/\s+/).filter((c) => c && c !== "canvas-placed-button");
+                classInput.value = cls.join(" ");
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
                 const computed = frame.contentWindow?.getComputedStyle(selectedNode);
-                nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
-                nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
-                nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
+                if (isCanvasPlacedButton(selectedNode)) {
+                    const vb = selectedNode.style.getPropertyValue("--cb-bg").trim();
+                    const vf = selectedNode.style.getPropertyValue("--cb-fg").trim();
+                    const vr = selectedNode.style.getPropertyValue("--cb-br").trim();
+                    nodeBackgroundColorInput.value = vb ? toHexColor(vb, "#ffffff") : toHexColor(computed?.backgroundColor, "#ffffff");
+                    nodeTextColorInput.value = vf ? toHexColor(vf, "#111111") : toHexColor(computed?.color, "#111111");
+                    nodeBorderColorInput.value = vr ? toHexColor(vr, "#d1d5db") : toHexColor(computed?.borderColor, "#d1d5db");
+                } else {
+                    nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
+                    nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
+                    nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
+                }
             }
 
             function applyInputsToNode() {
@@ -625,14 +777,29 @@
                 setAttr(selectedNode, "src", srcInput.value);
                 setAttr(selectedNode, "alt", altInput.value);
                 setAttr(selectedNode, "style", styleInput.value);
-                selectedNode.className = classInput.value || "";
+                if (isCanvasPlacedButton(selectedNode)) {
+                    const extra = (classInput.value || "").trim();
+                    selectedNode.className = "canvas-placed-button" + (extra ? " " + extra : "");
+                    selectedNode.style.setProperty("--cb-bg", nodeBackgroundColorInput.value || "#000000");
+                    selectedNode.style.setProperty("--cb-fg", nodeTextColorInput.value || "#ffffff");
+                    selectedNode.style.setProperty("--cb-br", nodeBorderColorInput.value || "#000000");
+                } else {
+                    selectedNode.className = classInput.value || "";
+                }
+                styleInput.value = selectedNode.getAttribute?.("style") || "";
             }
 
             function applySelectedNodeColors() {
                 if (!selectedNode) return;
-                selectedNode.style.backgroundColor = nodeBackgroundColorInput.value || "";
-                selectedNode.style.color = nodeTextColorInput.value || "";
-                selectedNode.style.borderColor = nodeBorderColorInput.value || "";
+                if (isCanvasPlacedButton(selectedNode)) {
+                    selectedNode.style.setProperty("--cb-bg", nodeBackgroundColorInput.value || "#000000");
+                    selectedNode.style.setProperty("--cb-fg", nodeTextColorInput.value || "#ffffff");
+                    selectedNode.style.setProperty("--cb-br", nodeBorderColorInput.value || "#000000");
+                } else {
+                    selectedNode.style.backgroundColor = nodeBackgroundColorInput.value || "";
+                    selectedNode.style.color = nodeTextColorInput.value || "";
+                    selectedNode.style.borderColor = nodeBorderColorInput.value || "";
+                }
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
             }
 
