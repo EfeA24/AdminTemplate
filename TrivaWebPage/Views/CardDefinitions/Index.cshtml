@@ -1,0 +1,60 @@
+@using System.Text.Encodings.Web
+@using TrivaWebPage.Helpers
+@model IReadOnlyList<TrivaWebPage.Models.CardOptions.CardDefinition>
+@{
+    ViewData["Title"] = "Card Definitions";
+}
+
+<div class="space-y-4">
+    <div class="flex items-center justify-between">
+        <h1 class="text-2xl font-semibold">Card Definitions</h1>
+        <a asp-action="Create" class="rounded bg-brand-lightAccent dark:bg-brand-darkAccent text-white px-4 py-2">Create</a>
+    </div>
+
+    @if (Model.Count == 0)
+    {
+        <div class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder p-4 text-sm">
+            No records found.
+        </div>
+    }
+    else
+    {
+        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            @foreach (var item in Model)
+            {
+                var inner = AdminHtmlSanitizer.Sanitize(item.PreviewHtml ?? string.Empty);
+                if (string.IsNullOrWhiteSpace(inner))
+                {
+                    inner = "<p style=\"margin:0;color:#6b7280;font-size:13px;\">Önizleme HTML’i yok.</p>";
+                }
+
+                var doc = "<!DOCTYPE html><html><head><meta charset=\"utf-8\"><meta name=\"color-scheme\" content=\"light\"><style>body{margin:0;padding:10px;font-family:system-ui,sans-serif;background:#fff;color:#111;}</style></head><body>"
+                          + inner
+                          + "</body></html>";
+                var srcdoc = HtmlEncoder.Default.Encode(doc);
+
+                <article class="rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder overflow-hidden">
+                    <div class="aspect-[9/16] bg-white border-b border-brand-lightBorder dark:border-brand-darkBorder">
+                        <iframe class="h-full w-full"
+                                title="@($"{item.Name} önizleme")"
+                                sandbox="allow-same-origin"
+                                srcdoc="@srcdoc"></iframe>
+                    </div>
+                    <div class="p-4 space-y-2">
+                        <div>
+                            <div class="font-semibold">@item.Name</div>
+                            <div class="text-xs opacity-70">@item.Code</div>
+                        </div>
+                        <div class="text-xs opacity-80">Type: @item.CardType</div>
+                        <div class="text-xs opacity-80">Status: @(item.IsActive ? "Active" : "Passive")</div>
+                        <div class="pt-1 space-x-3 text-sm">
+                            <a asp-action="Details" asp-route-id="@item.Id">Details</a>
+                            <a asp-action="Edit" asp-route-id="@item.Id">Edit</a>
+                            <a asp-action="Delete" asp-route-id="@item.Id">Delete</a>
+                        </div>
+                    </div>
+                </article>
+            }
+        </div>
+    }
+</div>

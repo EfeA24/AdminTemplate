@@ -18,7 +18,7 @@ public class CardDefinitionsController : Controller
     public async Task<IActionResult> Index(CancellationToken cancellationToken)
     {
         ViewBag.DisplayName = "Card Definitions";
-        return View("~/Views/Shared/AdminCrud/Index.cshtml", await _repository.GetAllAsync(cancellationToken));
+        return View("~/Views/CardDefinitions/Index.cshtml", await _repository.GetAllAsync(cancellationToken));
     }
 
     public async Task<IActionResult> Details(int id, CancellationToken cancellationToken)
