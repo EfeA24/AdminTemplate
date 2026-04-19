@@ -6,7 +6,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 namespace TrivaWebPage.Migrations
 {
     /// <inheritdoc />
-    public partial class InitialCreate : Migration
+    public partial class ProductionInitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -28,6 +28,42 @@ namespace TrivaWebPage.Migrations
                 constraints: table =>
                 {
                     table.PrimaryKey("PK_ActionDefinitions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "CardDefinitions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Code = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PreviewImageUrl = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    IsSystem = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardDefinitions", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "ColorPalettes",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    PrimaryHex = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    SecondaryHex = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    MutedHex = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    AccentHex = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_ColorPalettes", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -53,27 +89,34 @@ namespace TrivaWebPage.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "Pages",
+                name: "PageTemplates",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Slug = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Code = table.Column<string>(type: "nvarchar(450)", nullable: false),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    Width = table.Column<int>(type: "int", nullable: false),
-                    Height = table.Column<int>(type: "int", nullable: false),
-                    IsHomePage = table.Column<bool>(type: "bit", nullable: false),
-                    IsPublished = table.Column<bool>(type: "bit", nullable: false),
-                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
-                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
-                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
-                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_Pages", x => x.Id);
+                    table.PrimaryKey("PK_PageTemplates", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Users",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    UserName = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    PasswordHash = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Users", x => x.Id);
                 });
 
             migrationBuilder.CreateTable(
@@ -93,27 +136,115 @@ namespace TrivaWebPage.Migrations
                 });
 
             migrationBuilder.CreateTable(
-                name: "CardDefinitions",
+                name: "CardFieldDefinitions",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    CardDefinitionId = table.Column<int>(type: "int", nullable: false),
+                    FieldName = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FieldKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    FieldType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    IsRequired = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_CardFieldDefinitions", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_CardFieldDefinitions_CardDefinitions_CardDefinitionId",
+                        column: x => x.CardDefinitionId,
+                        principalTable: "CardDefinitions",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PageTemplatePages",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PageTemplateId = table.Column<int>(type: "int", nullable: false),
+                    Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    PreviewImagePath = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HtmlContent = table.Column<string>(type: "nvarchar(max)", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PageTemplatePages", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PageTemplatePages_PageTemplates_PageTemplateId",
+                        column: x => x.PageTemplateId,
+                        principalTable: "PageTemplates",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "Pages",
                 columns: table => new
                 {
                     Id = table.Column<int>(type: "int", nullable: false)
                         .Annotation("SqlServer:Identity", "1, 1"),
                     Name = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    Code = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    CardType = table.Column<string>(type: "nvarchar(max)", nullable: false),
+                    Slug = table.Column<string>(type: "nvarchar(450)", nullable: false),
+                    Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
-                    PreviewMediaFileId = table.Column<int>(type: "int", nullable: true),
-                    IsActive = table.Column<bool>(type: "bit", nullable: false)
+                    RenderedHtmlOverride = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    Width = table.Column<int>(type: "int", nullable: false),
+                    Height = table.Column<int>(type: "int", nullable: false),
+                    IsHomePage = table.Column<bool>(type: "bit", nullable: false),
+                    IsPublished = table.Column<bool>(type: "bit", nullable: false),
+                    IsDeleted = table.Column<bool>(type: "bit", nullable: false),
+                    DisplayOrder = table.Column<int>(type: "int", nullable: false),
+                    PageTemplatePageId = table.Column<int>(type: "int", nullable: true),
+                    ColorPaletteId = table.Column<int>(type: "int", nullable: true),
+                    CreatedDate = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    UpdatedDate = table.Column<DateTime>(type: "datetime2", nullable: true)
                 },
                 constraints: table =>
                 {
-                    table.PrimaryKey("PK_CardDefinitions", x => x.Id);
+                    table.PrimaryKey("PK_Pages", x => x.Id);
                     table.ForeignKey(
-                        name: "FK_CardDefinitions_MediaFiles_PreviewMediaFileId",
-                        column: x => x.PreviewMediaFileId,
-                        principalTable: "MediaFiles",
+                        name: "FK_Pages_ColorPalettes_ColorPaletteId",
+                        column: x => x.ColorPaletteId,
+                        principalTable: "ColorPalettes",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.SetNull);
+                    table.ForeignKey(
+                        name: "FK_Pages_PageTemplatePages_PageTemplatePageId",
+                        column: x => x.PageTemplatePageId,
+                        principalTable: "PageTemplatePages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.SetNull);
+                });
+
+            migrationBuilder.CreateTable(
+                name: "PageMediaFiles",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    PageId = table.Column<int>(type: "int", nullable: false),
+                    MediaFileId = table.Column<int>(type: "int", nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PageMediaFiles", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PageMediaFiles_MediaFiles_MediaFileId",
+                        column: x => x.MediaFileId,
+                        principalTable: "MediaFiles",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PageMediaFiles_Pages_PageId",
+                        column: x => x.PageId,
+                        principalTable: "Pages",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
                 });
 
             migrationBuilder.CreateTable(
@@ -137,30 +268,6 @@ namespace TrivaWebPage.Migrations
                         name: "FK_PageSections_Pages_PageId",
                         column: x => x.PageId,
                         principalTable: "Pages",
-                        principalColumn: "Id",
-                        onDelete: ReferentialAction.Cascade);
-                });
-
-            migrationBuilder.CreateTable(
-                name: "CardFieldDefinitions",
-                columns: table => new
-                {
-                    Id = table.Column<int>(type: "int", nullable: false)
-                        .Annotation("SqlServer:Identity", "1, 1"),
-                    CardDefinitionId = table.Column<int>(type: "int", nullable: false),
-                    FieldName = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FieldKey = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    FieldType = table.Column<string>(type: "nvarchar(max)", nullable: false),
-                    IsRequired = table.Column<bool>(type: "bit", nullable: false),
-                    DisplayOrder = table.Column<int>(type: "int", nullable: false)
-                },
-                constraints: table =>
-                {
-                    table.PrimaryKey("PK_CardFieldDefinitions", x => x.Id);
-                    table.ForeignKey(
-                        name: "FK_CardFieldDefinitions_CardDefinitions_CardDefinitionId",
-                        column: x => x.CardDefinitionId,
-                        principalTable: "CardDefinitions",
                         principalColumn: "Id",
                         onDelete: ReferentialAction.Cascade);
                 });
@@ -240,6 +347,7 @@ namespace TrivaWebPage.Migrations
                     Title = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Subtitle = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     Description = table.Column<string>(type: "nvarchar(max)", nullable: true),
+                    HtmlFragment = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     MediaFileId = table.Column<int>(type: "int", nullable: true),
                     BackgroundColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
                     TextColor = table.Column<string>(type: "nvarchar(max)", nullable: true),
@@ -425,9 +533,10 @@ namespace TrivaWebPage.Migrations
                 unique: true);
 
             migrationBuilder.CreateIndex(
-                name: "IX_CardDefinitions_PreviewMediaFileId",
+                name: "IX_CardDefinitions_Code",
                 table: "CardDefinitions",
-                column: "PreviewMediaFileId");
+                column: "Code",
+                unique: true);
 
             migrationBuilder.CreateIndex(
                 name: "IX_CardFieldDefinitions_CardDefinitionId",
@@ -461,14 +570,59 @@ namespace TrivaWebPage.Migrations
                 column: "PageSectionId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PageMediaFiles_MediaFileId",
+                table: "PageMediaFiles",
+                column: "MediaFileId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PageMediaFiles_PageId_MediaFileId",
+                table: "PageMediaFiles",
+                columns: new[] { "PageId", "MediaFileId" },
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Pages_ColorPaletteId",
+                table: "Pages",
+                column: "ColorPaletteId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Pages_PageTemplatePageId",
+                table: "Pages",
+                column: "PageTemplatePageId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Pages_Slug",
+                table: "Pages",
+                column: "Slug",
+                unique: true,
+                filter: "[IsDeleted] = 0");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_PageSections_PageId",
                 table: "PageSections",
                 column: "PageId");
 
             migrationBuilder.CreateIndex(
+                name: "IX_PageTemplatePages_PageTemplateId",
+                table: "PageTemplatePages",
+                column: "PageTemplateId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PageTemplates_Code",
+                table: "PageTemplates",
+                column: "Code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
                 name: "IX_TextComponents_PageComponentId",
                 table: "TextComponents",
                 column: "PageComponentId",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "IX_Users_UserName",
+                table: "Users",
+                column: "UserName",
                 unique: true);
         }
 
@@ -488,7 +642,13 @@ namespace TrivaWebPage.Migrations
                 name: "ImageComponents");
 
             migrationBuilder.DropTable(
+                name: "PageMediaFiles");
+
+            migrationBuilder.DropTable(
                 name: "TextComponents");
+
+            migrationBuilder.DropTable(
+                name: "Users");
 
             migrationBuilder.DropTable(
                 name: "WebsiteSettings");
@@ -503,6 +663,9 @@ namespace TrivaWebPage.Migrations
                 name: "CardFieldDefinitions");
 
             migrationBuilder.DropTable(
+                name: "MediaFiles");
+
+            migrationBuilder.DropTable(
                 name: "PageComponents");
 
             migrationBuilder.DropTable(
@@ -512,10 +675,16 @@ namespace TrivaWebPage.Migrations
                 name: "PageSections");
 
             migrationBuilder.DropTable(
-                name: "MediaFiles");
+                name: "Pages");
 
             migrationBuilder.DropTable(
-                name: "Pages");
+                name: "ColorPalettes");
+
+            migrationBuilder.DropTable(
+                name: "PageTemplatePages");
+
+            migrationBuilder.DropTable(
+                name: "PageTemplates");
         }
     }
 }

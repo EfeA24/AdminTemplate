@@ -59,6 +59,7 @@ using (var scope = app.Services.CreateScope())
     {
         await scope.ServiceProvider.GetRequiredService<CuratorTemplateSeedService>().SeedAsync();
         await scope.ServiceProvider.GetRequiredService<CardDefinitionSeedService>().SeedAsync();
+        await scope.ServiceProvider.GetRequiredService<AdminUserSeedService>().SeedAsync();
     }
     catch (Exception ex)
     {

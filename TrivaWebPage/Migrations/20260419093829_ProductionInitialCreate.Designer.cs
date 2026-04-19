@@ -12,8 +12,8 @@ using TrivaWebPage.Data.Connection;
 namespace TrivaWebPage.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    [Migration("20260418161226_UniqueSlugForActivePages")]
-    partial class UniqueSlugForActivePages
+    [Migration("20260419093829_ProductionInitialCreate")]
+    partial class ProductionInitialCreate
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

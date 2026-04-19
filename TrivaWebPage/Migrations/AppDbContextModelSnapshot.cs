@@ -55,7 +55,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("ActionDefinitions");
+                    b.ToTable("ActionDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.CardButton", b =>
@@ -97,7 +97,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("CardComponentId");
 
-                    b.ToTable("CardButtons");
+                    b.ToTable("CardButtons", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.CardDefinition", b =>
@@ -137,7 +137,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("CardDefinitions");
+                    b.ToTable("CardDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.CardFieldDefinition", b =>
@@ -173,7 +173,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("CardDefinitionId");
 
-                    b.ToTable("CardFieldDefinitions");
+                    b.ToTable("CardFieldDefinitions", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.CardFieldValue", b =>
@@ -199,7 +199,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("CardFieldDefinitionId");
 
-                    b.ToTable("CardFieldValues");
+                    b.ToTable("CardFieldValues", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.Contents.ButtonComponent", b =>
@@ -245,7 +245,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("PageComponentId")
                         .IsUnique();
 
-                    b.ToTable("ButtonComponents");
+                    b.ToTable("ButtonComponents", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.Contents.CardComponent", b =>
@@ -301,7 +301,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("PageComponentId")
                         .IsUnique();
 
-                    b.ToTable("CardComponents");
+                    b.ToTable("CardComponents", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.Contents.ImageComponent", b =>
@@ -337,7 +337,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("PageComponentId")
                         .IsUnique();
 
-                    b.ToTable("ImageComponents");
+                    b.ToTable("ImageComponents", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.Contents.TextComponent", b =>
@@ -384,7 +384,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("PageComponentId")
                         .IsUnique();
 
-                    b.ToTable("TextComponents");
+                    b.ToTable("TextComponents", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.ColorPalette", b =>
@@ -463,7 +463,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("MediaFiles");
+                    b.ToTable("MediaFiles", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.Page", b =>
@@ -531,7 +531,7 @@ namespace TrivaWebPage.Migrations
                         .IsUnique()
                         .HasFilter("[IsDeleted] = 0");
 
-                    b.ToTable("Pages");
+                    b.ToTable("Pages", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.PageComponent", b =>
@@ -587,7 +587,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("PageSectionId");
 
-                    b.ToTable("PageComponents");
+                    b.ToTable("PageComponents", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.PageMediaFile", b =>
@@ -649,7 +649,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("PageId");
 
-                    b.ToTable("PageSections");
+                    b.ToTable("PageSections", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.PageTemplate", b =>
@@ -682,7 +682,7 @@ namespace TrivaWebPage.Migrations
                     b.HasIndex("Code")
                         .IsUnique();
 
-                    b.ToTable("PageTemplates");
+                    b.ToTable("PageTemplates", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.General.PageTemplatePage", b =>
@@ -714,7 +714,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasIndex("PageTemplateId");
 
-                    b.ToTable("PageTemplatePages");
+                    b.ToTable("PageTemplatePages", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.User", b =>
@@ -766,7 +766,7 @@ namespace TrivaWebPage.Migrations
 
                     b.HasKey("Id");
 
-                    b.ToTable("WebsiteSettings");
+                    b.ToTable("WebsiteSettings", (string)null);
                 });
 
             modelBuilder.Entity("TrivaWebPage.Models.CardOptions.CardButton", b =>

@@ -246,7 +246,7 @@ public class MediaFileEditViewModel
 public class LoginViewModel
 {
     [Required] public string UserName { get; set; } = "admin";
-    [Required] public string Password { get; set; } = "12345";
+    [Required] public string Password { get; set; } = "1234";
     public bool RememberMe { get; set; }
 }
 

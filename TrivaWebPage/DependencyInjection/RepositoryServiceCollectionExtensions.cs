@@ -52,6 +52,7 @@ public static class RepositoryServiceCollectionExtensions
         services.AddScoped<PublicSitePageRenderer>();
         services.AddScoped<CuratorTemplateSeedService>();
         services.AddScoped<CardDefinitionSeedService>();
+        services.AddScoped<AdminUserSeedService>();
 
         return services;
     }
