@@ -79,15 +79,15 @@
         <a href="@Url.Action("Login", "Account")">Giriş Yap</a>
     </div>
 }
-<div class="triva-full-frame" style="position: relative;">
+<div class="triva-full-frame">
     <div class="triva-rwd-slot triva-rwd-desktop">
-        <iframe title="@WebUtility.HtmlEncode(title + " — masaüstü")" srcdoc="@WebUtility.HtmlEncode(Model.DesktopHtml)"></iframe>
+        <iframe title="@Html.Raw(WebUtility.HtmlEncode(title + " — masaüstü"))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.DesktopHtml))"></iframe>
     </div>
     <div class="triva-rwd-slot triva-rwd-tablet">
-        <iframe title="@WebUtility.HtmlEncode(title + " — tablet")" srcdoc="@WebUtility.HtmlEncode(Model.TabletHtml)"></iframe>
+        <iframe title="@Html.Raw(WebUtility.HtmlEncode(title + " — tablet"))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.TabletHtml))"></iframe>
     </div>
     <div class="triva-rwd-slot triva-rwd-phone">
-        <iframe title="@WebUtility.HtmlEncode(title + " — telefon")" srcdoc="@WebUtility.HtmlEncode(Model.PhoneHtml)"></iframe>
+        <iframe title="@Html.Raw(WebUtility.HtmlEncode(title + " — telefon"))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.PhoneHtml))"></iframe>
     </div>
 </div>
 </body>

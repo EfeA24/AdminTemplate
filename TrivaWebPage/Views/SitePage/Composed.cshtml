@@ -63,7 +63,7 @@
 <body>
 <div class="triva-root">
     <div class="triva-canvas" style="width:@(Model.PageWidth)px;height:@(Model.PageHeight)px;">
-        <iframe title="@WebUtility.HtmlEncode(title)" srcdoc="@WebUtility.HtmlEncode(Model.TemplateHtml)"></iframe>
+        <iframe title="@Html.Raw(WebUtility.HtmlEncode(title))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.TemplateHtml))"></iframe>
         @foreach (var t in Model.TextItems.Where(x => x.IsVisible))
         {
             var fw = string.IsNullOrWhiteSpace(t.FontWeight) ? (t.IsBold ? "700" : "400") : t.FontWeight;
