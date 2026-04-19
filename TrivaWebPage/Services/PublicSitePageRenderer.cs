@@ -26,6 +26,25 @@ public class PublicSitePageRenderer
     {
         if (PublicPageHtml.LooksLikeFullHtmlDocument(page.RenderedHtmlOverride))
         {
+            var hasTablet = !string.IsNullOrWhiteSpace(page.RenderedHtmlOverrideTablet);
+            var hasPhone = !string.IsNullOrWhiteSpace(page.RenderedHtmlOverridePhone);
+            if (hasTablet || hasPhone)
+            {
+                var desktop = page.RenderedHtmlOverride!;
+                var tablet = ResolveBreakpointHtml(page.RenderedHtmlOverrideTablet, desktop);
+                var phone = ResolveBreakpointHtml(page.RenderedHtmlOverridePhone, desktop);
+
+                var multiVm = new PublicSitePageMultiViewportViewModel
+                {
+                    BrowserTitle = string.IsNullOrWhiteSpace(page.Title) ? page.Name : page.Title,
+                    DesktopHtml = desktop,
+                    TabletHtml = tablet,
+                    PhoneHtml = phone
+                };
+
+                return controller.View("~/Views/SitePage/MultiViewportFull.cshtml", multiVm);
+            }
+
             return controller.Content(page.RenderedHtmlOverride!, "text/html; charset=utf-8");
         }
 
@@ -65,5 +84,15 @@ public class PublicSitePageRenderer
         };
 
         return controller.View("~/Views/SitePage/Composed.cshtml", vm);
+    }
+
+    private static string ResolveBreakpointHtml(string? candidate, string desktopFallback)
+    {
+        if (string.IsNullOrWhiteSpace(candidate))
+        {
+            return desktopFallback;
+        }
+
+        return PublicPageHtml.LooksLikeFullHtmlDocument(candidate) ? candidate : desktopFallback;
     }
 }

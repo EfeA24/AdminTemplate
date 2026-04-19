@@ -523,7 +523,10 @@ public class TemplateCanvasPageData
     public int PageWidth { get; set; }
     public int PageHeight { get; set; }
     public string? TemplatePageName { get; set; }
+    /// <summary>Masaüstü cihazı için düzenlenen HTML (şablon veya override).</summary>
     public string? HtmlContent { get; set; }
+    public string? HtmlContentTablet { get; set; }
+    public string? HtmlContentPhone { get; set; }
     public TemplateCanvasPaletteData? Palette { get; set; }
 }
 
@@ -546,4 +549,8 @@ public class TemplateCanvasSaveInputModel
 
     [Required]
     public string HtmlContent { get; set; } = string.Empty;
+
+    public string? HtmlContentTablet { get; set; }
+
+    public string? HtmlContentPhone { get; set; }
 }

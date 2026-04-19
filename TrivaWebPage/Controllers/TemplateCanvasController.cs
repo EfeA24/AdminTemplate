@@ -16,7 +16,6 @@ public class TemplateCanvasController : Controller
     private readonly IMediaFile _mediaFile;
     private readonly IWebHostEnvironment _environment;
     private readonly ICardDefinition _cardDefinitionRepository;
-    private readonly IPageCardBuilderRepository _pageCardBuilderRepository;
 
     public TemplateCanvasController(
         IPage pageRepository,
@@ -25,8 +24,7 @@ public class TemplateCanvasController : Controller
         IPageMediaFile pageMediaFile,
         IMediaFile mediaFile,
         IWebHostEnvironment environment,
-        ICardDefinition cardDefinitionRepository,
-        IPageCardBuilderRepository pageCardBuilderRepository)
+        ICardDefinition cardDefinitionRepository)
     {
         _pageRepository = pageRepository;
         _templatePageRepository = templatePageRepository;
@@ -35,7 +33,6 @@ public class TemplateCanvasController : Controller
         _mediaFile = mediaFile;
         _environment = environment;
         _cardDefinitionRepository = cardDefinitionRepository;
-        _pageCardBuilderRepository = pageCardBuilderRepository;
     }
 
     [HttpGet]
@@ -46,24 +43,6 @@ public class TemplateCanvasController : Controller
             .Select(x => new { x.Id, x.Code, x.Name, x.PreviewImageUrl })
             .ToList();
         return Json(list);
-    }
-
-    [HttpGet]
-    public async Task<IActionResult> ListButtonPresets(CancellationToken cancellationToken)
-    {
-        var presets = await _pageCardBuilderRepository.GetButtonPresetsAsync(cancellationToken);
-        return Json(presets
-            .Select(x => new
-            {
-                presetId = x.PresetId,
-                name = x.Name,
-                text = x.Text,
-                backgroundColor = x.BackgroundColor,
-                textColor = x.TextColor,
-                borderColor = x.BorderColor,
-                styleVariant = x.StyleVariant
-            })
-            .ToList());
     }
 
     [HttpGet]
@@ -134,6 +113,10 @@ public class TemplateCanvasController : Controller
                     }
                 }
 
+                var desktopHtml = string.IsNullOrWhiteSpace(page.RenderedHtmlOverride) ? templateHtml : page.RenderedHtmlOverride;
+                var tabletHtml = string.IsNullOrWhiteSpace(page.RenderedHtmlOverrideTablet) ? templateHtml : page.RenderedHtmlOverrideTablet;
+                var phoneHtml = string.IsNullOrWhiteSpace(page.RenderedHtmlOverridePhone) ? templateHtml : page.RenderedHtmlOverridePhone;
+
                 activePage = new TemplateCanvasPageData
                 {
                     PageId = page.Id,
@@ -141,7 +124,9 @@ public class TemplateCanvasController : Controller
                     PageWidth = page.Width,
                     PageHeight = page.Height,
                     TemplatePageName = templatePageName,
-                    HtmlContent = string.IsNullOrWhiteSpace(page.RenderedHtmlOverride) ? templateHtml : page.RenderedHtmlOverride,
+                    HtmlContent = desktopHtml,
+                    HtmlContentTablet = tabletHtml,
+                    HtmlContentPhone = phoneHtml,
                     Palette = await ResolvePaletteAsync(page.ColorPaletteId, cancellationToken)
                 };
 
@@ -235,14 +220,21 @@ public class TemplateCanvasController : Controller
             return RedirectToAction(nameof(Index));
         }
 
-        var sanitized = AdminHtmlSanitizer.Sanitize(model.HtmlContent);
-        if (string.IsNullOrWhiteSpace(sanitized))
+        var desktopSanitized = AdminHtmlSanitizer.Sanitize(model.HtmlContent);
+        if (string.IsNullOrWhiteSpace(desktopSanitized))
         {
             TempData["TemplateCanvasError"] = "Kaydedilecek HTML içeriği boş olamaz.";
             return RedirectToAction(nameof(Index), new { pageId = model.PageId });
         }
 
-        page.RenderedHtmlOverride = sanitized;
+        var tabletSource = string.IsNullOrWhiteSpace(model.HtmlContentTablet) ? model.HtmlContent : model.HtmlContentTablet;
+        var phoneSource = string.IsNullOrWhiteSpace(model.HtmlContentPhone) ? model.HtmlContent : model.HtmlContentPhone;
+        var tabletSanitized = AdminHtmlSanitizer.Sanitize(tabletSource ?? string.Empty);
+        var phoneSanitized = AdminHtmlSanitizer.Sanitize(phoneSource ?? string.Empty);
+
+        page.RenderedHtmlOverride = desktopSanitized;
+        page.RenderedHtmlOverrideTablet = string.IsNullOrWhiteSpace(tabletSanitized) ? desktopSanitized : tabletSanitized;
+        page.RenderedHtmlOverridePhone = string.IsNullOrWhiteSpace(phoneSanitized) ? desktopSanitized : phoneSanitized;
         page.ColorPaletteId = model.ColorPaletteId > 0 ? model.ColorPaletteId : null;
         page.UpdatedDate = DateTime.UtcNow;
         await _pageRepository.UpdateAsync(page, cancellationToken);
@@ -262,6 +254,8 @@ public class TemplateCanvasController : Controller
         }
 
         page.RenderedHtmlOverride = null;
+        page.RenderedHtmlOverrideTablet = null;
+        page.RenderedHtmlOverridePhone = null;
         page.UpdatedDate = DateTime.UtcNow;
         await _pageRepository.UpdateAsync(page, cancellationToken);
         TempData["TemplateCanvasMessage"] = "Sayfa şablonu varsayılan haline döndürüldü.";

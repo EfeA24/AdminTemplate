@@ -1,0 +1,94 @@
+@using System.Net
+@model TrivaWebPage.ViewModels.Public.PublicSitePageMultiViewportViewModel
+@{
+    Layout = null;
+    var title = string.IsNullOrWhiteSpace(Model.BrowserTitle) ? "Sayfa" : Model.BrowserTitle!;
+    var showLogin = !(User.Identity?.IsAuthenticated ?? false);
+}
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>@WebUtility.HtmlEncode(title)</title>
+    <style>
+        html, body { margin: 0; padding: 0; height: 100%; background: #fff; overflow: hidden; }
+        .triva-public-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            z-index: 100;
+            height: 44px;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+            padding: 0 12px;
+            background: rgba(255,255,255,.95);
+            border-bottom: 1px solid #e5e7eb;
+            box-sizing: border-box;
+        }
+        .triva-public-bar a {
+            font-family: Inter, system-ui, sans-serif;
+            font-size: 13px;
+            font-weight: 600;
+            color: #fff;
+            background: #00a19b;
+            text-decoration: none;
+            padding: 6px 14px;
+            border-radius: 8px;
+            border: 1px solid #008f8a;
+        }
+        .triva-public-bar a:hover { opacity: .92; }
+        .triva-full-frame {
+            position: fixed;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            box-sizing: border-box;
+        }
+        body.triva-doc-withBar .triva-full-frame { top: 44px; }
+        body.triva-doc-noBar .triva-full-frame { top: 0; }
+        .triva-rwd-slot {
+            display: none;
+            position: absolute;
+            inset: 0;
+        }
+        .triva-rwd-slot iframe {
+            width: 100%;
+            height: 100%;
+            border: 0;
+            display: block;
+        }
+        @@media (max-width: 640px) {
+            .triva-rwd-phone { display: block; }
+        }
+        @@media (min-width: 641px) and (max-width: 1024px) {
+            .triva-rwd-tablet { display: block; }
+        }
+        @@media (min-width: 1025px) {
+            .triva-rwd-desktop { display: block; }
+        }
+    </style>
+</head>
+<body class="@(showLogin ? "triva-doc-withBar" : "triva-doc-noBar")">
+@if (showLogin)
+{
+    <div class="triva-public-bar">
+        <a href="@Url.Action("Login", "Account")">Giriş Yap</a>
+    </div>
+}
+<div class="triva-full-frame" style="position: relative;">
+    <div class="triva-rwd-slot triva-rwd-desktop">
+        <iframe title="@WebUtility.HtmlEncode(title + " — masaüstü")" srcdoc="@WebUtility.HtmlEncode(Model.DesktopHtml)"></iframe>
+    </div>
+    <div class="triva-rwd-slot triva-rwd-tablet">
+        <iframe title="@WebUtility.HtmlEncode(title + " — tablet")" srcdoc="@WebUtility.HtmlEncode(Model.TabletHtml)"></iframe>
+    </div>
+    <div class="triva-rwd-slot triva-rwd-phone">
+        <iframe title="@WebUtility.HtmlEncode(title + " — telefon")" srcdoc="@WebUtility.HtmlEncode(Model.PhoneHtml)"></iframe>
+    </div>
+</div>
+</body>
+</html>

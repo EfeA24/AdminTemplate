@@ -9,6 +9,8 @@
         public string? Title { get; set; }
         public string? Description { get; set; }
         public string? RenderedHtmlOverride { get; set; }
+        public string? RenderedHtmlOverrideTablet { get; set; }
+        public string? RenderedHtmlOverridePhone { get; set; }
 
         public int Width { get; set; }
         public int Height { get; set; }

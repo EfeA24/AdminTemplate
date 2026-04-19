@@ -96,6 +96,25 @@ public class PagesController : Controller
         };
 
         await _pageRepository.CreateAsync(entity, cancellationToken);
+
+        if (entity.PageTemplatePageId is int templatePageId)
+        {
+            var templatePage = await _pageTemplatePageRepository.GetByIdAsync(templatePageId, cancellationToken);
+            if (templatePage is not null)
+            {
+                var fullDoc = PageTemplateHtmlBootstrapper.EnsureFullHtmlDocument(templatePage.HtmlContent);
+                var sanitized = AdminHtmlSanitizer.Sanitize(fullDoc);
+                if (!string.IsNullOrWhiteSpace(sanitized))
+                {
+                    entity.RenderedHtmlOverride = sanitized;
+                    entity.RenderedHtmlOverrideTablet = sanitized;
+                    entity.RenderedHtmlOverridePhone = sanitized;
+                    entity.UpdatedDate = DateTime.UtcNow;
+                    await _pageRepository.UpdateAsync(entity, cancellationToken);
+                }
+            }
+        }
+
         return RedirectToAction(nameof(Index));
     }
 

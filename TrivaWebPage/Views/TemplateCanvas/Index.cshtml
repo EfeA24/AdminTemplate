@@ -64,6 +64,8 @@
             <input type="hidden" name="PageId" value="@activePage.PageId" />
             <input type="hidden" name="ColorPaletteId" id="canvasPaletteIdInput" value="@(activePage.Palette?.Id)" />
             <input type="hidden" name="HtmlContent" id="canvasHtmlInput" />
+            <input type="hidden" name="HtmlContentTablet" id="canvasHtmlTabletInput" />
+            <input type="hidden" name="HtmlContentPhone" id="canvasHtmlPhoneInput" />
         </form>
 
         <div class="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
@@ -84,15 +86,8 @@
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır kart ekle</label>
-                    <select id="cardTypeSelect" class="w-full rounded border px-2 py-1.5 text-black text-sm"></select>
-                    <button type="button" id="addCardBtn" class="w-full rounded-lg bg-brand-lightAccent dark:bg-brand-darkAccent px-3 py-2 text-sm font-medium text-white hover:opacity-90">Canvas içine kart ekle</button>
-                </div>
-
-                <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
-                    <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır buton tipi (yalnızca görünüm)</label>
-                    <select id="buttonPresetSelect" class="w-full text-sm text-black"></select>
-                    <button type="button" id="togglePlaceButtonModeBtn" class="w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder px-3 py-2 text-sm hover:bg-black/5 dark:hover:bg-white/5">Tıklayarak yerleştir: kapalı</button>
-                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Modu açın, bir buton tipi seçin; önizlemede konuma tıklayın. Linki aşağıdan siz verirsiniz; önizlemede bağlantılar açılmaz, yayında normal çalışır.</p>
+                    <div id="cardTypeChips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white/50 dark:bg-black/20 p-2"></div>
+                    <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Karta tıklayınca canvas’a eklenir.</p>
                 </div>
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
@@ -159,11 +154,22 @@
                 </div>
             </section>
 
-            <section class="min-w-0 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 sm:p-6 overflow-auto">
-                <iframe id="canvasFrame"
-                        class="min-h-0 w-full min-w-0 rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-white"
-                        style="height: min(85vh, @($"{activePage.PageHeight}px"));">
-                </iframe>
+            <section class="min-w-0 rounded-xl border border-brand-lightBorder dark:border-brand-darkBorder bg-brand-lightPanel dark:bg-brand-darkPanel p-4 sm:p-6 overflow-auto space-y-3">
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-xs uppercase tracking-wide text-brand-lightMuted dark:text-brand-darkMuted">Önizleme</span>
+                    <div class="flex flex-wrap gap-1 rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder p-1 bg-white/40 dark:bg-black/20">
+                        <button type="button" class="canvas-bp-tab rounded-md px-3 py-1.5 text-xs font-medium bg-brand-lightAccent dark:bg-brand-darkAccent text-white" data-bp="desktop">Masaüstü</button>
+                        <button type="button" class="canvas-bp-tab rounded-md px-3 py-1.5 text-xs font-medium text-brand-lightText dark:text-brand-darkText hover:bg-black/5 dark:hover:bg-white/10" data-bp="tablet">Tablet</button>
+                        <button type="button" class="canvas-bp-tab rounded-md px-3 py-1.5 text-xs font-medium text-brand-lightText dark:text-brand-darkText hover:bg-black/5 dark:hover:bg-white/10" data-bp="phone">Telefon</button>
+                    </div>
+                </div>
+                <div id="canvasFrameOuter" class="mx-auto flex min-h-0 min-w-0 justify-center overflow-auto rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-neutral-100/80 dark:bg-black/30 p-3" style="max-height: min(85vh, 920px);">
+                    <div id="canvasFrameScaleWrap" class="relative origin-top" style="transform: scale(1);">
+                        <iframe id="canvasFrame"
+                                class="block rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm"
+                                style="width: @(activePage.PageWidth)px; height: @(activePage.PageHeight)px;"></iframe>
+                    </div>
+                </div>
             </section>
         </div>
 
@@ -207,44 +213,38 @@
 
 @if (activePage is not null)
 {
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" crossorigin="anonymous" />
-    <style>
-        #templateCanvasOptionsPanel .select2-container--default .select2-results > .select2-results__options {
-            max-height: 22rem;
-        }
-        #templateCanvasOptionsPanel .select2-results__option--highlighted .triva-preset-preview-btn {
-            filter: brightness(1.06);
-        }
-        #templateCanvasOptionsPanel .select2-results__option:hover .triva-preset-preview-btn {
-            filter: brightness(1.08);
-            transform: scale(1.02);
-            transition: transform .18s ease, filter .18s ease;
-        }
-    </style>
-    <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js" crossorigin="anonymous"></script>
-    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js" crossorigin="anonymous"></script>
     <script>
         (function () {
-            const htmlContent = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? ""));
+            const htmlByBp = {
+                desktop: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContent ?? "")),
+                tablet: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContentTablet ?? "")),
+                phone: @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.HtmlContentPhone ?? ""))
+            };
             const initialPalette = @Html.Raw(System.Text.Json.JsonSerializer.Serialize(activePage.Palette));
             const pageMedia = JSON.parse("@Html.Raw(safeTemplateCanvasMediaJson)");
             let libraryMedia = JSON.parse("@Html.Raw(safeLibraryMediaJson)");
             const pageId = @activePage.PageId;
+            const pageDims = { w: @activePage.PageWidth, h: @activePage.PageHeight };
+            const previewDims = {
+                desktop: { w: pageDims.w, h: pageDims.h },
+                tablet: { w: 768, h: 1024 },
+                phone: { w: 390, h: 844 }
+            };
             const mediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadMedia", "TemplateCanvas")));
             const libraryMediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadLibraryMedia", "TemplateCanvas")));
             const cardDefinitionsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListCardDefinitions", "TemplateCanvas")));
-            const buttonPresetsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListButtonPresets", "TemplateCanvas")));
             const frame = document.getElementById("canvasFrame");
+            const frameOuter = document.getElementById("canvasFrameOuter");
+            const frameScaleWrap = document.getElementById("canvasFrameScaleWrap");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
             const htmlInput = document.getElementById("canvasHtmlInput");
+            const htmlTabletInput = document.getElementById("canvasHtmlTabletInput");
+            const htmlPhoneInput = document.getElementById("canvasHtmlPhoneInput");
             const paletteIdInput = document.getElementById("canvasPaletteIdInput");
             const deleteNodeBtn = document.getElementById("deleteNodeBtn");
             const clearSelectionBtn = document.getElementById("clearSelectionBtn");
-            const addCardBtn = document.getElementById("addCardBtn");
-            const cardTypeSelect = document.getElementById("cardTypeSelect");
-            const buttonPresetSelect = document.getElementById("buttonPresetSelect");
-            const togglePlaceButtonModeBtn = document.getElementById("togglePlaceButtonModeBtn");
+            const cardTypeChips = document.getElementById("cardTypeChips");
             const textInput = document.getElementById("nodeTextInput");
             const hrefInput = document.getElementById("nodeHrefInput");
             const srcInput = document.getElementById("nodeSrcInput");
@@ -261,7 +261,6 @@
             const swatchMuted = document.getElementById("swatchMuted");
             const swatchAccent = document.getElementById("swatchAccent");
             const canvasMediaModal = document.getElementById("canvasMediaModal");
-            const openCanvasMediaModalBtn = document.getElementById("openCanvasMediaModalBtn");
             const closeCanvasMediaModalBtn = document.getElementById("closeCanvasMediaModalBtn");
             const canvasMediaUploadForm = document.getElementById("canvasMediaUploadForm");
             const canvasMediaFileInput = document.getElementById("canvasMediaFileInput");
@@ -274,286 +273,18 @@
             const libraryMediaFileInput = document.getElementById("libraryMediaFileInput");
             const libraryMediaGrid = document.getElementById("libraryMediaGrid");
             const libraryMediaUploadError = document.getElementById("libraryMediaUploadError");
-            if (!frame || !saveBtn || !saveForm || !htmlInput) return;
+            const canvasNodeColorsPanel = document.getElementById("canvasNodeColorsPanel");
+            if (!frame || !saveBtn || !saveForm || !htmlInput || !htmlTabletInput || !htmlPhoneInput) return;
 
             const requestToken = saveForm.querySelector('input[name="__RequestVerificationToken"]')?.value || "";
 
             let selectedNode = null;
             let selectedOutline = null;
             let activePalette = initialPalette;
-            let placeButtonMode = false;
-            const buttonPresetById = new Map();
-            const canvasNodeColorsPanel = document.getElementById("canvasNodeColorsPanel");
+            let activeBp = "desktop";
 
-            function normalizePresetRow(item) {
-                const id = item.presetId ?? item.PresetId;
-                if (id == null) return null;
-                return {
-                    presetId: id,
-                    name: item.name || item.Name || ("Preset " + id),
-                    text: item.text || item.Text || "Buton",
-                    backgroundColor: item.backgroundColor || item.BackgroundColor || "#00a19b",
-                    textColor: item.textColor || item.TextColor || "#ffffff",
-                    borderColor: item.borderColor || item.BorderColor || "#008f8a",
-                    styleVariant: sanitizeCanvasVariantKey(item.styleVariant || item.StyleVariant || "solid")
-                };
-            }
-
-            function sanitizeCanvasVariantKey(v) {
-                const s = String(v || "solid").toLowerCase().replace(/[^a-z0-9-]/g, "");
-                const allowed = new Set([
-                    "solid", "pill", "square", "outline", "elevated", "ghost", "dashed", "bar", "compact", "wide",
-                    "glow", "soft3d", "glass"
-                ]);
-                return allowed.has(s) ? s : "solid";
-            }
-
-            /** Görsel varyant: yalnızca Select2 önizlemesi (iframe içi canlı görünüm CSS ile). */
-            function getCanvasButtonVisualCss(variant, bg, fg, br) {
-                const v = sanitizeCanvasVariantKey(variant);
-                const base = [
-                    "display:inline-flex",
-                    "align-items:center",
-                    "justify-content:center",
-                    "box-sizing:border-box",
-                    "text-decoration:none",
-                    "font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif",
-                    "line-height:1.2",
-                    "white-space:nowrap",
-                    "max-width:100%",
-                    "overflow:hidden",
-                    "text-overflow:ellipsis"
-                ];
-                const fill = ["background:" + bg, "color:" + fg, "border:1px solid " + br];
-                switch (v) {
-                    case "pill":
-                        return base.concat(fill, ["border-radius:9999px", "padding:10px 24px", "font-weight:600", "font-size:14px"]).join(";");
-                    case "square":
-                        return base.concat(fill, ["border-radius:2px", "padding:10px 14px", "font-weight:800", "font-size:11px", "text-transform:uppercase", "letter-spacing:.08em"]).join(";");
-                    case "outline":
-                        return base.concat([
-                            "background:transparent",
-                            "color:" + fg,
-                            "border:2px solid " + br,
-                            "border-radius:10px",
-                            "padding:8px 18px",
-                            "font-weight:600",
-                            "font-size:14px"
-                        ]).join(";");
-                    case "elevated":
-                        return base.concat(fill, [
-                            "border-radius:14px",
-                            "padding:11px 20px",
-                            "font-weight:600",
-                            "font-size:14px",
-                            "box-shadow:0 12px 28px rgba(15,23,42,.2)"
-                        ]).join(";");
-                    case "ghost":
-                        return base.concat([
-                            "background-color:" + bg,
-                            "background-image:linear-gradient(180deg,rgba(255,255,255,.28),rgba(255,255,255,.02))",
-                            "color:" + fg,
-                            "border:1px solid rgba(255,255,255,.45)",
-                            "border-radius:12px",
-                            "padding:10px 18px",
-                            "font-weight:600",
-                            "font-size:14px",
-                            "box-shadow:inset 0 1px 0 rgba(255,255,255,.35)"
-                        ]).join(";");
-                    case "dashed":
-                        return base.concat([
-                            "background:" + bg,
-                            "color:" + fg,
-                            "border:2px dashed " + br,
-                            "border-radius:12px",
-                            "padding:9px 18px",
-                            "font-weight:600",
-                            "font-size:14px"
-                        ]).join(";");
-                    case "bar":
-                        return base.concat([
-                            "background:" + bg,
-                            "color:" + fg,
-                            "border:none",
-                            "border-radius:8px",
-                            "padding:10px 16px 12px",
-                            "font-weight:600",
-                            "font-size:14px",
-                            "box-shadow:inset 0 -5px 0 0 " + br
-                        ]).join(";");
-                    case "compact":
-                        return base.concat(fill, ["border-radius:6px", "padding:5px 11px", "font-weight:600", "font-size:11px"]).join(";");
-                    case "wide":
-                        return base.concat(fill, [
-                            "border-radius:10px",
-                            "padding:12px 36px",
-                            "font-weight:600",
-                            "font-size:15px",
-                            "letter-spacing:.12em",
-                            "text-transform:uppercase"
-                        ]).join(";");
-                    case "glow":
-                        return base.concat(fill, [
-                            "border-radius:12px",
-                            "padding:11px 22px",
-                            "font-weight:700",
-                            "font-size:14px",
-                            "box-shadow:0 0 0 1px rgba(255,255,255,.25),0 10px 26px rgba(15,23,42,.25)"
-                        ]).join(";");
-                    case "soft3d":
-                        return base.concat(fill, [
-                            "border-radius:10px",
-                            "padding:10px 20px",
-                            "font-weight:700",
-                            "font-size:14px",
-                            "border:1px solid " + br,
-                            "box-shadow:0 5px 0 rgba(0,0,0,.22),0 8px 16px rgba(15,23,42,.12)"
-                        ]).join(";");
-                    case "glass":
-                        return base.concat([
-                            "background:linear-gradient(135deg,rgba(255,255,255,.42),rgba(255,255,255,.08))",
-                            "background-color:" + bg,
-                            "color:" + fg,
-                            "border:1px solid rgba(255,255,255,.55)",
-                            "border-radius:14px",
-                            "padding:10px 20px",
-                            "font-weight:600",
-                            "font-size:14px",
-                            "backdrop-filter:blur(8px)",
-                            "box-shadow:inset 0 1px 0 rgba(255,255,255,.5)"
-                        ]).join(";");
-                    default:
-                        return base.concat(fill, ["border-radius:8px", "padding:10px 16px", "font-weight:600", "font-size:14px"]).join(";");
-                }
-            }
-
-            /** Iframe: token renkleri (--cb-*) + varyanta özel hover. */
-            function getCanvasButtonVariantStylesheet() {
-                const g = (sel, rules) => sel + "{" + rules + "}";
-                const h = (sel, rules) => sel + ":hover{" + rules + "}";
-                const b = [
-                    "display:inline-flex;align-items:center;justify-content:center;box-sizing:border-box;",
-                    "text-decoration:none;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;",
-                    "line-height:1.2;white-space:nowrap;max-width:100%;overflow:hidden;text-overflow:ellipsis;",
-                    "transition:transform .22s ease,box-shadow .22s ease,filter .22s ease,background-color .22s ease,",
-                    "background .22s ease,border-color .22s ease,letter-spacing .22s ease,border-style .2s ease,backdrop-filter .28s ease"
-                ].join("");
-                const base = "a.canvas-placed-button[data-canvas-button-variant]";
-                const t = [];
-                const V = (name, normal, hover) => {
-                    t.push(g(base + '="' + name + '"]', b + normal));
-                    t.push(h(base + '="' + name + '"]', hover));
-                };
-                V("solid",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:8px;padding:10px 16px;font-weight:600;font-size:14px;",
-                    "filter:brightness(1.1);transform:translateY(-2px);box-shadow:0 8px 20px rgba(15,23,42,.2);");
-                V("pill",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:9999px;padding:10px 24px;font-weight:600;font-size:14px;",
-                    "transform:scale(1.05);filter:saturate(1.12) brightness(1.05);box-shadow:0 10px 26px rgba(15,23,42,.22);");
-                V("square",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:2px;padding:10px 14px;font-weight:800;font-size:11px;text-transform:uppercase;letter-spacing:.08em;",
-                    "filter:brightness(1.12);letter-spacing:.14em;transform:translateY(-1px);box-shadow:0 6px 14px rgba(15,23,42,.18);");
-                V("outline",
-                    "background:transparent;color:var(--cb-fg);border:2px solid var(--cb-br);border-radius:10px;padding:8px 18px;font-weight:600;font-size:14px;",
-                    "background:rgba(15,23,42,.06);border-color:var(--cb-bg);transform:translateY(-2px);box-shadow:0 6px 16px rgba(15,23,42,.12);");
-                V("elevated",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:14px;padding:11px 20px;font-weight:600;font-size:14px;box-shadow:0 12px 28px rgba(15,23,42,.2);",
-                    "transform:translateY(-4px);box-shadow:0 18px 36px rgba(15,23,42,.28);filter:brightness(1.06);");
-                V("ghost",
-                    "background-color:var(--cb-bg);background-image:linear-gradient(180deg,rgba(255,255,255,.3),rgba(255,255,255,.04));color:var(--cb-fg);border:1px solid rgba(255,255,255,.45);border-radius:12px;padding:10px 18px;font-weight:600;font-size:14px;box-shadow:inset 0 1px 0 rgba(255,255,255,.4);",
-                    "filter:brightness(1.08);box-shadow:inset 0 1px 0 rgba(255,255,255,.55),0 10px 22px rgba(15,23,42,.18);transform:translateY(-1px);");
-                V("dashed",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:2px dashed var(--cb-br);border-radius:12px;padding:9px 18px;font-weight:600;font-size:14px;",
-                    "border-style:solid;border-width:2px;transform:scale(1.03);filter:brightness(1.06);box-shadow:0 6px 18px rgba(15,23,42,.15);");
-                V("bar",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:none;border-radius:8px;padding:10px 16px 12px;font-weight:600;font-size:14px;box-shadow:inset 0 -5px 0 0 var(--cb-br);",
-                    "box-shadow:inset 0 -9px 0 0 var(--cb-br);transform:translateY(-2px);filter:brightness(1.05);");
-                V("compact",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:6px;padding:5px 11px;font-weight:600;font-size:11px;",
-                    "transform:scale(1.1);filter:brightness(1.08);box-shadow:0 6px 14px rgba(15,23,42,.16);");
-                V("wide",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:10px;padding:12px 36px;font-weight:600;font-size:15px;letter-spacing:.12em;text-transform:uppercase;",
-                    "letter-spacing:.18em;filter:brightness(1.08);transform:translateY(-2px);box-shadow:0 10px 24px rgba(15,23,42,.2);");
-                V("glow",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:12px;padding:11px 22px;font-weight:700;font-size:14px;box-shadow:0 0 0 1px rgba(255,255,255,.2),0 10px 26px rgba(15,23,42,.22);",
-                    "filter:brightness(1.1) drop-shadow(0 0 14px var(--cb-bg));box-shadow:0 0 0 2px rgba(255,255,255,.38),0 14px 34px rgba(15,23,42,.3);transform:translateY(-2px);");
-                V("soft3d",
-                    "background:var(--cb-bg);color:var(--cb-fg);border:1px solid var(--cb-br);border-radius:10px;padding:10px 20px;font-weight:700;font-size:14px;box-shadow:0 5px 0 rgba(0,0,0,.24),0 8px 16px rgba(15,23,42,.12);",
-                    "transform:translateY(-3px);box-shadow:0 7px 0 rgba(0,0,0,.22),0 14px 28px rgba(15,23,42,.2);filter:brightness(1.06);");
-                V("glass",
-                    "background:linear-gradient(135deg,rgba(255,255,255,.4),rgba(255,255,255,.06));background-color:var(--cb-bg);color:var(--cb-fg);border:1px solid rgba(255,255,255,.55);border-radius:14px;padding:10px 20px;font-weight:600;font-size:14px;backdrop-filter:blur(8px);box-shadow:inset 0 1px 0 rgba(255,255,255,.45);",
-                    "backdrop-filter:blur(12px);filter:brightness(1.06);border-color:rgba(255,255,255,.75);box-shadow:inset 0 1px 0 rgba(255,255,255,.65),0 12px 28px rgba(15,23,42,.18);transform:translateY(-2px);");
-                return t.join("");
-            }
-
-            function ensureCanvasButtonTokens(anchor) {
-                if (!anchor || anchor.tagName !== "A") return;
-                const isPlaced = anchor.classList?.contains("canvas-placed-button") || anchor.hasAttribute?.("data-canvas-button-preset");
-                if (!isPlaced) return;
-                if (!anchor.classList.contains("canvas-placed-button")) anchor.classList.add("canvas-placed-button");
-                const win = anchor.ownerDocument?.defaultView;
-                if (!win) return;
-                let vk = sanitizeCanvasVariantKey(anchor.getAttribute("data-canvas-button-variant"));
-                anchor.setAttribute("data-canvas-button-variant", vk);
-                if (anchor.style.getPropertyValue("--cb-bg")) return;
-                const cs = win.getComputedStyle(anchor);
-                const bg = toHexColor(cs.backgroundColor, "#00a19b");
-                const fg = toHexColor(cs.color, "#ffffff");
-                const br = toHexColor(cs.borderColor, bg);
-                const pos = anchor.style.position || "absolute";
-                const left = anchor.style.left || "";
-                const top = anchor.style.top || "";
-                const zi = anchor.style.zIndex || "20";
-                anchor.style.cssText = [
-                    "position:" + pos,
-                    left ? "left:" + left : "",
-                    top ? "top:" + top : "",
-                    "z-index:" + zi,
-                    "cursor:pointer",
-                    "--cb-bg:" + bg,
-                    "--cb-fg:" + fg,
-                    "--cb-br:" + br
-                ].filter(Boolean).join(";");
-            }
-
-            function isCanvasPlacedButton(node) {
-                return !!(node && node.nodeType === 1 && node.tagName === "A" &&
-                    (node.classList?.contains("canvas-placed-button") || node.hasAttribute?.("data-canvas-button-preset")));
-            }
-
-            function focusCanvasNodeColorsPanel() {
-                if (!canvasNodeColorsPanel) return;
-                canvasNodeColorsPanel.scrollIntoView({ behavior: "smooth", block: "nearest" });
-                canvasNodeColorsPanel.style.boxShadow = "0 0 0 3px rgba(0,161,155,.42)";
-                canvasNodeColorsPanel.style.transition = "box-shadow .35s ease";
-                window.clearTimeout(focusCanvasNodeColorsPanel._t);
-                focusCanvasNodeColorsPanel._t = window.setTimeout(() => {
-                    canvasNodeColorsPanel.style.boxShadow = "";
-                }, 1400);
-            }
-
-            function buildPresetSelect2Html(preset, mode) {
-                const isDropdown = mode === "dropdown";
-                const label = preset.name || ("Preset " + preset.presetId);
-                const raw = preset.text || "Buton";
-                const sample = raw.length > 20 ? raw.slice(0, 19) + "…" : raw;
-                const bg = preset.backgroundColor || "#00a19b";
-                const fg = preset.textColor || "#fff";
-                const br = preset.borderColor || bg;
-                const css = getCanvasButtonVisualCss(preset.styleVariant, bg, fg, br);
-                const rowPad = isDropdown ? "padding:6px 0" : "padding:2px 0";
-                const previewScale = isDropdown ? "" : "transform:scale(.9);transform-origin:left center;";
-                const rightStyle = isDropdown
-                    ? "flex:1;font-size:12px;color:#64748b;line-height:1.25"
-                    : "font-size:12px;color:#64748b;max-width:10rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap";
-                return (
-                    "<span style=\"display:flex;align-items:center;gap:10px;width:100%;" + rowPad + "\">" +
-                    "<span class=\"triva-preset-preview-btn\" style=\"" + previewScale + css + "\">" +
-                    escapeHtml(sample) +
-                    "</span>" +
-                    "<span style=\"" + rightStyle + "\">" + escapeHtml(label) + "</span>" +
-                    "</span>"
-                );
+            function escapeRegExp(text) {
+                return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
             }
 
             function escapeHtml(s) {
@@ -564,98 +295,11 @@
                     .replace(/\"/g, "&quot;");
             }
 
-            function getSelectedButtonPreset() {
-                if (!buttonPresetSelect) return null;
-                const id = window.jQuery?.fn?.select2
-                    ? String(window.jQuery(buttonPresetSelect).val() || "")
-                    : String(buttonPresetSelect.value || "");
-                if (!id) return null;
-                return buttonPresetById.get(id) || null;
-            }
-
-            function placeButtonFromPreset(doc, ev, preset) {
-                const p = normalizePresetRow(preset) || preset;
-                const vk = sanitizeCanvasVariantKey(p.styleVariant);
-                const a = doc.createElement("a");
-                a.setAttribute("href", "#");
-                a.textContent = p.text || "Buton";
-                a.setAttribute("data-canvas-button-preset", String(p.presetId ?? ""));
-                a.setAttribute("data-canvas-button-variant", vk);
-                a.className = "canvas-placed-button";
-                const bg = p.backgroundColor || "var(--color-accent, #00a19b)";
-                const fg = p.textColor || "#ffffff";
-                const br = p.borderColor || bg;
-                const left = typeof ev.pageX === "number" ? ev.pageX : ev.clientX;
-                const top = typeof ev.pageY === "number" ? ev.pageY : ev.clientY;
-                a.style.cssText = [
-                    "position:absolute",
-                    "left:" + left + "px",
-                    "top:" + top + "px",
-                    "z-index:20",
-                    "cursor:pointer",
-                    "--cb-bg:" + bg,
-                    "--cb-fg:" + fg,
-                    "--cb-br:" + br
-                ].join(";");
-                doc.body.appendChild(a);
-                selectNode(a);
-            }
-
-            function setPlaceButtonMode(on) {
-                placeButtonMode = !!on;
-                if (togglePlaceButtonModeBtn) {
-                    togglePlaceButtonModeBtn.textContent = placeButtonMode
-                        ? "Tıklayarak yerleştir: açık (kapat)"
-                        : "Tıklayarak yerleştir: kapalı";
-                }
-                if (frame) {
-                    frame.style.outline = placeButtonMode ? "3px solid #00a19b" : "";
-                    frame.style.outlineOffset = placeButtonMode ? "2px" : "";
-                }
-            }
-
-            function loadFrame() {
+            function flushHtmlStore() {
                 const doc = frame.contentDocument;
-                doc.open();
-                doc.write(htmlContent);
-                doc.close();
-
-                const style = doc.createElement("style");
-                style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;opacity:1 !important;}";
-                doc.head.appendChild(style);
-                const variantStyle = doc.createElement("style");
-                variantStyle.id = "triva-canvas-btn-variants";
-                variantStyle.textContent = getCanvasButtonVariantStylesheet();
-                doc.head.appendChild(variantStyle);
-                applyPalette(doc, activePalette);
-                if (doc.body) {
-                    const pos = doc.defaultView?.getComputedStyle(doc.body)?.position;
-                    if (!pos || pos === "static") {
-                        doc.body.style.position = "relative";
-                    }
-                }
-                window.requestAnimationFrame(() => {
-                    doc.querySelectorAll("a.canvas-placed-button,a[data-canvas-button-preset]").forEach((a) => ensureCanvasButtonTokens(a));
-                });
-
-                doc.addEventListener("click", (e) => {
-                    e.stopPropagation();
-                    if (placeButtonMode) {
-                        const preset = getSelectedButtonPreset();
-                        if (preset) {
-                            e.preventDefault();
-                            placeButtonFromPreset(doc, e, preset);
-                            return;
-                        }
-                    }
-                    const anchor = e.target && typeof e.target.closest === "function" ? e.target.closest("a") : null;
-                    if (anchor) {
-                        e.preventDefault();
-                        selectNode(anchor);
-                        return;
-                    }
-                    selectNode(e.target);
-                }, true);
+                if (!doc) return;
+                doc.querySelectorAll(".__canvas-selected").forEach((x) => x.classList.remove("__canvas-selected"));
+                htmlByBp[activeBp] = doc.documentElement.outerHTML;
             }
 
             function applyPalette(doc, palette) {
@@ -710,8 +354,73 @@
                 });
             }
 
-            function escapeRegExp(text) {
-                return String(text).replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+            function wireFrameDocument(doc) {
+                const style = doc.createElement("style");
+                style.textContent = ".__canvas-selected{outline:2px solid var(--canvas-select-color, #00a19b) !important;outline-offset:2px !important;opacity:1 !important;}";
+                doc.head.appendChild(style);
+                applyPalette(doc, activePalette);
+                if (doc.body) {
+                    const pos = doc.defaultView?.getComputedStyle(doc.body)?.position;
+                    if (!pos || pos === "static") {
+                        doc.body.style.position = "relative";
+                    }
+                }
+                doc.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    const anchor = e.target && typeof e.target.closest === "function" ? e.target.closest("a") : null;
+                    if (anchor) {
+                        e.preventDefault();
+                        selectNode(anchor);
+                        return;
+                    }
+                    selectNode(e.target);
+                }, true);
+            }
+
+            function loadHtmlIntoFrame(htmlString) {
+                const doc = frame.contentDocument;
+                doc.open();
+                doc.write(htmlString || "");
+                doc.close();
+                wireFrameDocument(doc);
+            }
+
+            function resizePreviewForBp() {
+                const d = previewDims[activeBp];
+                if (!d || !frame || !frameOuter || !frameScaleWrap) return;
+                frame.style.width = d.w + "px";
+                frame.style.height = d.h + "px";
+                const rw = Math.max(120, frameOuter.clientWidth - 24);
+                const rh = Math.max(120, frameOuter.clientHeight - 24);
+                const sx = rw / d.w;
+                const sy = rh / d.h;
+                const s = Math.min(1, sx, sy);
+                frameScaleWrap.style.transform = "scale(" + s + ")";
+                frameScaleWrap.style.transformOrigin = "top center";
+            }
+
+            function updateBpTabStyles() {
+                document.querySelectorAll(".canvas-bp-tab").forEach((btn) => {
+                    const on = btn.getAttribute("data-bp") === activeBp;
+                    btn.classList.toggle("bg-brand-lightAccent", on);
+                    btn.classList.toggle("dark:bg-brand-darkAccent", on);
+                    btn.classList.toggle("text-white", on);
+                    btn.classList.toggle("text-brand-lightText", !on);
+                    btn.classList.toggle("dark:text-brand-darkText", !on);
+                });
+            }
+
+            function switchBreakpoint(bp) {
+                if (bp === activeBp) return;
+                flushHtmlStore();
+                activeBp = bp;
+                loadHtmlIntoFrame(htmlByBp[activeBp] || "");
+                updateBpTabStyles();
+                window.requestAnimationFrame(() => {
+                    resizePreviewForBp();
+                    clearSelection();
+                    syncInputsFromNode();
+                });
             }
 
             function selectNode(node) {
@@ -721,9 +430,6 @@
                 selectedOutline = node;
                 selectedOutline.classList.add("__canvas-selected");
                 syncInputsFromNode();
-                if (isCanvasPlacedButton(node)) {
-                    window.requestAnimationFrame(() => focusCanvasNodeColorsPanel());
-                }
             }
 
             function clearSelection() {
@@ -749,22 +455,12 @@
                 hrefInput.value = selectedNode.getAttribute?.("href") || "";
                 if (srcInput) srcInput.value = selectedNode.getAttribute?.("src") || "";
                 altInput.value = selectedNode.getAttribute?.("alt") || "";
-                const cls = (selectedNode.className || "").split(/\s+/).filter((c) => c && c !== "canvas-placed-button");
-                classInput.value = cls.join(" ");
+                classInput.value = (selectedNode.className || "").split(/\s+/).filter((c) => c).join(" ");
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
                 const computed = frame.contentWindow?.getComputedStyle(selectedNode);
-                if (isCanvasPlacedButton(selectedNode)) {
-                    const vb = selectedNode.style.getPropertyValue("--cb-bg").trim();
-                    const vf = selectedNode.style.getPropertyValue("--cb-fg").trim();
-                    const vr = selectedNode.style.getPropertyValue("--cb-br").trim();
-                    nodeBackgroundColorInput.value = vb ? toHexColor(vb, "#ffffff") : toHexColor(computed?.backgroundColor, "#ffffff");
-                    nodeTextColorInput.value = vf ? toHexColor(vf, "#111111") : toHexColor(computed?.color, "#111111");
-                    nodeBorderColorInput.value = vr ? toHexColor(vr, "#d1d5db") : toHexColor(computed?.borderColor, "#d1d5db");
-                } else {
-                    nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
-                    nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
-                    nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
-                }
+                nodeBackgroundColorInput.value = toHexColor(computed?.backgroundColor, "#ffffff");
+                nodeTextColorInput.value = toHexColor(computed?.color, "#111111");
+                nodeBorderColorInput.value = toHexColor(computed?.borderColor, "#d1d5db");
             }
 
             function applyInputsToNode() {
@@ -777,29 +473,15 @@
                 setAttr(selectedNode, "src", srcInput.value);
                 setAttr(selectedNode, "alt", altInput.value);
                 setAttr(selectedNode, "style", styleInput.value);
-                if (isCanvasPlacedButton(selectedNode)) {
-                    const extra = (classInput.value || "").trim();
-                    selectedNode.className = "canvas-placed-button" + (extra ? " " + extra : "");
-                    selectedNode.style.setProperty("--cb-bg", nodeBackgroundColorInput.value || "#000000");
-                    selectedNode.style.setProperty("--cb-fg", nodeTextColorInput.value || "#ffffff");
-                    selectedNode.style.setProperty("--cb-br", nodeBorderColorInput.value || "#000000");
-                } else {
-                    selectedNode.className = classInput.value || "";
-                }
+                selectedNode.className = classInput.value || "";
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
             }
 
             function applySelectedNodeColors() {
                 if (!selectedNode) return;
-                if (isCanvasPlacedButton(selectedNode)) {
-                    selectedNode.style.setProperty("--cb-bg", nodeBackgroundColorInput.value || "#000000");
-                    selectedNode.style.setProperty("--cb-fg", nodeTextColorInput.value || "#ffffff");
-                    selectedNode.style.setProperty("--cb-br", nodeBorderColorInput.value || "#000000");
-                } else {
-                    selectedNode.style.backgroundColor = nodeBackgroundColorInput.value || "";
-                    selectedNode.style.color = nodeTextColorInput.value || "";
-                    selectedNode.style.borderColor = nodeBorderColorInput.value || "";
-                }
+                selectedNode.style.backgroundColor = nodeBackgroundColorInput.value || "";
+                selectedNode.style.color = nodeTextColorInput.value || "";
+                selectedNode.style.borderColor = nodeBorderColorInput.value || "";
                 styleInput.value = selectedNode.getAttribute?.("style") || "";
             }
 
@@ -815,7 +497,16 @@
                 const match = String(colorValue).match(/rgba?\((\d+),\s*(\d+),\s*(\d+)/i);
                 if (!match) return fallback;
                 const toHex = (v) => Number(v).toString(16).padStart(2, "0");
-                return `#${toHex(match[1])}${toHex(match[2])}${toHex(match[3])}`;
+                return "#" + toHex(match[1]) + toHex(match[2]) + toHex(match[3]);
+            }
+
+            function setAttr(node, key, value) {
+                if (!node || !node.setAttribute) return;
+                if (!value) {
+                    node.removeAttribute(key);
+                    return;
+                }
+                node.setAttribute(key, value);
             }
 
             function renderInfoCard(card) {
@@ -834,10 +525,30 @@
                 card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Kart</h3><p style='margin:0;'>Şablon içeriğini düzenleyebilirsiniz.</p>";
             }
 
+            function renderMenuNavH(card) {
+                card.innerHTML = "<nav style='display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px;font-weight:500;'><a href='#' style='color:var(--color-primary,#111);text-decoration:none;padding:4px 0;border-bottom:2px solid var(--color-accent,#00a19b);'>Ana</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>Hizmetler</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>İletişim</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>Blog</a></nav>";
+            }
+
+            function renderMenuNavV(card) {
+                card.innerHTML = "<nav style='display:flex;flex-direction:column;gap:2px;font-size:12px;max-width:11rem;'><a href='#' style='padding:6px 10px;border-radius:6px;background:#f8fafc;color:#0f172a;text-decoration:none;'>Özet</a><a href='#' style='padding:6px 10px;border-radius:6px;color:#475569;text-decoration:none;'>Detaylar</a><a href='#' style='padding:6px 10px;border-radius:6px;color:#475569;text-decoration:none;'>Ayarlar</a><a href='#' style='padding:6px 10px;border-radius:6px;color:#475569;text-decoration:none;'>Çıkış</a></nav>";
+            }
+
+            function renderMenuPills(card) {
+                card.innerHTML = "<nav style='display:flex;flex-wrap:wrap;gap:6px;font-size:11px;'><span style='padding:5px 12px;border-radius:9999px;background:var(--color-accent,#00a19b);color:#fff;font-weight:600;'>Tümü</span><a href='#' style='padding:5px 12px;border-radius:9999px;background:#e2e8f0;color:#334155;text-decoration:none;'>Yeni</a><a href='#' style='padding:5px 12px;border-radius:9999px;background:#e2e8f0;color:#334155;text-decoration:none;'>Popüler</a></nav>";
+            }
+
+            function renderMenuIconRow(card) {
+                card.innerHTML = "<nav style='display:flex;gap:10px;align-items:center;font-size:10px;color:#64748b;'><a href='#' style='display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:inherit;min-width:44px;'><span style='font-size:16px;line-height:1;'>⌂</span><span>Ana</span></a><a href='#' style='display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:inherit;min-width:44px;'><span style='font-size:16px;line-height:1;'>☰</span><span>Menü</span></a><a href='#' style='display:flex;flex-direction:column;align-items:center;gap:2px;text-decoration:none;color:inherit;min-width:44px;'><span style='font-size:16px;line-height:1;'>✉</span><span>Mesaj</span></a></nav>";
+            }
+
             const CARD_RENDERERS = {
                 info: renderInfoCard,
                 cta: renderCtaCard,
                 image: renderImageCard,
+                "menu-nav-h": renderMenuNavH,
+                "menu-nav-v": renderMenuNavV,
+                "menu-pills": renderMenuPills,
+                "menu-icon-row": renderMenuIconRow,
                 default: renderDefaultCard
             };
 
@@ -845,107 +556,50 @@
                 const card = doc.createElement("div");
                 if (!card) return null;
                 card.className = "canvas-card";
-                card.style.cssText = "border:1px solid #e2e8f0;border-radius:20px;padding:24px 28px;margin:20px 0;background:#ffffff;color:#111111;box-shadow:0 8px 24px rgba(15,23,42,.06);";
                 const key = String(cardCode || "").toLowerCase();
+                const isMenu = key.startsWith("menu-");
+                card.style.cssText = isMenu
+                    ? "border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px;margin:10px 0;background:#ffffff;color:#111111;box-shadow:0 2px 8px rgba(15,23,42,.06);max-width:22rem;"
+                    : "border:1px solid #e2e8f0;border-radius:20px;padding:24px 28px;margin:20px 0;background:#ffffff;color:#111111;box-shadow:0 8px 24px rgba(15,23,42,.06);";
                 card.setAttribute("data-card-template-code", key || "default");
                 const render = CARD_RENDERERS[key] || CARD_RENDERERS.default;
                 render(card);
                 return card;
             }
 
-            async function loadCardDefinitionOptions() {
-                if (!cardTypeSelect || !cardDefinitionsListUrl) return;
-                try {
-                    const res = await fetch(cardDefinitionsListUrl, { credentials: "same-origin" });
-                    if (!res.ok) return;
-                    const list = await res.json();
-                    cardTypeSelect.innerHTML = "";
-                    (list || []).forEach((item) => {
-                        const code = item.code || item.Code;
-                        const name = item.name || item.Name;
-                        if (!code) return;
-                        const opt = document.createElement("option");
-                        opt.value = code;
-                        opt.textContent = name || code;
-                        cardTypeSelect.appendChild(opt);
-                    });
-                } catch {
-                    /* ignore */
-                }
-            }
-
-            async function loadButtonPresetOptions() {
-                if (!buttonPresetSelect || !buttonPresetsListUrl) return;
-                try {
-                    const res = await fetch(buttonPresetsListUrl, { credentials: "same-origin" });
-                    if (!res.ok) return;
-                    const list = await res.json();
-                    buttonPresetById.clear();
-                    buttonPresetSelect.innerHTML = "";
-                    const empty = document.createElement("option");
-                    empty.value = "";
-                    empty.textContent = "";
-                    buttonPresetSelect.appendChild(empty);
-                    (list || []).forEach((item) => {
-                        const preset = normalizePresetRow(item);
-                        if (!preset) return;
-                        buttonPresetById.set(String(preset.presetId), preset);
-                        const opt = document.createElement("option");
-                        opt.value = String(preset.presetId);
-                        opt.textContent = preset.name;
-                        buttonPresetSelect.appendChild(opt);
-                    });
-                    if (window.jQuery?.fn?.select2) {
-                        const $s = window.jQuery(buttonPresetSelect);
-                        if ($s.hasClass("select2-hidden-accessible")) {
-                            $s.select2("destroy");
-                        }
-                        const $panel = window.jQuery(buttonPresetSelect).closest("section.rounded-xl");
-                        $s.select2({
-                            width: "100%",
-                            placeholder: "Buton tipi seçin",
-                            allowClear: true,
-                            dropdownParent: $panel.length ? $panel : window.jQuery("body"),
-                            escapeMarkup: function (x) { return x; },
-                            templateResult: function (data) {
-                                if (!data.id) {
-                                    return window.jQuery("<span>").text(data.text || "");
-                                }
-                                const preset = buttonPresetById.get(String(data.id));
-                                if (!preset) {
-                                    return window.jQuery("<span>").text(data.text || "");
-                                }
-                                return window.jQuery("<span>").html(buildPresetSelect2Html(preset, "dropdown"));
-                            },
-                            templateSelection: function (data) {
-                                if (!data.id) {
-                                    return window.jQuery("<span>").text(data.text || "");
-                                }
-                                const preset = buttonPresetById.get(String(data.id));
-                                if (!preset) {
-                                    return window.jQuery("<span>").text(data.text || "");
-                                }
-                                return window.jQuery("<span>").html(buildPresetSelect2Html(preset, "selection"));
-                            }
-                        });
-                    }
-                } catch {
-                    /* ignore */
-                }
-            }
-
-            function addCardToCanvas() {
+            function addCardToCanvas(code) {
                 const doc = frame.contentDocument;
                 if (!doc?.body) return;
-                let code = cardTypeSelect?.value;
-                if (!code && cardTypeSelect?.options?.length)
-                    code = cardTypeSelect.options[0].value;
-                if (!code) code = "info";
-                const card = createCanvasCardElement(doc, code);
+                const c = code || "info";
+                const card = createCanvasCardElement(doc, c);
                 if (!card) return;
                 const target = selectedNode && selectedNode.appendChild ? selectedNode : doc.body;
                 target.appendChild(card);
                 selectNode(card);
+            }
+
+            async function loadCardDefinitionChips() {
+                if (!cardTypeChips || !cardDefinitionsListUrl) return;
+                try {
+                    const res = await fetch(cardDefinitionsListUrl, { credentials: "same-origin" });
+                    if (!res.ok) return;
+                    const list = await res.json();
+                    cardTypeChips.innerHTML = "";
+                    (list || []).forEach((item) => {
+                        const code = item.code || item.Code;
+                        const name = item.name || item.Name;
+                        if (!code) return;
+                        const btn = document.createElement("button");
+                        btn.type = "button";
+                        btn.className = "rounded-md border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-2 py-1 text-left text-[11px] font-medium text-gray-800 shadow-sm hover:border-brand-lightAccent dark:hover:border-brand-darkAccent";
+                        btn.textContent = name || code;
+                        btn.title = code;
+                        btn.addEventListener("click", () => addCardToCanvas(code));
+                        cardTypeChips.appendChild(btn);
+                    });
+                } catch {
+                    /* ignore */
+                }
             }
 
             function setPaletteSwatches(palette) {
@@ -976,15 +630,6 @@
                 applyPalette(doc, activePalette);
                 pageBackgroundColorInput.value = activePalette.SecondaryHex || "#ffffff";
                 setPaletteSwatches(activePalette);
-            }
-
-            function setAttr(node, key, value) {
-                if (!node || !node.setAttribute) return;
-                if (!value) {
-                    node.removeAttribute(key);
-                    return;
-                }
-                node.setAttribute(key, value);
             }
 
             function resolveTargetImg() {
@@ -1109,12 +754,12 @@
                 canvasMediaModal.classList.add("flex");
             }
 
-            openCanvasMediaModalBtn?.addEventListener("click", openCanvasMediaModal);
             closeCanvasMediaModalBtn?.addEventListener("click", closeCanvasMediaModal);
             canvasMediaModal?.addEventListener("click", closeCanvasMediaModal);
             openLibraryMediaModalBtn?.addEventListener("click", openLibraryMediaModal);
             closeLibraryMediaModalBtn?.addEventListener("click", closeLibraryMediaModal);
             libraryMediaModal?.addEventListener("click", closeLibraryMediaModal);
+
             canvasMediaUploadForm?.addEventListener("submit", async (e) => {
                 e.preventDefault();
                 showCanvasMediaError("");
@@ -1184,9 +829,16 @@
                 el?.addEventListener("input", applySelectedNodeColors);
             });
             pageBackgroundColorInput?.addEventListener("input", applyPageBackgroundColor);
-            addCardBtn?.addEventListener("click", addCardToCanvas);
-            togglePlaceButtonModeBtn?.addEventListener("click", () => setPlaceButtonMode(!placeButtonMode));
             paletteSelect?.addEventListener("change", applyPaletteFromSelection);
+
+            document.querySelectorAll(".canvas-bp-tab").forEach((btn) => {
+                btn.addEventListener("click", () => {
+                    const bp = btn.getAttribute("data-bp");
+                    if (bp) switchBreakpoint(bp);
+                });
+            });
+
+            window.addEventListener("resize", () => resizePreviewForBp());
 
             deleteNodeBtn?.addEventListener("click", () => {
                 if (!selectedNode) return;
@@ -1202,15 +854,18 @@
             });
 
             saveBtn.addEventListener("click", () => {
-                const doc = frame.contentDocument;
-                if (!doc) return;
-                doc.querySelectorAll(".__canvas-selected").forEach((x) => x.classList.remove("__canvas-selected"));
-                htmlInput.value = doc.documentElement.outerHTML;
+                flushHtmlStore();
+                htmlInput.value = htmlByBp.desktop || "";
+                htmlTabletInput.value = htmlByBp.tablet || htmlByBp.desktop || "";
+                htmlPhoneInput.value = htmlByBp.phone || htmlByBp.desktop || "";
                 saveForm.submit();
             });
 
-            Promise.all([loadCardDefinitionOptions(), loadButtonPresetOptions()]).finally(() => {
-                loadFrame();
+            loadCardDefinitionChips().finally(() => {
+                activeBp = "desktop";
+                loadHtmlIntoFrame(htmlByBp.desktop || "");
+                updateBpTabStyles();
+                resizePreviewForBp();
             });
             setPaletteSwatches(activePalette);
             if (activePalette?.SecondaryHex && pageBackgroundColorInput) {
