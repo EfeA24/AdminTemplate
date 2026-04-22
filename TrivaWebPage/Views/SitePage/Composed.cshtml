@@ -3,6 +3,7 @@
 @{
     Layout = null;
     var title = string.IsNullOrWhiteSpace(Model.BrowserTitle) ? Model.Slug : Model.BrowserTitle!;
+    var visibleCards = Model.Cards.Where(x => x.IsVisible).OrderBy(x => x.DisplayOrder).ThenBy(x => x.ComponentId).ToList();
 }
 <!DOCTYPE html>
 <html lang="tr">
@@ -11,14 +12,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>@WebUtility.HtmlEncode(title)</title>
     <style>
-        html, body { margin: 0; padding: 0; min-height: 100%; background: #fff; }
+        html, body { margin: 0; padding: 0; min-height: 100%; background: #0f0f12; }
         .triva-root { display: block; box-sizing: border-box; }
         .triva-canvas {
             position: relative;
             background: #fff;
-            overflow: hidden;
+            overflow: visible;
+            box-sizing: border-box;
         }
-        .triva-canvas iframe {
+        .triva-iframe-shell {
+            position: relative;
+            width: 100%;
+            box-sizing: border-box;
+            background: #fff;
+        }
+        .triva-iframe-shell iframe {
             position: absolute;
             inset: 0;
             width: 100%;
@@ -34,36 +42,110 @@
             white-space: pre-wrap;
             word-break: break-word;
         }
-        .triva-card {
-            position: absolute;
-            z-index: 20;
+        .triva-cards-grid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 16px;
+            padding: 16px;
+            width: 100%;
             box-sizing: border-box;
-            overflow: auto;
-            border-radius: 12px;
-            border: 1px solid #e5e7eb;
-            padding: 8px;
-            background: #fff;
+            background: #0f0f12;
         }
-        .triva-card .triva-card-html { font-size: 12px; color: #111827; max-width: none; }
-        .triva-card-title { font-weight: 600; font-size: 14px; margin: 0 0 4px; color: #111827; }
-        .triva-card-sub { font-size: 12px; color: #4b5563; margin: 0 0 6px; }
-        .triva-card-desc { font-size: 12px; color: #374151; margin: 0 0 6px; }
-        .triva-card-img { width: 100%; height: 7rem; object-fit: cover; border-radius: 8px; display: block; }
-        .triva-card-btns { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
-        .triva-card-btns a {
-            display: inline-block;
-            padding: 4px 10px;
-            border-radius: 8px;
-            font-size: 12px;
+        .triva-card {
+            box-sizing: border-box;
+            min-width: 0;
+        }
+        .triva-card--default {
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            background: #1a1a1f;
+            color: #f4f4f5;
+        }
+        .triva-card-media {
+            position: relative;
+            width: 100%;
+            aspect-ratio: 16 / 10;
+            flex-shrink: 0;
+            background: #2a2a30;
+        }
+        .triva-card-media img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+            border-radius: 14px 14px 0 0;
+        }
+        .triva-card-body {
+            display: flex;
+            flex-direction: column;
+            flex: 1;
+            padding: 16px 16px 14px;
+            gap: 8px;
+        }
+        .triva-card-title {
+            font-family: system-ui, "Segoe UI", sans-serif;
+            font-weight: 700;
+            font-size: 1rem;
+            line-height: 1.3;
+            margin: 0;
+            color: inherit;
+        }
+        .triva-card-desc {
+            font-family: system-ui, "Segoe UI", sans-serif;
+            font-size: 0.8125rem;
+            line-height: 1.45;
+            margin: 0;
+            color: rgba(244, 244, 245, 0.82);
+            flex: 1;
+        }
+        .triva-card-footer {
+            display: flex;
+            justify-content: flex-end;
+            align-items: center;
+            margin-top: 4px;
+        }
+        .triva-card-btn {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 8px 14px;
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 600;
             text-decoration: none;
             border: 1px solid transparent;
+            background: #c4b5fd;
+            color: #111827;
+        }
+        .triva-card-btn:hover { filter: brightness(1.05); }
+        .triva-card-btn-icon {
+            font-size: 0.75rem;
+            line-height: 1;
+            opacity: 0.85;
+        }
+        .triva-card--html {
+            border-radius: 14px;
+            border: 1px solid rgba(255, 255, 255, 0.12);
+            padding: 12px;
+            background: #1a1a1f;
+            overflow: auto;
+        }
+        .triva-card--html .triva-card-html {
+            font-size: 12px;
+            color: #e5e7eb;
+            max-width: none;
         }
     </style>
 </head>
 <body>
 <div class="triva-root">
-    <div class="triva-canvas" style="width:@(Model.PageWidth)px;height:@(Model.PageHeight)px;">
-        <iframe title="@Html.Raw(WebUtility.HtmlEncode(title))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.TemplateHtml))"></iframe>
+    <div class="triva-canvas" style="width:@(Model.PageWidth)px;min-height:@(Model.PageHeight)px;">
+        <div class="triva-iframe-shell" style="height:@(Model.PageHeight)px;">
+            <iframe title="@Html.Raw(WebUtility.HtmlEncode(title))" srcdoc="@Html.Raw(WebUtility.HtmlEncode(Model.TemplateHtml))"></iframe>
+        </div>
         @foreach (var t in Model.TextItems.Where(x => x.IsVisible))
         {
             var fw = string.IsNullOrWhiteSpace(t.FontWeight) ? (t.IsBold ? "700" : "400") : t.FontWeight;
@@ -72,45 +154,58 @@
                 @t.Content
             </div>
         }
-        @foreach (var c in Model.Cards.Where(x => x.IsVisible))
+        @if (visibleCards.Count > 0)
         {
-            <div class="triva-card"
-                 style="left:@(c.X)px;top:@(c.Y)px;width:@(c.Width)px;height:@(c.Height)px;background:@WebUtility.HtmlEncode(c.BackgroundColor ?? "#ffffff");color:@WebUtility.HtmlEncode(c.TextColor ?? "#111827");border-color:@WebUtility.HtmlEncode(c.BorderColor ?? "#d1d5db");">
-                @if (!string.IsNullOrWhiteSpace(c.HtmlFragment))
+            <div class="triva-cards-grid">
+                @foreach (var c in visibleCards)
                 {
-                    <div class="triva-card-html">@Html.Raw(c.HtmlFragment)</div>
-                }
-                else
-                {
-                    if (!string.IsNullOrWhiteSpace(c.Title))
+                    @if (!string.IsNullOrWhiteSpace(c.HtmlFragment))
                     {
-                        <p class="triva-card-title">@c.Title</p>
-                    }
-                    if (!string.IsNullOrWhiteSpace(c.Subtitle))
-                    {
-                        <p class="triva-card-sub">@c.Subtitle</p>
-                    }
-                    if (c.ShowImage && !string.IsNullOrWhiteSpace(c.MediaFilePath))
-                    {
-                        <img class="triva-card-img" src="@WebUtility.HtmlEncode(c.MediaFilePath)" alt="" />
-                    }
-                    if (!string.IsNullOrWhiteSpace(c.Description))
-                    {
-                        <p class="triva-card-desc">@c.Description</p>
-                    }
-                    if (c.ShowButton && c.Buttons is { Count: > 0 })
-                    {
-                        <div class="triva-card-btns">
-                            @foreach (var b in c.Buttons.OrderBy(x => x.DisplayOrder))
-                            {
-                                var href = string.IsNullOrWhiteSpace(b.ActionUrl) ? "#" : b.ActionUrl;
-                                var tgt = string.IsNullOrWhiteSpace(b.ActionTarget) ? "_self" : b.ActionTarget;
-                                <a href="@WebUtility.HtmlEncode(href)" target="@WebUtility.HtmlEncode(tgt)"
-                                   style="background:@WebUtility.HtmlEncode(b.BackgroundColor ?? "#00a19b");color:@WebUtility.HtmlEncode(b.TextColor ?? "#ffffff");border-color:@WebUtility.HtmlEncode(b.BorderColor ?? "#008f8a");">
-                                    @b.Text
-                                </a>
-                            }
+                        <div class="triva-card triva-card--html">
+                            <div class="triva-card-html">@Html.Raw(c.HtmlFragment)</div>
                         </div>
+                    }
+                    else
+                    {
+                        var bg = string.IsNullOrWhiteSpace(c.BackgroundColor) ? "#1a1a1f" : c.BackgroundColor;
+                        var fg = string.IsNullOrWhiteSpace(c.TextColor) ? "#f4f4f5" : c.TextColor;
+                        var bd = string.IsNullOrWhiteSpace(c.BorderColor) ? "#3f3f46" : c.BorderColor;
+                        var primaryBtn = (c.ShowButton && c.Buttons is { Count: > 0 })
+                            ? c.Buttons.OrderBy(x => x.DisplayOrder).First()
+                            : null;
+                        <article class="triva-card triva-card--default" style="background:@WebUtility.HtmlEncode(bg);color:@WebUtility.HtmlEncode(fg);border-color:@WebUtility.HtmlEncode(bd);">
+                            @if (c.ShowImage && !string.IsNullOrWhiteSpace(c.MediaFilePath))
+                            {
+                                <div class="triva-card-media">
+                                    <img src="@WebUtility.HtmlEncode(c.MediaFilePath)" alt="" />
+                                </div>
+                            }
+                            <div class="triva-card-body">
+                                @if (!string.IsNullOrWhiteSpace(c.Title))
+                                {
+                                    <h3 class="triva-card-title">@c.Title</h3>
+                                }
+                                @if (!string.IsNullOrWhiteSpace(c.Description))
+                                {
+                                    <p class="triva-card-desc">@c.Description</p>
+                                }
+                                @if (primaryBtn is not null)
+                                {
+                                    var href = string.IsNullOrWhiteSpace(primaryBtn.ActionUrl) ? "#" : primaryBtn.ActionUrl;
+                                    var tgt = string.IsNullOrWhiteSpace(primaryBtn.ActionTarget) ? "_self" : primaryBtn.ActionTarget;
+                                    var btnBg = string.IsNullOrWhiteSpace(primaryBtn.BackgroundColor) ? "#c4b5fd" : primaryBtn.BackgroundColor;
+                                    var btnFg = string.IsNullOrWhiteSpace(primaryBtn.TextColor) ? "#ffffff" : primaryBtn.TextColor;
+                                    var btnBd = string.IsNullOrWhiteSpace(primaryBtn.BorderColor) ? "transparent" : primaryBtn.BorderColor;
+                                    <div class="triva-card-footer">
+                                        <a class="triva-card-btn" href="@WebUtility.HtmlEncode(href)" target="@WebUtility.HtmlEncode(tgt)"
+                                           style="background:@WebUtility.HtmlEncode(btnBg);color:@WebUtility.HtmlEncode(btnFg);border-color:@WebUtility.HtmlEncode(btnBd);">
+                                            @primaryBtn.Text
+                                            <span class="triva-card-btn-icon" aria-hidden="true">&#8599;</span>
+                                        </a>
+                                    </div>
+                                }
+                            </div>
+                        </article>
                     }
                 }
             </div>

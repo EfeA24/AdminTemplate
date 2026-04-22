@@ -86,7 +86,7 @@
 
                 <div class="space-y-2 border-t border-brand-lightBorder dark:border-brand-darkBorder pt-3">
                     <label class="text-xs text-brand-lightMuted dark:text-brand-darkMuted">Hazır kart ekle</label>
-                    <div id="cardTypeChips" class="flex flex-wrap gap-1.5 max-h-32 overflow-y-auto rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white/50 dark:bg-black/20 p-2"></div>
+                    <div id="cardTypeChips" class="flex flex-col gap-1.5 max-h-48 overflow-y-auto rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white/50 dark:bg-black/20 p-2"></div>
                     <p class="text-[11px] text-brand-lightMuted dark:text-brand-darkMuted">Karta tıklayınca canvas’a eklenir.</p>
                 </div>
 
@@ -163,12 +163,10 @@
                         <button type="button" class="canvas-bp-tab rounded-md px-3 py-1.5 text-xs font-medium text-brand-lightText dark:text-brand-darkText hover:bg-black/5 dark:hover:bg-white/10" data-bp="phone">Telefon</button>
                     </div>
                 </div>
-                <div id="canvasFrameOuter" class="mx-auto flex min-h-0 min-w-0 justify-center overflow-auto rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-neutral-100/80 dark:bg-black/30 p-3" style="max-height: min(85vh, 920px);">
-                    <div id="canvasFrameScaleWrap" class="relative origin-top" style="transform: scale(1);">
-                        <iframe id="canvasFrame"
-                                class="block rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm"
-                                style="width: @(activePage.PageWidth)px; height: @(activePage.PageHeight)px;"></iframe>
-                    </div>
+                <div id="canvasFrameOuter" class="flex min-h-0 w-full min-w-0 flex-col overflow-auto rounded-xl border border-dashed border-brand-lightBorder dark:border-brand-darkBorder bg-neutral-100/80 dark:bg-black/30 p-3" style="max-height: min(85vh, 920px);">
+                    <iframe id="canvasFrame"
+                            class="block w-full max-w-full rounded-lg border border-brand-lightBorder dark:border-brand-darkBorder bg-white shadow-sm"
+                            style="aspect-ratio: @(activePage.PageWidth) / @(activePage.PageHeight); height: auto; min-height: 200px;"></iframe>
                 </div>
             </section>
         </div>
@@ -234,8 +232,6 @@
             const libraryMediaUploadUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("UploadLibraryMedia", "TemplateCanvas")));
             const cardDefinitionsListUrl = @Html.Raw(JsonSerializer.Serialize(Url.Action("ListCardDefinitions", "TemplateCanvas")));
             const frame = document.getElementById("canvasFrame");
-            const frameOuter = document.getElementById("canvasFrameOuter");
-            const frameScaleWrap = document.getElementById("canvasFrameScaleWrap");
             const saveBtn = document.getElementById("saveCanvasBtn");
             const saveForm = document.getElementById("saveCanvasForm");
             const htmlInput = document.getElementById("canvasHtmlInput");
@@ -387,16 +383,11 @@
 
             function resizePreviewForBp() {
                 const d = previewDims[activeBp];
-                if (!d || !frame || !frameOuter || !frameScaleWrap) return;
-                frame.style.width = d.w + "px";
-                frame.style.height = d.h + "px";
-                const rw = Math.max(120, frameOuter.clientWidth - 24);
-                const rh = Math.max(120, frameOuter.clientHeight - 24);
-                const sx = rw / d.w;
-                const sy = rh / d.h;
-                const s = Math.min(1, sx, sy);
-                frameScaleWrap.style.transform = "scale(" + s + ")";
-                frameScaleWrap.style.transformOrigin = "top center";
+                if (!d || !frame) return;
+                frame.style.width = "100%";
+                frame.style.maxWidth = "100%";
+                frame.style.height = "auto";
+                frame.style.aspectRatio = d.w + " / " + d.h;
             }
 
             function updateBpTabStyles() {
@@ -525,6 +516,19 @@
                 card.innerHTML = "<h3 style='margin:0 0 8px;font-size:20px;'>Kart</h3><p style='margin:0;'>Şablon içeriğini düzenleyebilirsiniz.</p>";
             }
 
+            function renderProductCard(card) {
+                card.innerHTML = "<div style='display:flex;flex-direction:column;border-radius:14px;overflow:hidden;border:1px solid #3f3f46;background:#1a1a1f;color:#f4f4f5;width:100%;max-width:100%;box-sizing:border-box;'>" +
+                    "<div style='aspect-ratio:16/10;background:#2a2a30;min-height:120px;'>" +
+                    "<img src='https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800&q=80' alt='' style='width:100%;height:100%;object-fit:cover;display:block;'/>" +
+                    "</div>" +
+                    "<div style='display:flex;flex-direction:column;gap:8px;padding:16px 16px 14px;'>" +
+                    "<h3 style='margin:0;font-size:1rem;font-weight:700;line-height:1.3;'>Lorem ipsum dolor sit amet</h3>" +
+                    "<p style='margin:0;font-size:0.8125rem;line-height:1.45;color:rgba(244,244,245,0.82);'>Consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.</p>" +
+                    "<div style='display:flex;justify-content:flex-end;margin-top:4px;'>" +
+                    "<a href='#' style='display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border-radius:10px;font-size:0.8125rem;font-weight:600;text-decoration:none;background:#c4b5fd;color:#ffffff;border:1px solid transparent;'>Lorem ipsum <span aria-hidden=\"true\">&#8599;</span></a>" +
+                    "</div></div></div>";
+            }
+
             function renderMenuNavH(card) {
                 card.innerHTML = "<nav style='display:flex;flex-wrap:wrap;gap:6px 12px;align-items:center;font-size:12px;font-weight:500;'><a href='#' style='color:var(--color-primary,#111);text-decoration:none;padding:4px 0;border-bottom:2px solid var(--color-accent,#00a19b);'>Ana</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>Hizmetler</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>İletişim</a><a href='#' style='color:var(--color-muted,#64748b);text-decoration:none;padding:4px 0;'>Blog</a></nav>";
             }
@@ -545,6 +549,7 @@
                 info: renderInfoCard,
                 cta: renderCtaCard,
                 image: renderImageCard,
+                "product-card": renderProductCard,
                 "menu-nav-h": renderMenuNavH,
                 "menu-nav-v": renderMenuNavV,
                 "menu-pills": renderMenuPills,
@@ -558,9 +563,14 @@
                 card.className = "canvas-card";
                 const key = String(cardCode || "").toLowerCase();
                 const isMenu = key.startsWith("menu-");
-                card.style.cssText = isMenu
-                    ? "border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px;margin:10px 0;background:#ffffff;color:#111111;box-shadow:0 2px 8px rgba(15,23,42,.06);max-width:22rem;"
-                    : "border:1px solid #e2e8f0;border-radius:20px;padding:24px 28px;margin:20px 0;background:#ffffff;color:#111111;box-shadow:0 8px 24px rgba(15,23,42,.06);";
+                const isProduct = key === "product-card";
+                if (isProduct) {
+                    card.style.cssText = "margin:20px 0;width:100%;max-width:100%;box-sizing:border-box;border:none;padding:0;background:transparent;box-shadow:none;color:inherit;";
+                } else if (isMenu) {
+                    card.style.cssText = "border:1px solid #e2e8f0;border-radius:12px;padding:8px 12px;margin:10px 0;background:#ffffff;color:#111111;box-shadow:0 2px 8px rgba(15,23,42,.06);max-width:22rem;";
+                } else {
+                    card.style.cssText = "border:1px solid #e2e8f0;border-radius:20px;padding:24px 28px;margin:20px 0;background:#ffffff;color:#111111;box-shadow:0 8px 24px rgba(15,23,42,.06);max-width:100%;box-sizing:border-box;";
+                }
                 card.setAttribute("data-card-template-code", key || "default");
                 const render = CARD_RENDERERS[key] || CARD_RENDERERS.default;
                 render(card);
@@ -591,7 +601,7 @@
                         if (!code) return;
                         const btn = document.createElement("button");
                         btn.type = "button";
-                        btn.className = "rounded-md border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-2 py-1 text-left text-[11px] font-medium text-gray-800 shadow-sm hover:border-brand-lightAccent dark:hover:border-brand-darkAccent";
+                        btn.className = "w-full rounded-md border border-brand-lightBorder dark:border-brand-darkBorder bg-white px-2 py-1.5 text-left text-[11px] font-medium text-gray-800 shadow-sm hover:border-brand-lightAccent dark:hover:border-brand-darkAccent";
                         btn.textContent = name || code;
                         btn.title = code;
                         btn.addEventListener("click", () => addCardToCanvas(code));

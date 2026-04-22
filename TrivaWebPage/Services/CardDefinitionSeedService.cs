@@ -22,7 +22,8 @@ public class CardDefinitionSeedService
         {
             ("info", "Bilgi Kartı"),
             ("cta", "Aksiyon Kartı"),
-            ("image", "Görselli Kart")
+            ("image", "Görselli Kart"),
+            ("product-card", "Ürün kartı")
         };
 
         var utc = DateTime.UtcNow;
